@@ -3,175 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEC Purchase News Hub</title>
+    <title>SEC 구매전략 뉴스허브</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f3f6fb; }
-        .sidebar { width: 300px; background: white; border-right: 1px solid #e2e8f0; height: 100vh; position: fixed; left: 0; top: 0; overflow-y: auto; z-index: 50; }
-        .main-content { margin-left: 300px; padding: 2.5rem; min-height: 100vh; }
-        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07); }
-        .dashboard-stat { border-radius: 24px; padding: 1.5rem; transition: all 0.3s ease; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8f9fb; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; left: 0; top: 60px; background: white; border-right: 1px solid #e5e7eb; overflow-y: auto; }
+        .header { height: 60px; position: fixed; top: 0; width: 100%; background: white; border-bottom: 1px solid #e5e7eb; z-index: 100; }
+        .main-content { margin-left: 260px; margin-top: 60px; padding: 2rem; max-width: 1100px; }
+        .summary-box { background: white; border: 1px solid #e5e7eb; border-top: 3px solid #1428a0; border-radius: 4px; }
+        .news-card { background: white; border-bottom: 1px solid #eee; padding: 1.5rem 0; }
+        .category-tag { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .calendar-dot { width: 6px; height: 6px; border-radius: 50%; background-color: #3b82f6; display: inline-block; }
         .samsung-blue { color: #1428a0; }
-        .bg-samsung { background-color: #1428a0; }
-        .nav-active { background-color: #f1f5f9; color: #1428a0; font-weight: 700; border-right: 4px solid #1428a0; }
-        .calendar-day:hover { background-color: #f8fafc; border-radius: 12px; }
     </style>
 </head>
-<body class="flex">
+<body>
 
-    <aside class="sidebar flex flex-col p-6">
-        <div class="flex items-center gap-3 mb-12 px-2">
-            <div class="w-10 h-10 bg-samsung rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">N</div>
-            <h1 class="text-xl font-black tracking-tight samsung-blue uppercase">News Hub</h1>
+    <nav class="header flex items-center justify-between px-6">
+        <div class="flex items-center gap-6">
+            <h1 class="text-lg font-black samsung-blue">X News Hub</h1>
+            <div class="flex gap-6 text-sm font-medium text-slate-500">
+                <a href="#" class="samsung-blue font-bold border-b-2 border-[#1428a0] pb-1">LG전자뉴스</a>
+                <a href="#">LG전자채용</a>
+                <a href="#">기타경쟁사</a>
+                <a href="#">경제/산업</a>
+                <a href="#">리포트</a>
+            </div>
         </div>
+        <div class="flex items-center gap-4 text-slate-400">
+            <i data-lucide="search" class="w-5 h-5"></i>
+            <i data-lucide="bell" class="w-5 h-5"></i>
+        </div>
+    </nav>
 
-        <div class="mb-10">
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">History Calendar</p>
-            <div class="space-y-1">
-                <div class="calendar-day p-3 flex justify-between items-center nav-active cursor-pointer">
-                    <span class="text-sm">2026.01.19 (Mon)</span>
-                    <span class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold">Today</span>
-                </div>
-                <div class="calendar-day p-3 flex justify-between items-center text-slate-500 cursor-pointer">
-                    <span class="text-sm">2026.01.18 (Sun)</span>
-                </div>
-                <div class="calendar-day p-3 flex justify-between items-center text-slate-500 cursor-pointer">
-                    <span class="text-sm">2026.01.17 (Sat)</span>
-                </div>
-                <div class="calendar-day p-3 flex justify-between items-center text-slate-500 cursor-pointer">
-                    <span class="text-sm font-bold">2026.01.16 (Fri)</span>
-                    <span class="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full">Weekly</span>
-                </div>
+    <aside class="sidebar p-6">
+        <div class="mb-8">
+            <h3 class="text-sm font-bold mb-4 flex justify-between">날짜별 뉴스 <i data-lucide="chevron-up" class="w-4 h-4"></i></h3>
+            <div class="bg-slate-50 p-3 rounded text-center text-xs mb-2 font-bold">전체 기간 <span class="text-slate-400 ml-1">820</span></div>
+            <div class="text-[11px] grid grid-cols-7 gap-y-2 text-center text-slate-500">
+                <div class="col-span-7 font-bold text-slate-800 mb-2">2026년 1월</div>
+                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                <span></span><span></span><span></span><span></span><span>1</span><span>2</span><span>3</span>
+                <span>4</span><span>5</span><span class="font-bold text-blue-600">6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span class="font-bold text-blue-600">16</span><span>17</span>
+                <span>18</span><span class="font-bold text-blue-600 ring-1 ring-blue-500 rounded-full">19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
             </div>
         </div>
 
-        <div class="mb-10">
-            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">Categories</p>
-            <nav class="space-y-1">
-                <button onclick="filterContent('all')" class="w-full text-left p-3 text-sm font-medium hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
-                    <i data-lucide="layout-grid" class="w-4 h-4"></i> 전체 보기
-                </button>
-                <button onclick="filterContent('원자재')" class="w-full text-left p-3 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
-                    <i data-lucide="box" class="w-4 h-4"></i> 원자재
-                </button>
-                <button onclick="filterContent('거시경제')" class="w-full text-left p-3 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
-                    <i data-lucide="trending-up" class="w-4 h-4"></i> 거시경제
-                </button>
-                <button onclick="filterContent('경쟁사')" class="w-full text-left p-3 text-sm font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-3">
-                    <i data-lucide="users" class="w-4 h-4"></i> 경쟁사 동향
-                </button>
-            </nav>
+        <div>
+            <h3 class="text-sm font-bold mb-4 flex justify-between">카테고리 <i data-lucide="chevron-up" class="w-4 h-4"></i></h3>
+            <ul class="text-xs space-y-3 text-slate-600">
+                <li class="flex justify-between font-bold text-blue-600"><span>● 전체</span><span>820</span></li>
+                <li class="flex justify-between"><span>사업·전략</span><span>323</span></li>
+                <li class="flex justify-between"><span>기술</span><span>154</span></li>
+                <li class="flex justify-between"><span>원자재</span><span>82</span></li>
+                <li class="flex justify-between text-blue-500 font-bold"><span>거시경제</span><span>47</span></li>
+                <li class="flex justify-between"><span>공급망</span><span>24</span></li>
+            </ul>
         </div>
     </aside>
 
-    <main class="main-content flex-1">
+    <main class="main-content">
         
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="dashboard-stat bg-white shadow-sm border border-slate-200">
-                <div class="flex justify-between items-start mb-4">
-                    <p class="text-[11px] font-bold text-blue-500 uppercase tracking-tighter">24 Hours Ago</p>
-                    <i data-lucide="zap" class="w-4 h-4 text-blue-500"></i>
-                </div>
-                <h3 class="text-2xl font-black mb-1 text-slate-800">🔴 High Risk</h3>
-                <p class="text-xs text-slate-500">밤사이 구리 $13,000 돌파 및 운임 급등</p>
+        <section class="summary-box p-6 mb-8">
+            <div class="flex items-center gap-2 mb-6 border-b pb-2">
+                <div class="w-1 h-4 bg-red-500"></div>
+                <h2 class="font-bold text-sm">주요 뉴스 요약</h2>
+                <span class="text-[10px] text-slate-400 ml-auto">매일 아침 7시 업데이트</span>
             </div>
-            <div class="dashboard-stat bg-white shadow-sm border border-slate-200">
-                <div class="flex justify-between items-start mb-4">
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">1 Day Ago</p>
-                    <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
+            
+            <div class="grid grid-cols-3 gap-8 text-[11px] leading-relaxed">
+                <div>
+                    <h3 class="font-bold mb-3 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3 text-blue-500"></i> 지난 24시간</h3>
+                    <ul class="space-y-3">
+                        <li class="flex gap-2"><span class="text-blue-500">•</span> 트럼프 EU 8개국 관세 10% 부과 예고, 2월 발효 전망</li>
+                        <li class="flex gap-2"><span class="text-blue-500">•</span> LME 구리 $13,000 돌파, 비철금속 중심 상방 압력 심화</li>
+                    </ul>
                 </div>
-                <h3 class="text-2xl font-black mb-1 text-slate-800">🟡 Stable</h3>
-                <p class="text-xs text-slate-500">레진 시세 박스권 횡보 및 환율 소폭 조정</p>
-            </div>
-            <div class="dashboard-stat bg-slate-900">
-                <div class="flex justify-between items-start mb-4">
-                    <p class="text-[11px] font-bold text-blue-400 uppercase tracking-tighter">Last Week Avg</p>
-                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i>
+                <div class="border-x px-8">
+                    <h3 class="font-bold mb-3 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i> 하루 전</h3>
+                    <ul class="space-y-3">
+                        <li class="flex gap-2"><span>•</span> 레진 시세 4.15% 반등하며 박스권 상단 돌파 시도</li>
+                        <li class="flex gap-2"><span>•</span> Honeywell R454B 냉매 가격 인상 소식에 공급망 긴장</li>
+                    </ul>
                 </div>
-                <h3 class="text-2xl font-black mb-1 text-white">+8.7% Up</h3>
-                <p class="text-xs text-slate-400">비철금속 중심 재료비 상방 압력 지속</p>
+                <div class="pl-4">
+                    <h3 class="font-bold mb-3 flex items-center gap-1"><i data-lucide="bar-chart-2" class="w-3 h-3 text-slate-400"></i> 지난주 종합</h3>
+                    <ul class="space-y-3">
+                        <li class="flex gap-2"><span>•</span> 글로벌 운임지수 16% 급등하며 물류비 부담 가중</li>
+                        <li class="flex gap-2"><span>•</span> 경쟁사 프리미엄/HVAC 중심 포트폴리오 강화 뚜렷</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
-        <header class="mb-8 flex justify-between items-end">
-            <div>
-                <h2 class="text-3xl font-black tracking-tight text-slate-900 mb-1">Weekly Intelligence Report</h2>
-                <p class="text-sm text-slate-500 font-medium">삼성전자 생활가전 구매팀 전용 실시간 시황 대시보드</p>
+        <div class="flex justify-between items-center mb-4 pb-2 border-b">
+            <h3 class="font-bold text-sm">최신 뉴스 <span class="font-normal text-slate-400 text-xs ml-2">100개 중 1-20개 표시</span></h3>
+            <div class="text-xs text-slate-500 flex gap-4">
+                <span class="font-bold text-slate-900">최신순</span>
+                <span>관련도순</span>
             </div>
-            <div class="flex items-center gap-2 text-xs font-bold text-slate-400 bg-white px-4 py-2 rounded-full border border-slate-100">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                LIVE UPDATED: 16:30 KST
-            </div>
-        </header>
+        </div>
 
-        <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8" id="newsGrid">
-            </section>
-
-        <section class="mt-16 glass-card rounded-[2rem] p-10 relative overflow-hidden">
-            <div class="relative z-10">
-                <div class="flex items-center gap-3 mb-6">
-                    <i data-lucide="shield-check" class="w-6 h-6 text-blue-600"></i>
-                    <h3 class="text-xl font-black text-slate-900">AI 정밀 팩트체크 리포트</h3>
+        <div id="news-feed">
+            <article class="news-card">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="category-tag bg-blue-50 text-blue-600">사업·전략</span>
+                    <h4 class="font-bold text-base hover:underline cursor-pointer">트럼프 EU 8개국 대상 10% 관세 부과 예고 (2/1 발효)</h4>
+                    <span class="text-[11px] text-slate-400 ml-auto">1월 17일 오후 5시</span>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm leading-relaxed text-slate-600">
-                    <p>본 보고서는 <strong>Perplexity</strong>와 <strong>Genspark</strong>의 실시간 데이터를 교차 검증하였습니다. <br>구리 가격 $13,000 돌파는 LME 현물가 기준(01/16 종가)으로 사실임을 확인하였으며, Honeywell 냉매 인상은 2026년 실적용 예정 건으로 분석되었습니다.</p>
-                    <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                        <span class="text-[10px] font-bold text-blue-600 uppercase mb-2 block">Action Required</span>
-                        <p class="text-xs font-bold text-slate-800">트럼프 EU 관세 발효(2/1) 전 폴란드 법인 소싱 루트 재설계 및 1Q 냉매 선구매 전략 수립 권고.</p>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                    덴마크, 노르웨이, 스웨덴 등 8개국 대상 관세 부과가 예고됨에 따라 폴란드 생산기지 루트 재검토 및 재료비 약 3.5% 상승 압박이 예상됩니다.
+                </p>
+                <div class="flex items-center gap-4 text-[11px] text-slate-400">
+                    <button class="flex items-center gap-1">▼ Details</button>
+                    <div class="flex items-center gap-2">
+                        <span>관련 기사 (3개)</span>
+                        <div class="flex gap-1">
+                            <img src="https://www.google.com/s2/favicons?domain=reuters.com" class="w-3 h-3">
+                            <img src="https://www.google.com/s2/favicons?domain=bloomberg.com" class="w-3 h-3">
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="absolute -right-20 -top-20 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
-        </section>
+            </article>
+
+            <article class="news-card">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="category-tag bg-orange-50 text-orange-600">원자재</span>
+                    <h4 class="font-bold text-base hover:underline cursor-pointer">LME 구리 가격 $13,000/톤 돌파... 월간 8.7% 급등</h4>
+                    <span class="text-[11px] text-slate-400 ml-auto">1월 16일 오전 10시</span>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                    중국 정제동 수출 제한 및 에너지 비용 상승으로 구리 가격이 폭등하며 모터 및 배선 부품 원가 상방 압력이 지속되고 있습니다.
+                </p>
+                <div class="flex items-center gap-4 text-[11px] text-slate-400">
+                    <button class="flex items-center gap-1">▼ Details</button>
+                    <span>관련 기사 (5개)</span>
+                </div>
+            </article>
+
+            <article class="news-card">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="category-tag bg-purple-50 text-purple-600">경쟁사</span>
+                    <h4 class="font-bold text-base hover:underline cursor-pointer">Whirlpool, 삼성·LG 대상 마이크로웨이브 특허 침해 소송 제기</h4>
+                    <span class="text-[11px] text-slate-400 ml-auto">11월 18일 오후 3시</span>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                    미국 시장 내 견제가 가속화되는 가운데, 디자인 우회 설계 및 법무 대응 시나리오 점검이 필요한 상황입니다.
+                </p>
+                <div class="flex items-center gap-4 text-[11px] text-slate-400">
+                    <button class="flex items-center gap-1">▼ Details</button>
+                    <span>관련 기사 (2개)</span>
+                </div>
+            </article>
+        </div>
+
+        <div class="flex justify-center gap-2 mt-12 text-xs">
+            <span class="px-3 py-1 bg-red-600 text-white rounded">1</span>
+            <span class="px-3 py-1 border rounded hover:bg-slate-100 cursor-pointer">2</span>
+            <span class="px-3 py-1 border rounded hover:bg-slate-100 cursor-pointer">3</span>
+            <span class="px-3 py-1 border rounded hover:bg-slate-100 cursor-pointer">다음</span>
+        </div>
     </main>
 
     <script>
-        // 뉴스 데이터 통합 (제미나이_통합결과.md 기반)
-        const newsItems = [
-            { cat: '거시경제', risk: 'High', title: '트럼프 EU 8개국 10% 관세 부과 예고', impact: '+3.5%', img: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800', url: 'https://reuters.com/', date: '01.17', summary: '덴마크, 노르웨이, 스웨덴 등 8개국 대상. 폴란드 생산기지 원가 리스크 확대.' },
-            { cat: '원자재', risk: 'High', title: 'LME 구리 $13,000/톤 돌파 (월간 8.7%↑)', impact: '+2.8%', img: 'https://images.unsplash.com/photo-1558444479-c8482877a722?w=800', url: 'https://westmetall.com/', date: '01.16', summary: '비철금속 강세 지속. 모터 및 배선 부품 재료비 직접 상승 압박.' },
-            { cat: '원자재', risk: 'High', title: '해상 운임 주간 최대 26% 급등', impact: '+1.2%', img: 'https://images.unsplash.com/photo-1494412519320-aa613dfb7738?w=800', url: 'https://trasportoeuropa.it/', date: '01.08', summary: '아시아-유럽/미국 주요 노선 GRI 단행. 물류비 포함 총원가 상승 위험.' },
-            { cat: '원자재', risk: 'High', title: 'Honeywell R454B 냉매 42% 인상', impact: '+2.2%', img: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800', url: 'https://achrnews.com/', date: '04.17', summary: '환경 규제 및 쿼터 축소 영향. 차세대 냉매 소싱 다변화 시급.' },
-            { cat: '거시경제', risk: 'Med', title: 'USD/KRW 환율 1,473.76원 상향', impact: '+0.8%', img: 'https://images.unsplash.com/photo-1611974717483-360061fc7059?w=800', url: 'https://tradingeconomics.com/', date: '01.16', summary: '달러 강세 유지. 수입 자재 대금 환차손 방어를 위한 헤지 비중 확대.' },
-            { cat: '경쟁사', risk: 'Med', title: 'Whirlpool, 삼성·LG 대상 특허 소송', impact: 'N/A', img: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=800', url: 'https://reuters.com/', date: '11.18', summary: '미국 시장 내 견제 강화. 디자인 우회 설계 및 법무 대응 시나리오 가동.' }
-        ];
-
-        function renderCards(filter = 'all') {
-            const grid = document.getElementById('newsGrid');
-            const filtered = filter === 'all' ? newsItems : newsItems.filter(i => i.cat === filter);
-            
-            grid.innerHTML = filtered.map(item => `
-                <article class="bg-white rounded-[2rem] border border-slate-200 overflow-hidden group hover:shadow-2xl transition-all duration-500 cursor-pointer" onclick="window.open('${item.url}', '_blank')">
-                    <div class="h-48 overflow-hidden relative">
-                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="News">
-                        <div class="absolute top-4 left-4 flex gap-2">
-                            <span class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black samsung-blue uppercase">${item.cat}</span>
-                            <span class="${item.risk === 'High' ? 'bg-red-500' : 'bg-yellow-500'} text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">${item.risk}</span>
-                        </div>
-                    </div>
-                    <div class="p-8">
-                        <p class="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">${item.date} REPORT</p>
-                        <h4 class="text-xl font-bold text-slate-900 mb-3 leading-tight group-hover:text-[#1428a0] transition-colors">${item.title}</h4>
-                        <p class="text-xs text-slate-500 leading-relaxed mb-6 line-clamp-2">${item.summary}</p>
-                        <div class="pt-6 border-t border-slate-100 flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-800 italic">재료비 영향: ${item.impact}</span>
-                            <i data-lucide="arrow-up-right" class="w-4 h-4 text-slate-300 group-hover:text-[#1428a0]"></i>
-                        </div>
-                    </div>
-                </article>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function filterContent(cat) {
-            renderCards(cat);
-        }
-
-        // 초기화
         lucide.createIcons();
-        renderCards();
     </script>
 </body>
 </html>
