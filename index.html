@@ -13,22 +13,34 @@
         .header { height: 55px; position: fixed; top: 0; width: 100%; z-index: 100; border-bottom: 2px solid #1428a0; }
         .sidebar { width: 280px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: white; }
         .main-content { margin-left: 280px; margin-top: 55px; padding: 30px 40px; max-width: 1200px; }
-        
-        /* 1. 얄쌍한 링(Ring) 달력 디자인 */
-        .calendar-grid span { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; position: relative; font-size: 11px; color: #94a3b8; }
-        .calendar-ring { border: 1.2px solid #1428a0; color: #1428a0 !important; font-weight: 800; cursor: pointer; }
-        .dark .calendar-ring { border-color: #3b82f6; color: #3b82f6 !important; }
-        .calendar-selected { background-color: #1428a0 !important; color: white !important; box-shadow: 0 4px 10px rgba(20, 40, 160, 0.3); }
 
-        /* 2. 태그 디자인 */
-        .sidebar-tag { padding: 4px 12px; border-radius: 100px; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; color: #64748b; }
-        .sidebar-tag:hover { border-color: #1428a0; color: #1428a0; background: #f8fafc; }
-        .sidebar-tag.active { background: #1428a0; color: white; border-color: #1428a0; }
+        /* 1. 가변형 링 달력 디자인 */
+        .calendar-grid span { 
+            display: inline-flex; align-items: center; justify-content: center; 
+            border-radius: 50%; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; font-size: 10px; cursor: default;
+        }
+        .calendar-ring { border: 1.2px solid #1428a0; color: #1428a0; font-weight: 800; cursor: pointer !important; }
+        .ring-lv1 { width: 24px; height: 24px; border-width: 1px; }
+        .ring-lv2 { width: 28px; height: 28px; border-width: 2px; }
+        .ring-lv3 { width: 32px; height: 32px; border-width: 3px; box-shadow: 0 0 10px rgba(20,40,160,0.2); }
+        .calendar-selected { background-color: #1428a0 !important; color: white !important; }
 
-        .summary-card { border: 1px solid #e1e1e1; border-top: 4px solid #1428a0; border-radius: 0 0 8px 8px; background: white; }
+        /* 2. 동적 워드 클라우드 태그 */
+        .tag-cloud-item {
+            display: inline-block; transition: all 0.3s ease; cursor: pointer;
+            padding: 2px 8px; border-radius: 12px; margin: 3px; font-weight: 700;
+        }
+        .tag-cloud-item:hover { 
+            transform: scale(1.1) rotate(-2deg); background: #1428a0; color: white !important; 
+            box-shadow: 0 4px 12px rgba(20,40,160,0.2);
+        }
+
         .news-item { border-bottom: 1px solid #f1f5f9; padding: 24px 0; }
         .dark body { background-color: #1a1c1e; color: #e2e8f0; }
-        .dark .header, .dark .sidebar, .dark .summary-card, .dark .news-item, .dark .bg-white { background-color: #25282c; border-color: #3f444a; }
+        .dark .header, .dark .sidebar, .dark .news-item { background-color: #25282c; border-color: #3f444a; }
+        .region-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; cursor: pointer; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="bg-[#fcfcfc] text-[#333]">
@@ -47,32 +59,28 @@
                 <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('경쟁사')">경쟁사</a>
             </nav>
         </div>
-        <div class="flex items-center gap-4">
-            <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500 dark:text-yellow-400"></i>
-            </button>
-            <div class="text-[9px] text-gray-300 font-bold uppercase tracking-widest hidden lg:block">Samsung DA Division</div>
-        </div>
+        <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500 dark:text-yellow-400"></i>
+        </button>
     </header>
 
     <aside class="sidebar dark:bg-[#25282c]">
-        <h3 class="text-[10px] font-black mb-3 dark:text-gray-200 uppercase tracking-widest">Global Issue Map <i data-lucide="globe" class="w-3 h-3 text-blue-500 ml-1"></i></h3>
-        <div id="mapContainer" class="w-full h-32 bg-slate-50 dark:bg-slate-800 rounded-lg mb-8 relative border dark:border-gray-700"></div>
+        <h3 class="text-[10px] font-black mb-3 dark:text-gray-200 uppercase tracking-widest">Global Issue Map</h3>
+        <div id="mapContainer" class="w-full h-32 bg-slate-50 dark:bg-slate-800 rounded-lg mb-8 relative border dark:border-gray-700 overflow-hidden"></div>
 
         <div class="mb-10">
-            <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest">Archive Calendar <i data-lucide="calendar" class="w-3 h-3 text-slate-300 ml-1"></i></h3>
-            <div id="calendarGrid" class="calendar-grid grid grid-cols-7 gap-y-2 text-center text-slate-400"></div>
+            <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest">Archive Calendar</h3>
+            <div id="calendarGrid" class="calendar-grid grid grid-cols-7 gap-y-2 text-center text-slate-400 items-center"></div>
         </div>
 
         <div>
             <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest">Strategic Tags</h3>
-            <div id="tagCloud" class="flex flex-wrap gap-2"></div>
+            <div id="tagCloud" class="flex flex-wrap items-center"></div>
         </div>
     </aside>
 
     <main class="main-content">
         <div class="grid grid-cols-3 gap-6 mb-10" id="summaryGrid"></div>
-
         <div class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700">
             <h2 class="font-bold text-lg dark:text-gray-100" id="feedTitle">Market Intelligence Feed</h2>
             <div class="text-[10px] flex gap-4 uppercase font-bold text-slate-400">
@@ -80,8 +88,7 @@
                 <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">By Risk</span>
             </div>
         </div>
-
-        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] uppercase tracking-widest">Synchronizing Intelligence...</div>
+        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-xs uppercase">Loading...</div>
         <div id="news-feed" class="space-y-4"></div>
     </main>
 
@@ -89,12 +96,10 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwpTIuLZcwhQa0eGpeXhX9xGTyp7Q3h84rxufHOGdyIUZUiA3SD7bunjDpmvK6-6OcDxQ/exec";
         let allNews = [];
 
-        // [핵심] 시트의 "2026. 1. 19" 형식을 웹브라우저 날짜로 강제 변환
         function parseDate(dateStr) {
-            if (!dateStr) return null;
-            const parts = dateStr.toString().split('.');
-            if (parts.length < 3) return new Date(dateStr);
-            return new Date(parts[0].trim(), parts[1].trim() - 1, parts[2].trim());
+            if (!dateStr) return new Date();
+            const clean = dateStr.toString().replace(/\./g, '-').replace(/\s/g, '');
+            return new Date(clean);
         }
 
         async function fetchNews() {
@@ -102,8 +107,8 @@
                 const res = await fetch(GAS_URL);
                 allNews = await res.json();
                 renderAll(allNews);
-                renderFeed(allNews); // 초기 전체 기사 노출
-            } catch(e) { console.error("Fetch Error:", e); }
+                renderFeed(allNews);
+            } catch(e) { console.error(e); }
             document.getElementById('loading').style.display = 'none';
         }
 
@@ -114,122 +119,128 @@
             renderTags(data);
         }
 
-        // 링 달력: 얄쌍한 테두리 형태
         function renderCalendar(data) {
             const grid = document.getElementById('calendarGrid');
-            const activeDays = new Set(data.map(n => {
-                const d = parseDate(n.Date);
-                return d ? d.getDate() : null;
-            }));
-            
-            let html = `<div class="col-span-7 font-black text-slate-800 dark:text-slate-200 mb-2">2026. 01</div>`;
-            ['S','M','T','W','T','F','S'].forEach(s => html += `<span class="font-bold">${s}</span>`);
+            const dateCounts = data.reduce((acc, n) => {
+                const d = parseDate(n.Date).getDate();
+                acc[d] = (acc[d] || 0) + 1;
+                return acc;
+            }, {});
+
+            let html = `<div class="col-span-7 font-black text-slate-800 dark:text-slate-200 mb-2 text-[11px]">2026. 01</div>`;
+            ['S','M','T','W','T','F','S'].forEach(s => html += `<span class="font-bold opacity-50">${s}</span>`);
             for (let i = 0; i < 4; i++) html += `<span></span>`;
 
             for (let d = 1; d <= 31; d++) {
-                const hasNews = activeDays.has(d);
-                const cls = hasNews ? 'calendar-ring' : '';
-                html += `<span class="${cls}" id="cal-${d}" onclick="${hasNews ? `filterByDate(${d})` : ''}">${d}</span>`;
+                const count = dateCounts[d] || 0;
+                let sizeClass = "";
+                if(count === 1) sizeClass = "calendar-ring ring-lv1";
+                else if(count === 2) sizeClass = "calendar-ring ring-lv2";
+                else if(count >= 3) sizeClass = "calendar-ring ring-lv3";
+                
+                html += `<span class="${sizeClass}" id="cal-${d}" onclick="${count > 0 ? `filterByDate(${d})` : ''}">${d}</span>`;
             }
             grid.innerHTML = html;
         }
 
-        function filterByDate(day) {
-            document.querySelectorAll('.calendar-grid span').forEach(el => el.classList.remove('calendar-selected'));
-            const selectedEl = document.getElementById(`cal-${day}`);
-            if(selectedEl) selectedEl.classList.add('calendar-selected');
-            const filtered = allNews.filter(n => {
-                const d = parseDate(n.Date);
-                return d && d.getDate() === day;
-            });
-            renderFeed(filtered);
-            document.getElementById('feedTitle').innerText = `Archive: 2026. 01. ${day}`;
-        }
-
-        // 태그 클라우드: 상단 메뉴와 동기화
         function renderTags(data) {
             const container = document.getElementById('tagCloud');
-            const cats = data.reduce((acc, cur) => { acc[cur.Category] = (acc[cur.Category] || 0) + 1; return acc; }, {});
-            let html = `<div class="sidebar-tag active" onclick="filterNews('all', this)"># 전체 <span class="opacity-50">${data.length}</span></div>`;
-            for(const [c, count] of Object.entries(cats)) {
-                html += `<div class="sidebar-tag" onclick="filterNews('${c}', this)"># ${c} <span class="opacity-50">${count}</span></div>`;
+            const tagMap = {};
+            data.forEach(n => {
+                if(n.Tags) {
+                    n.Tags.split(',').forEach(tag => {
+                        const t = tag.trim();
+                        if(t) tagMap[t] = (tagMap[t] || 0) + 1;
+                    });
+                }
+            });
+
+            const counts = Object.values(tagMap);
+            const maxCount = counts.length > 0 ? Math.max(...counts) : 1;
+            let html = "";
+            for (const [tag, count] of Object.entries(tagMap)) {
+                const fontSize = 10 + (count / maxCount) * 8;
+                const opacity = 0.5 + (count / maxCount) * 0.5;
+                html += `<span class="tag-cloud-item" style="font-size: ${fontSize}px; opacity: ${opacity}; color: #475569;" onclick="filterByTag('${tag}')">${tag}</span>`;
             }
             container.innerHTML = html;
         }
 
-        // 뉴스 피드: 출처 Favicon 및 상세 링크 복구
         function renderFeed(data) {
             const feed = document.getElementById('news-feed');
-            if (!data || data.length === 0) {
-                feed.innerHTML = `<div class="py-20 text-center text-slate-300 text-xs">No reports found.</div>`;
+            if (data.length === 0) {
+                feed.innerHTML = `<div class="py-20 text-center text-slate-300 text-xs">기사가 없습니다.</div>`;
                 return;
             }
             feed.innerHTML = data.map(n => {
-                const domain = n.URL && n.URL.startsWith('http') ? new URL(n.URL).hostname.replace('www.', '') : 'Link';
+                const domain = n.URL ? new URL(n.URL).hostname.replace('www.', '') : 'Link';
                 return `
-                <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm hover:border-blue-100 border border-transparent transition-all">
+                <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all">
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="tag px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${n.Category}</span>
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${n.Category}</span>
                             <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${n.Region || 'Global'}</span>
                             <span class="text-[10px] text-slate-300 ml-auto">${n.Date}</span>
                         </div>
                         <h4 class="font-bold text-base cursor-pointer hover:text-[#1428a0] mb-3 leading-snug" onclick="window.open('${n.URL}', '_blank')">${n.Title}</h4>
-                        <p class="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-5 line-clamp-2">${n.Summary}</p>
-                        
+                        <p class="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4 line-clamp-2">${n.Summary}</p>
                         <div class="flex items-center gap-4 border-t dark:border-gray-800 pt-4">
-                            <button class="text-[10px] font-bold text-[#1428a0] flex items-center gap-1" onclick="window.open('${n.URL}', '_blank')">
-                                <i data-lucide="external-link" class="w-3 h-3"></i> View Details
-                            </button>
+                            <button class="text-[10px] font-bold text-[#1428a0] flex items-center gap-1" onclick="window.open('${n.URL}', '_blank')"><i data-lucide="external-link" class="w-3 h-3"></i> View Details</button>
                             <div class="flex items-center gap-2 border-l pl-4 opacity-60">
                                 <img src="https://www.google.com/s2/favicons?domain=${n.URL}" class="w-3 h-3 grayscale">
                                 <span class="text-[10px] text-slate-400 uppercase font-bold">${domain}</span>
                             </div>
                         </div>
                     </div>
-                    ${n.Image ? `<div class="w-40 h-28 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover"></div>` : ''}
+                    ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all"></div>` : ''}
                 </article>`;
             }).join('');
             lucide.createIcons();
         }
 
-        // 요약 섹션
+        function filterByDate(day) {
+            document.querySelectorAll('.calendar-grid span').forEach(el => el.classList.remove('calendar-selected'));
+            document.getElementById(`cal-${day}`).classList.add('calendar-selected');
+            const filtered = allNews.filter(n => parseDate(n.Date).getDate() === day);
+            document.getElementById('feedTitle').innerText = `Archive: 2026. 01. ${day}`;
+            renderFeed(filtered);
+        }
+
+        function filterByTag(tag) {
+            const filtered = allNews.filter(n => n.Tags && n.Tags.includes(tag));
+            document.getElementById('feedTitle').innerText = `Tag: ${tag}`;
+            renderFeed(filtered);
+        }
+
+        function filterNews(cat) {
+            const filtered = cat === 'all' ? allNews : allNews.filter(n => n.Category === cat);
+            renderFeed(filtered);
+        }
+
         function renderSummary(data) {
             const highs = data.filter(a => a.Risk === 'High').slice(0, 3);
             document.getElementById('summaryGrid').innerHTML = highs.map(a => `
-                <div class="summary-card bg-white dark:bg-[#25282c] p-6 shadow-sm border border-transparent hover:border-red-200 transition-all">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded">HIGH RISK</span>
-                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
-                    </div>
-                    <h4 class="font-bold text-sm mb-2 line-clamp-1">${a.Title}</h4>
-                    <p class="text-[11px] text-slate-500">${a.Impact || 'Analyzing...'}</p>
+                <div class="summary-card p-6 shadow-sm">
+                    <span class="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded">HIGH RISK</span>
+                    <h4 class="font-bold text-sm mt-3 mb-1 line-clamp-1">${a.Title}</h4>
+                    <p class="text-[11px] text-slate-500">${a.Impact || 'N/A'}</p>
                 </div>
             `).join('');
-            lucide.createIcons();
-        }
-
-        function filterNews(cat, el) {
-            document.querySelectorAll('.sidebar-tag').forEach(tag => tag.classList.remove('active'));
-            if(el) el.classList.add('active');
-            const filtered = cat === 'all' ? allNews : allNews.filter(n => n.Category === cat);
-            renderFeed(filtered);
-            document.getElementById('feedTitle').innerText = cat === 'all' ? 'Market Intelligence Feed' : `${cat} Insights`;
-        }
-
-        function sortNews(type) {
-            const sorted = [...allNews];
-            if(type === 'risk') {
-                const p = { 'High': 1, 'Med': 2, 'Low': 3 };
-                sorted.sort((a, b) => p[a.Risk] - p[b.Risk]);
-            }
-            renderFeed(sorted);
         }
 
         function renderMap(data) {
             const container = document.getElementById('mapContainer');
             container.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_monochrome.svg" class="w-full h-full object-contain opacity-20 dark:invert">`;
-            // (지도 좌표 로직 생략 - 필요 시 추가 가능)
+            const coords = { 'China': { t: '35%', l: '78%' }, 'USA': { t: '32%', l: '18%' }, 'EU': { t: '28%', l: '48%' }, 'Poland': { t: '25%', l: '52%' }, 'Vietnam': { t: '48%', l: '76%' } };
+            [...new Set(data.filter(a => a.Risk === 'High').map(a => a.Region))].forEach(reg => {
+                if(coords[reg]) {
+                    const dot = document.createElement('div');
+                    dot.className = 'region-dot';
+                    dot.style.top = coords[reg].t; dot.style.left = coords[reg].l;
+                    dot.onclick = () => { const f = allNews.filter(n => n.Region === reg); renderFeed(f); };
+                    container.appendChild(dot);
+                }
+            });
         }
 
         function toggleDarkMode() {
