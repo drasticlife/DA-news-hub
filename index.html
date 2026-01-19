@@ -3,190 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEC 구매전략 뉴스허브</title>
+    <title>삼성전자 DA 구매 전략 뉴스 허브</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #fcfcfc; color: #333; scroll-behavior: smooth; }
-        .header { height: 50px; background: #fff; border-bottom: 1px solid #eee; position: fixed; top: 0; width: 100%; z-index: 100; }
-        .sidebar { width: 240px; position: fixed; left: 0; top: 50px; height: calc(100vh - 50px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: #fff; }
-        .main-content { margin-left: 240px; margin-top: 50px; padding: 30px 40px; max-width: 1000px; }
-        .summary-section { border: 1px solid #e1e1e1; border-top: 3px solid #1428a0; padding: 25px; margin-bottom: 40px; background: #fff; }
-        .news-item { border-bottom: 1px solid #f0f0f0; padding: 25px 0; transition: all 0.2s; }
-        .news-item:hover { background-color: #fcfcfc; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #fcfcfc; color: #333; }
+        .header { height: 55px; background: #fff; border-bottom: 2px solid #1428a0; position: fixed; top: 0; width: 100%; z-index: 100; }
+        .sidebar { width: 240px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: #fff; }
+        .main-content { margin-left: 240px; margin-top: 55px; padding: 30px 40px; max-width: 1050px; }
+        .summary-section { border: 1px solid #e1e1e1; border-top: 3px solid #d32f2f; padding: 25px; margin-bottom: 40px; background: #fff; }
+        .news-item { border-bottom: 1px solid #f0f0f0; padding: 25px 0; }
         .tag { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-right: 8px; }
         .tag-macro { background: #e3f2fd; color: #1976d2; }
         .tag-raw { background: #fff3e0; color: #e65100; }
         .tag-comp { background: #f3e5f5; color: #7b1fa2; }
         .dot { width: 6px; height: 6px; background: #3b82f6; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .nav-link:hover { color: #1428a0; text-decoration: underline; }
-        .calendar-active { background-color: #3b82f6; color: white !important; border-radius: 999px; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1428a0; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <header class="header flex items-center px-6 justify-between">
+    <header class="header flex items-center px-6 justify-between shadow-sm">
         <div class="flex items-center gap-6">
-            <h1 class="text-lg font-black text-[#1428a0] tracking-tighter cursor-pointer" onclick="location.reload()">X News Hub</h1>
+            <h1 class="text-lg font-black text-[#1428a0] tracking-tighter cursor-pointer" onclick="location.reload()">SEC DA News Hub</h1>
             <nav class="flex gap-5 text-sm font-medium text-gray-500">
-                <a href="#news-feed" class="nav-link text-[#1428a0] font-bold border-b-2 border-[#1428a0] pb-1">전략뉴스</a>
-                <a href="#raw-materials" class="nav-link" onclick="filterNews('원자재')">원자재분석</a>
-                <a href="#macro" class="nav-link" onclick="filterNews('거시경제')">거시/정책</a>
-                <a href="#competitors" class="nav-link" onclick="filterNews('경쟁사')">경쟁사동향</a>
-                <a href="#report" class="nav-link">주간리포트</a>
+                <a href="#" class="text-[#1428a0] font-bold border-b-2 border-[#1428a0] pb-1">구매전략 뉴스</a>
+                <a href="#">원자재 분석</a>
+                <a href="#">거시/정책</a>
+                <a href="#">경쟁사 동향</a>
+                <a href="#">주간 리포트</a>
             </nav>
         </div>
-        <div class="flex gap-4 text-gray-400">
-            <i data-lucide="search" class="w-5 h-5 cursor-pointer hover:text-[#1428a0]"></i>
-            <i data-lucide="bell" class="w-5 h-5 cursor-pointer hover:text-[#1428a0]"></i>
-        </div>
+        <div class="flex gap-4 text-gray-400 font-bold text-xs uppercase">Internal Use Only</div>
     </header>
 
     <aside class="sidebar">
         <div class="mb-10">
-            <h3 class="text-sm font-bold mb-4 flex justify-between items-center">시황 히스토리 <i data-lucide="chevron-up" class="w-4 h-4 text-gray-300"></i></h3>
-            <div class="bg-gray-50 p-2 text-center text-xs font-bold mb-4 rounded cursor-pointer" onclick="filterNews('all')">전체 리포트 <span class="text-gray-400 ml-1">1,240</span></div>
-            <div class="text-[11px] grid grid-cols-7 gap-y-2 text-center text-gray-400">
-                <div class="col-span-7 font-bold text-gray-800 mb-2">2026년 1월</div>
-                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
-                <span></span><span></span><span></span><span></span><span>1</span><span>2</span><span>3</span>
-                <span>4</span><span>5</span><span class="cursor-pointer hover:text-blue-600" onclick="alert('1월 6일 시황으로 이동합니다.')">6</span><span>7</span><span>8</span><span>9</span><span>10</span>
-                <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span class="cursor-pointer hover:text-blue-600" onclick="alert('1월 16일 시황으로 이동합니다.')">16</span><span>17</span>
-                <span>18</span><span class="font-bold text-blue-600 calendar-active cursor-pointer p-1">19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
+            <h3 class="text-sm font-bold mb-4 flex justify-between items-center">시황 히스토리 <i data-lucide="calendar" class="w-4 h-4 text-gray-300"></i></h3>
+            <div class="bg-gray-50 p-2 text-center text-xs font-bold mb-4 rounded">누적 데이터 <span class="text-[#1428a0] ml-1" id="totalCount">0</span>건</div>
             </div>
-        </div>
         <div>
             <h3 class="text-sm font-bold mb-4 flex justify-between items-center">전략 카테고리 <i data-lucide="chevron-up" class="w-4 h-4 text-gray-300"></i></h3>
-            <ul class="text-xs space-y-3 text-gray-600">
-                <li class="flex justify-between font-bold text-blue-600 cursor-pointer" onclick="filterNews('all')"><span>● 전체</span><span>1,240</span></li>
-                <li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('사업·전략')"><span>사업·전략</span><span>412</span></li>
-                <li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('원자재')"><span>원자재 분석</span><span>285</span></li>
-                <li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('거시경제')"><span>거시경제/관세</span><span>156</span></li>
-                <li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('경쟁사')"><span>경쟁사 동향</span><span>94</span></li>
+            <ul class="text-xs space-y-3 text-gray-600" id="categoryMenu">
+                <li class="flex justify-between font-bold text-blue-600"><span>● 전체</span><span id="allCount">0</span></li>
             </ul>
         </div>
     </aside>
 
     <main class="main-content">
-        
-        <section class="summary-section shadow-sm" id="highlights">
+        <section class="summary-section shadow-sm">
             <div class="flex items-center gap-2 mb-6 border-b pb-3">
                 <div class="w-1 h-4 bg-red-600"></div>
-                <h2 class="font-bold text-sm text-[#d32f2f]">주요 뉴스 요약 (🔴 High Risk Focus)</h2>
-                <span class="text-[10px] text-gray-400 ml-auto uppercase">2026.01.19 SYNC</span>
+                <h2 class="font-bold text-sm">실시간 리스크 요약 (High Risk Focus)</h2>
             </div>
-            <div class="grid grid-cols-3 gap-10 text-[11px] leading-relaxed text-gray-700">
-                <div>
-                    <h3 class="font-bold mb-4 flex items-center gap-1 text-blue-600"><i data-lucide="zap" class="w-3 h-3"></i> 지난 24시간</h3>
-                    <ul class="space-y-4">
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://reuters.com', '_blank')"><span class="dot"></span><strong>트럼프 EU 관세 부과:</strong> 2/1 발효, 폴란드 법인 원가 압박 심화</li>
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://tradingeconomics.com/commodity/copper', '_blank')"><span class="dot"></span><strong>LME 구리 $13,000 돌파:</strong> 수급 불균형 심화</li>
-                    </ul>
-                </div>
-                <div class="border-x px-10">
-                    <h3 class="font-bold mb-4 flex items-center gap-1 text-gray-500"><i data-lucide="clock" class="w-3 h-3"></i> 하루 전</h3>
-                    <ul class="space-y-4">
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://achrnews.com', '_blank')"><span class="dot"></span>냉매 가격 42% 폭등 (Honeywell R454B)</li>
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://tradingeconomics.com/commodity/steel', '_blank')"><span class="dot"></span>중국 레진 반등 조짐 포착</li>
-                    </ul>
-                </div>
-                <div class="pl-4">
-                    <h3 class="font-bold mb-4 flex items-center gap-1 text-gray-500"><i data-lucide="bar-chart-2" class="w-3 h-3"></i> 지난주 종합</h3>
-                    <ul class="space-y-4">
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://trasportoeuropa.it', '_blank')"><span class="dot"></span>해상 운임 주간 26% 급등 리스크</li>
-                        <li class="cursor-pointer hover:underline" onclick="window.open('https://reuters.com', '_blank')"><span class="dot"></span>Whirlpool발 특허 소송 대응 시급</li>
-                    </ul>
-                </div>
+            <div class="grid grid-cols-3 gap-10 text-[11px] leading-relaxed text-gray-700" id="summaryGrid">
+                <div class="col-span-3 text-center text-gray-400">데이터를 불러오는 중입니다...</div>
             </div>
         </section>
 
-        <div id="news-feed-container">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                <h3 class="font-bold text-sm">최신 뉴스 분석</h3>
-                <div class="text-xs text-gray-400 flex gap-4"><span class="font-bold text-gray-800 cursor-pointer">최신순</span><span class="cursor-pointer">리스크순</span></div>
-            </div>
-            <div id="news-feed">
-                </div>
+        <div class="flex justify-between items-center mb-4 pb-2 border-b">
+            <h3 class="font-bold text-sm">최신 뉴스 피드</h3>
         </div>
 
+        <div id="loading" class="loading-spinner"></div>
+        <div id="news-feed"></div>
     </main>
 
     <script>
-        // 실제 데이터 및 링크 주입
-        const newsData = [
-            {
-                tag: '거시경제', tagClass: 'tag-macro', category: '거시경제',
-                title: '트럼프 EU 8개국 대상 10% 관세 부과 예고 (2/1 발효)',
-                content: '덴마크, 노르웨이, 스웨덴 등 EU 핵심 국가에 대한 관세 부과 예고로 폴란드 생산기지 소싱 루트 재설계 및 재료비 약 3.5% 상승 압박이 가시화되고 있습니다.',
-                date: '1월 17일 오후 5시',
-                url: 'https://reuters.com/',
-                relevantCount: 3, domains: ['reuters.com', 'bloomberg.com']
-            },
-            {
-                tag: '원자재', tagClass: 'tag-raw', category: '원자재',
-                title: 'LME 구리 가격 $13,000/톤 돌파... 월간 8.7% 폭등 기록',
-                content: '중국 정제동 수출 제한 및 에너지 비용 상승에 따라 구리 가격이 3년래 최고치를 경신했습니다. 모터 및 배선 부품 원가 상방 압력이 한계치에 도달한 상황입니다.',
-                date: '1월 16일 오전 10시',
-                url: 'https://tradingeconomics.com/commodity/copper',
-                relevantCount: 5, domains: ['westmetall.com', 'tradingeconomics.com']
-            },
-            {
-                tag: '원자재', tagClass: 'tag-raw', category: '원자재',
-                title: 'Honeywell R454B 냉매 가격 42% 파격 인상 단행',
-                content: '공급 타이트 및 차세대 냉매 전환 가중으로 인한 인상입니다. 선제적 재고 확보 및 공급선 다변화가 즉시 요구됩니다.',
-                date: '4월 17일 오후 2시',
-                url: 'https://achrnews.com/',
-                relevantCount: 2, domains: ['achrnews.com']
-            },
-            {
-                tag: '경쟁사', tagClass: 'tag-comp', category: '경쟁사',
-                title: 'Whirlpool, 삼성·LG 대상 마이크로웨이브 특허 소송 제기',
-                content: '미국 시장 내 견제가 심화되는 가운데, 디자인 우회 설계 및 법무 대응 시나리오 가동이 필요한 상황입니다.',
-                date: '11월 18일 오후 3시',
-                url: 'https://reuters.com/',
-                relevantCount: 2, domains: ['reuters.com']
-            }
-        ];
+        // 🔗 1단계에서 복사한 구글 앱스 스크립트 웹 앱 URL을 여기에 넣으세요.
+        const GAS_URL = "여기에_웹_앱_URL을_붙여넣으세요";
 
-        function renderNews(filter = 'all') {
-            const feed = document.getElementById('news-feed');
-            const filteredData = filter === 'all' ? newsData : newsData.filter(item => item.category === filter);
-            
-            feed.innerHTML = filteredData.map(item => `
+        async function fetchNews() {
+            try {
+                const response = await fetch(GAS_URL);
+                const data = await response.json();
+                renderUI(data);
+            } catch (error) {
+                console.error("데이터 로드 실패:", error);
+                document.getElementById('news-feed').innerHTML = "데이터를 불러오는 데 실패했습니다.";
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderUI(articles) {
+            document.getElementById('totalCount').innerText = articles.length;
+            document.getElementById('allCount').innerText = articles.length;
+
+            // 1. 요약 섹션 (High Risk 기사 중 상위 3개)
+            const highRisks = articles.filter(a => a.Risk === 'High').slice(0, 3);
+            if (highRisks.length > 0) {
+                document.getElementById('summaryGrid').innerHTML = highRisks.map(a => `
+                    <div>
+                        <h3 class="font-bold mb-3 flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-red-500"></i> ${a.Category}</h3>
+                        <p class="cursor-pointer hover:underline" onclick="window.open('${a.URL}', '_blank')">
+                            <span class="dot"></span><strong>${a.Title}:</strong> ${a.Impact} 영향 예상
+                        </p>
+                    </div>
+                `).join('');
+            }
+
+            // 2. 뉴스 피드 리스트
+            const feedHtml = articles.map(a => `
                 <article class="news-item">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="tag ${item.tagClass}">${item.tag}</span>
-                        <h4 class="font-bold text-base cursor-pointer text-[#1428a0] hover:underline" onclick="window.open('${item.url}', '_blank')">
-                            ${item.title}
-                        </h4>
-                        <span class="text-[11px] text-gray-400 ml-auto">${item.date}</span>
+                        <span class="tag ${a.Category === '원자재' ? 'tag-raw' : 'tag-macro'}">${a.Category}</span>
+                        <h4 class="font-bold text-base hover:underline cursor-pointer text-[#1428a0]" onclick="window.open('${a.URL}', '_blank')">${a.Title}</h4>
+                        <span class="text-[11px] text-gray-400 ml-auto">${a.Date}</span>
                     </div>
-                    <p class="text-[13px] text-gray-600 leading-relaxed mb-4 line-clamp-2 italic font-medium cursor-pointer" onclick="window.open('${item.url}', '_blank')">
-                        ${item.content}
-                    </p>
+                    <p class="text-[13px] text-gray-600 leading-relaxed mb-4 line-clamp-2">${a.Summary}</p>
                     <div class="flex items-center gap-4 text-[11px] text-gray-400">
-                        <button class="flex items-center gap-1 font-bold text-gray-500 hover:text-[#1428a0]" onclick="window.open('${item.url}', '_blank')">▼ Details (기사보기)</button>
-                        <div class="flex items-center gap-2 border-l pl-4">
-                            <span>관련 출처 (${item.relevantCount}개)</span>
-                            <div class="flex gap-1">
-                                ${item.domains.map(d => `<img src="https://www.google.com/s2/favicons?domain=${d}" class="w-3 h-3 cursor-pointer" onclick="window.open('https://${d}', '_blank')">`).join('')}
-                            </div>
-                        </div>
+                        <button class="font-bold hover:text-[#1428a0]" onclick="window.open('${a.URL}', '_blank')">▼ 기사 원문 보기</button>
                     </div>
                 </article>
             `).join('');
+            document.getElementById('news-feed').innerHTML = feedHtml;
             lucide.createIcons();
         }
 
-        function filterNews(cat) {
-            renderNews(cat);
-            window.scrollTo({ top: document.getElementById('news-feed-container').offsetTop - 70, behavior: 'smooth' });
-        }
-
-        // 초기화
-        lucide.createIcons();
-        renderNews();
+        window.onload = fetchNews;
     </script>
 </body>
 </html>
