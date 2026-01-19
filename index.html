@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEC DA Purchase Strategy News Hub</title>
+    <title>SEC DA Purchase Intelligence Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
@@ -11,16 +11,17 @@
     <style>
         body { font-family: 'Pretendard', sans-serif; transition: all 0.3s ease; }
         .header { height: 55px; position: fixed; top: 0; width: 100%; z-index: 100; border-bottom: 2px solid #1428a0; }
-        .sidebar { width: 260px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: white; }
-        .main-content { margin-left: 260px; margin-top: 55px; padding: 30px 40px; max-width: 1100px; }
-        .summary-section { border: 1px solid #e1e1e1; border-top: 4px solid #1428a0; padding: 25px; margin-bottom: 40px; background: #fff; border-radius: 0 0 8px 8px; }
+        .sidebar { width: 280px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 20px; overflow-y: auto; background: white; }
+        .main-content { margin-left: 280px; margin-top: 55px; padding: 30px 40px; max-width: 1200px; }
+        .summary-card { border: 1px solid #e1e1e1; border-top: 4px solid #1428a0; border-radius: 0 0 8px 8px; }
         .news-item { border-bottom: 1px solid #f0f0f0; padding: 20px 0; }
-        .tag { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
         .dark body { background-color: #1a1c1e; color: #e2e8f0; }
-        .dark .header, .dark .sidebar, .dark .summary-section, .dark .news-item, .dark .bg-white { background-color: #25282c; border-color: #3f444a; }
-        .dark .text-gray-500 { color: #94a3b8; }
-        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #1428a0; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 40px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .dark .header, .dark .sidebar, .dark .summary-card, .dark .news-item { background-color: #25282c; border-color: #3f444a; }
+        .world-map-container { width: 100%; height: 160px; background: #f8fafc; border-radius: 8px; margin-bottom: 20px; position: relative; overflow: hidden; }
+        .dark .world-map-container { background: #1e293b; }
+        .region-dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444; cursor: pointer; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+        .calendar-active { background-color: #1428a0; color: white !important; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="bg-[#fcfcfc] text-[#333]">
@@ -28,161 +29,186 @@
     <header class="header flex items-center px-6 justify-between bg-white dark:bg-[#25282c] shadow-sm">
         <div class="flex items-center gap-6">
             <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
-                <div class="w-7 h-7 bg-[#1428a0] rounded flex items-center justify-center text-white font-bold text-xs shadow-sm">DA</div>
-                <h1 class="text-base font-black text-[#1428a0] dark:text-blue-400">Purchase Strategy News Hub</h1>
+                <div class="w-7 h-7 bg-[#1428a0] rounded flex items-center justify-center text-white font-bold text-xs">DA</div>
+                <h1 class="text-base font-black text-[#1428a0] dark:text-blue-400">Purchase Intelligence</h1>
             </div>
             <nav class="flex gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
                 <a href="#" class="text-[#1428a0] dark:text-blue-400 font-bold border-b-2 border-[#1428a0] pb-1">전략 시황</a>
-                <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('원자재')">원자재 분석</a>
+                <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('원자재')">원자재</a>
                 <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('거시경제')">거시/정책</a>
-                <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('경쟁사')">경쟁사 동향</a>
-                <a href="#" class="hover:text-[#1428a0]">주간 리포트</a>
+                <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('생산지역')">생산지역</a>
+                <a href="#" class="hover:text-[#1428a0]" onclick="filterNews('경쟁사')">경쟁사</a>
             </nav>
         </div>
         <div class="flex items-center gap-4">
-            <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500 dark:text-yellow-400"></i>
-            </button>
-            <div class="text-[10px] text-gray-300 font-bold uppercase tracking-widest hidden md:block">Samsung Confidential</div>
+            <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500 dark:text-yellow-400"></i></button>
+            <div class="text-[10px] text-gray-300 font-bold uppercase tracking-widest hidden md:block">Samsung DA Division</div>
         </div>
     </header>
 
     <aside class="sidebar dark:bg-[#25282c]">
-        <div class="mb-10">
-            <h3 class="text-sm font-bold mb-4 flex justify-between items-center dark:text-gray-200">시황 히스토리 <i data-lucide="calendar" class="w-4 h-4 text-gray-300"></i></h3>
-            <div class="bg-gray-50 dark:bg-gray-800 p-2 text-center text-xs font-bold mb-4 rounded cursor-pointer" onclick="filterNews('all')">
-                누적 리포트 <span id="totalCount" class="text-blue-600 ml-1">0</span>건
+        <h3 class="text-xs font-bold mb-2 flex justify-between items-center dark:text-gray-200">GLOBAL ISSUE MAP <i data-lucide="globe" class="w-3 h-3 text-blue-500"></i></h3>
+        <div class="world-map-container" id="mapContainer">
             </div>
+
+        <div class="mb-8">
+            <h3 class="text-xs font-bold mb-4 flex justify-between items-center dark:text-gray-200">ARCHIVE CALENDAR <i data-lucide="calendar" class="w-3 h-3 text-slate-300"></i></h3>
+            <div class="text-[10px] grid grid-cols-7 gap-y-2 text-center text-slate-400">
+                <div class="col-span-7 font-bold text-slate-800 dark:text-slate-200 mb-1">2026. 01</div>
+                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                <span></span><span></span><span></span><span></span><span>1</span><span>2</span><span>3</span>
+                <span>4</span><span>5</span><span class="cursor-pointer hover:text-blue-600">6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span class="cursor-pointer hover:text-blue-600">16</span><span>17</span>
+                <span>18</span><span class="calendar-active cursor-pointer">19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span>
             </div>
-        <div>
-            <h3 class="text-sm font-bold mb-4 dark:text-gray-200">카테고리 필터</h3>
-            <ul class="text-xs space-y-3 text-gray-600 dark:text-gray-400" id="categoryMenu"></ul>
+        </div>
+
+        <div class="space-y-6">
+            <h3 class="text-xs font-bold dark:text-gray-200 border-b pb-2">STRATEGIC FILTERS</h3>
+            <ul class="text-xs space-y-4 text-gray-500 dark:text-gray-400" id="categoryMenu">
+                </ul>
         </div>
     </aside>
 
     <main class="main-content">
-        <section class="summary-section bg-white dark:bg-[#25282c] shadow-sm">
-            <div class="flex items-center gap-2 mb-6 border-b dark:border-gray-700 pb-3">
-                <div class="w-1 h-4 bg-red-600"></div>
-                <h2 class="font-bold text-sm text-red-600 uppercase">🚨 High Risk Summary</h2>
-                <span class="text-[10px] text-gray-400 ml-auto" id="syncTime">Updating...</span>
+        <div class="grid grid-cols-3 gap-6 mb-8" id="summaryGrid">
             </div>
-            <div class="grid grid-cols-3 gap-10 text-[11px] leading-relaxed dark:text-gray-300" id="highRiskGrid">
-                <div class="col-span-3 text-center py-4 text-slate-300">데이터 로드 중...</div>
-            </div>
-        </section>
 
-        <div id="news-feed-container">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b dark:border-gray-700">
-                <h3 class="font-bold text-sm dark:text-gray-200">최신 시황 분석 리드</h3>
-                <div class="text-xs text-gray-400 flex gap-4">
-                    <span id="sortLatest" class="font-bold text-gray-800 dark:text-gray-200 cursor-pointer underline underline-offset-4 decoration-2 decoration-blue-500" onclick="sortNews('latest')">최신순</span>
-                    <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">리스크순</span>
-                </div>
+        <div class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700">
+            <h2 class="font-bold text-lg dark:text-gray-200" id="feedTitle">Latest Intelligence</h2>
+            <div class="text-xs flex gap-4">
+                <span class="font-bold cursor-pointer text-[#1428a0]" onclick="sortNews('latest')">최신순</span>
+                <span class="cursor-pointer text-slate-400" onclick="sortNews('risk')">리스크순</span>
             </div>
-            <div id="loading" class="loading-spinner"></div>
-            <div id="news-feed"></div>
         </div>
+
+        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-sm">Analyzing Market Intelligence...</div>
+        <div id="news-feed" class="grid grid-cols-1 gap-4"></div>
     </main>
 
     <script>
-        // 사용자님의 구글 앱스 스크립트 URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwpTIuLZcwhQa0eGpeXhX9xGTyp7Q3h84rxufHOGdyIUZUiA3SD7bunjDpmvK6-6OcDxQ/exec";
         let allNews = [];
+
+        // 지도 좌표 매핑 (지역명: {top, left})
+        const regionCoords = {
+            'China': { top: '35%', left: '78%' },
+            'Poland': { top: '25%', left: '52%' },
+            'USA': { top: '32%', left: '18%' },
+            'Vietnam': { top: '48%', left: '76%' },
+            'EU': { top: '28%', left: '48%' },
+            'SE Asia': { top: '55%', left: '80%' }
+        };
 
         async function fetchNews() {
             try {
                 const res = await fetch(GAS_URL);
                 allNews = await res.json();
-                renderUI(allNews);
-            } catch (e) {
-                console.error("데이터 로드 실패", e);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
+                renderAll(allNews);
+            } catch(e) { console.error(e); }
+            document.getElementById('loading').style.display = 'none';
         }
 
-        function renderUI(data) {
-            document.getElementById('totalCount').innerText = data.length;
-            if(data.length > 0) document.getElementById('syncTime').innerText = `SYNC: ${data[0].Date}`;
-
-            // High Risk 요약 (상위 3건)
-            const highs = data.filter(a => a.Risk === 'High').slice(0, 3);
-            document.getElementById('highRiskGrid').innerHTML = highs.length > 0 ? highs.map((a, i) => `
-                <div class="${i === 1 ? 'border-x dark:border-gray-700 px-10' : ''}">
-                    <h3 class="font-bold mb-3 flex items-center gap-1 text-blue-500"><i data-lucide="zap" class="w-3 h-3"></i> ${a.Category}</h3>
-                    <p class="cursor-pointer hover:underline" onclick="window.open('${a.URL}', '_blank')"><strong>${a.Title}:</strong> ${a.Impact || '리스크 분석 중'}</p>
-                </div>
-            `).join('') : "<div class='col-span-3 text-center text-slate-400'>검출된 High Risk가 없습니다.</div>";
-
-            // 카테고리 메뉴
-            const cats = data.reduce((acc, cur) => { acc[cur.Category] = (acc[cur.Category] || 0) + 1; return acc; }, {});
-            let catHtml = `<li class="flex justify-between font-bold text-blue-600 cursor-pointer" onclick="filterNews('all')"><span>● 전체</span><span>${data.length}</span></li>`;
-            for (const [c, count] of Object.entries(cats)) {
-                catHtml += `<li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('${c}')"><span>${c}</span><span>${count}</span></li>`;
-            }
-            document.getElementById('categoryMenu').innerHTML = catHtml;
-
+        function renderAll(data) {
+            renderMap(data);
+            renderSummary(data);
+            renderMenu(data);
             renderFeed(data);
+        }
+
+        // 글로벌 이슈 맵 렌더링
+        function renderMap(data) {
+            const container = document.getElementById('mapContainer');
+            // 세계지도 배경 (SVG)
+            container.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_monochrome.svg" class="w-full h-full object-contain opacity-30 dark:invert">`;
+            
+            // 데이터 기반 이슈 지역 마킹
+            const activeRegions = [...new Set(data.filter(a => a.Risk === 'High').map(a => a.Region))];
+            activeRegions.forEach(reg => {
+                if(regionCoords[reg]) {
+                    const dot = document.createElement('div');
+                    dot.className = 'region-dot';
+                    dot.style.top = regionCoords[reg].top;
+                    dot.style.left = regionCoords[reg].left;
+                    dot.title = `${reg} 지역 이슈 발생`;
+                    dot.onclick = () => filterByRegion(reg);
+                    container.appendChild(dot);
+                }
+            });
+        }
+
+        function renderSummary(data) {
+            const highs = data.filter(a => a.Risk === 'High').slice(0, 3);
+            document.getElementById('summaryGrid').innerHTML = highs.map(a => `
+                <div class="summary-card bg-white dark:bg-[#25282c] p-5 shadow-sm">
+                    <span class="text-[10px] font-bold text-red-600">🚨 HIGH RISK</span>
+                    <h4 class="font-bold text-sm mt-2 mb-1 truncate">${a.Title}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">${a.Impact}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderMenu(data) {
+            const cats = data.reduce((acc, cur) => { acc[cur.Category] = (acc[cur.Category] || 0) + 1; return acc; }, {});
+            let html = `<li class="flex justify-between font-bold text-blue-600 cursor-pointer" onclick="filterNews('all')"><span class="flex items-center gap-2"><i data-lucide="layout-grid" class="w-3 h-3"></i> 전체 시황</span><span>${data.length}</span></li>`;
+            for(const [c, count] of Object.entries(cats)) {
+                html += `<li class="flex justify-between cursor-pointer hover:text-[#1428a0]" onclick="filterNews('${c}')"><span>${c}</span><span>${count}</span></li>`;
+            }
+            document.getElementById('categoryMenu').innerHTML = html;
+            lucide.createIcons();
         }
 
         function renderFeed(data) {
             const feed = document.getElementById('news-feed');
             feed.innerHTML = data.map(n => `
-                <article class="news-item flex gap-6 items-start">
+                <article class="news-item flex gap-6 items-start bg-white dark:bg-[#25282c] p-6 rounded-lg shadow-sm border border-transparent hover:border-blue-200 transition-all">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="tag ${n.Risk === 'High' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${n.Category}</span>
-                            <h4 class="font-bold text-base cursor-pointer hover:underline text-[#1428a0]" onclick="window.open('${n.URL}', '_blank')">${n.Title}</h4>
-                            <span class="text-[11px] text-gray-400 ml-auto">${n.Date}</span>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="tag ${n.Risk === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${n.Category}</span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">${n.Region || 'Global'}</span>
+                            <span class="text-[11px] text-slate-300 ml-auto">${n.Date}</span>
                         </div>
-                        <p class="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed mb-4 line-clamp-2 italic">${n.Summary}</p>
-                        <div class="flex items-center gap-4 text-[11px] text-gray-400">
-                            <button class="font-bold hover:text-[#1428a0]" onclick="window.open('${n.URL}', '_blank')">▼ Details (원문)</button>
-                            <img src="https://www.google.com/s2/favicons?domain=${n.URL}" class="w-3 h-3">
-                            <span class="font-bold">Risk: ${n.Risk}</span>
+                        <h4 class="font-bold text-base cursor-pointer hover:text-[#1428a0] mb-3" onclick="window.open('${n.URL}', '_blank')">${n.Title}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4 line-clamp-2">${n.Summary}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-black text-slate-800 dark:text-slate-200">영향도: ${n.Impact}</span>
+                            <button class="text-[10px] font-bold text-blue-600 hover:underline" onclick="window.open('${n.URL}', '_blank')">VIEW INSIGHT →</button>
                         </div>
                     </div>
-                    ${n.Image ? `<div class="w-32 h-24 rounded overflow-hidden border dark:border-gray-700 shadow-sm flex-shrink-0">
-                                    <img src="${n.Image}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=NanoBanana'">
-                                 </div>` : ''}
+                    ${n.Image ? `<div class="w-40 h-28 rounded overflow-hidden shadow-inner flex-shrink-0 bg-slate-100"><img src="${n.Image}" class="w-full h-full object-cover"></div>` : ''}
                 </article>
             `).join('');
             lucide.createIcons();
         }
 
-        function sortNews(type) {
-            let sorted = [...allNews];
-            const latestBtn = document.getElementById('sortLatest');
-            const riskBtn = document.getElementById('sortRisk');
+        function filterNews(cat) {
+            const filtered = cat === 'all' ? allNews : allNews.filter(n => n.Category === cat);
+            document.getElementById('feedTitle').innerText = cat === 'all' ? 'Latest Intelligence' : `${cat} Analysis`;
+            renderFeed(filtered);
+        }
 
-            if (type === 'risk') {
+        function filterByRegion(reg) {
+            const filtered = allNews.filter(n => n.Region === reg);
+            document.getElementById('feedTitle').innerText = `Issue in ${reg}`;
+            renderFeed(filtered);
+            window.scrollTo({ top: document.getElementById('news-feed').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function sortNews(type) {
+            const sorted = [...allNews];
+            if(type === 'risk') {
                 const priority = { 'High': 1, 'Med': 2, 'Low': 3 };
                 sorted.sort((a, b) => priority[a.Risk] - priority[b.Risk]);
-                riskBtn.className = "font-bold text-gray-800 dark:text-gray-200 cursor-pointer underline underline-offset-4 decoration-2 decoration-blue-500";
-                latestBtn.className = "cursor-pointer hover:text-[#1428a0]";
-            } else {
-                riskBtn.className = "cursor-pointer hover:text-[#1428a0]";
-                latestBtn.className = "font-bold text-gray-800 dark:text-gray-200 cursor-pointer underline underline-offset-4 decoration-2 decoration-blue-500";
             }
             renderFeed(sorted);
         }
 
-        function filterNews(cat) {
-            const filtered = cat === 'all' ? allNews : allNews.filter(n => n.Category === cat);
-            renderFeed(filtered);
-        }
-
         function toggleDarkMode() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            document.documentElement.classList.toggle('dark');
             lucide.createIcons();
         }
 
-        window.onload = () => {
-            lucide.createIcons();
-            fetchNews();
-        };
+        window.onload = fetchNews;
     </script>
 </body>
 </html>
