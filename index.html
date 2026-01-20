@@ -277,26 +277,38 @@
         let curYear = 2026, curMonth = 0;
         let tagCloudInstance = null;
 
-        // 국가 좌표 맵핑 (viewBox 1000x500 기준, %)
+        // 국가 좌표 맵핑 (실제 세계 지도 이미지 기준, %)
+        // 표준 메르카토르 투영법 - 정확한 실제 위치
         const countryCoords = {
-            '미국': { x: 15, y: 25 }, 'USA': { x: 15, y: 25 },
-            '중국': { x: 75, y: 35 }, 'China': { x: 75, y: 35 },
-            '일본': { x: 82, y: 32 }, 'Japan': { x: 82, y: 32 },
-            '한국': { x: 80, y: 35 }, 'Korea': { x: 80, y: 35 }, 'South Korea': { x: 80, y: 35 },
-            '독일': { x: 52, y: 22 }, 'Germany': { x: 52, y: 22 },
-            '영국': { x: 48, y: 20 }, 'UK': { x: 48, y: 20 }, 'United Kingdom': { x: 48, y: 20 },
-            '프랑스': { x: 50, y: 24 }, 'France': { x: 50, y: 24 },
-            '러시아': { x: 70, y: 20 }, 'Russia': { x: 70, y: 20 },
-            '인도': { x: 68, y: 42 }, 'India': { x: 68, y: 42 },
-            '브라질': { x: 19, y: 58 }, 'Brazil': { x: 19, y: 58 },
-            '호주': { x: 85, y: 72 }, 'Australia': { x: 85, y: 72 },
-            '캐나다': { x: 12, y: 18 }, 'Canada': { x: 12, y: 18 },
-            '멕시코': { x: 14, y: 38 }, 'Mexico': { x: 14, y: 38 },
-            '이탈리아': { x: 53, y: 30 }, 'Italy': { x: 53, y: 30 },
-            '스페인': { x: 48, y: 30 }, 'Spain': { x: 48, y: 30 },
-            '베트남': { x: 78, y: 45 }, 'Vietnam': { x: 78, y: 45 },
-            '태국': { x: 76, y: 44 }, 'Thailand': { x: 76, y: 44 },
-            '인도네시아': { x: 80, y: 52 }, 'Indonesia': { x: 80, y: 52 },
+            // 북미 (왼쪽 15-25%)
+            '미국': { x: 20, y: 40 }, 'USA': { x: 20, y: 40 },
+            '캐나다': { x: 22, y: 30 }, 'Canada': { x: 22, y: 30 },
+            '멕시코': { x: 18, y: 48 }, 'Mexico': { x: 18, y: 48 },
+            
+            // 남미 (왼쪽 25-35%)
+            '브라질': { x: 32, y: 65 }, 'Brazil': { x: 32, y: 65 },
+            
+            // 유럽 (중앙 48-55%)
+            '영국': { x: 49, y: 33 }, 'UK': { x: 49, y: 33 }, 'United Kingdom': { x: 49, y: 33 },
+            '프랑스': { x: 50, y: 36 }, 'France': { x: 50, y: 36 },
+            '독일': { x: 52, y: 34 }, 'Germany': { x: 52, y: 34 },
+            '이탈리아': { x: 53, y: 38 }, 'Italy': { x: 53, y: 38 },
+            '스페인': { x: 48, y: 39 }, 'Spain': { x: 48, y: 39 },
+            '러시아': { x: 68, y: 30 }, 'Russia': { x: 68, y: 30 },
+            
+            // 아시아 (오른쪽 60-80%)
+            '중국': { x: 73, y: 40 }, 'China': { x: 73, y: 40 },
+            '일본': { x: 80, y: 38 }, 'Japan': { x: 80, y: 38 },
+            '한국': { x: 77, y: 38 }, 'Korea': { x: 77, y: 38 }, 'South Korea': { x: 77, y: 38 },
+            '인도': { x: 65, y: 48 }, 'India': { x: 65, y: 48 },
+            '베트남': { x: 72, y: 50 }, 'Vietnam': { x: 72, y: 50 },
+            '태국': { x: 70, y: 50 }, 'Thailand': { x: 70, y: 50 },
+            '인도네시아': { x: 75, y: 55 }, 'Indonesia': { x: 75, y: 55 },
+            
+            // 오세아니아 (오른쪽 하단 80-85%)
+            '호주': { x: 80, y: 70 }, 'Australia': { x: 80, y: 70 },
+            
+            // 전역 (정중앙)
             'Global': { x: 50, y: 50 }
         };
 
@@ -684,52 +696,11 @@
             
             mapContainer.innerHTML = '';
             
-            // 실제 세계 지도 SVG (상세한 대륙 실루엣)
-            mapContainer.innerHTML = `
-                <svg width="100%" height="100%" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" style="position: absolute;">
-                    <defs>
-                        <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#e0f2fe;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#bae6fd;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="1000" height="500" fill="url(#oceanGrad)"/>
-                    
-                    <!-- 북미 대륙 -->
-                    <path d="M 100,100 L 120,80 L 140,70 L 165,75 L 185,80 L 200,95 L 210,120 L 215,145 L 210,170 L 200,190 L 180,205 L 160,215 L 140,220 L 120,215 L 105,200 L 95,180 L 88,160 L 85,135 L 90,115 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 남미 대륙 -->
-                    <path d="M 175,230 L 190,225 L 200,235 L 205,255 L 210,280 L 212,310 L 208,340 L 200,365 L 190,380 L 175,390 L 160,385 L 150,365 L 145,335 L 143,300 L 148,265 L 160,240 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 유럽 대륙 -->
-                    <path d="M 485,95 L 500,85 L 520,82 L 540,87 L 555,95 L 565,110 L 568,125 L 565,140 L 555,150 L 540,155 L 520,153 L 505,145 L 492,130 L 485,110 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 아프리카 대륙 -->
-                    <path d="M 495,160 L 510,155 L 530,158 L 548,168 L 562,185 L 575,210 L 582,240 L 585,275 L 580,310 L 570,340 L 555,360 L 535,372 L 515,375 L 495,370 L 480,355 L 470,330 L 465,300 L 465,270 L 470,235 L 478,200 L 487,175 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 아시아 대륙 -->
-                    <path d="M 580,80 L 620,70 L 660,68 L 700,75 L 740,90 L 780,110 L 810,135 L 825,165 L 830,195 L 820,220 L 800,235 L 770,245 L 735,248 L 700,243 L 665,230 L 635,210 L 610,185 L 590,155 L 580,125 L 578,100 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 동남아시아 -->
-                    <path d="M 735,255 L 755,258 L 775,268 L 790,283 L 798,300 L 795,318 L 785,332 L 768,340 L 750,338 L 735,328 L 728,310 L 728,290 L 732,272 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 호주 대륙 -->
-                    <path d="M 790,340 L 820,335 L 855,340 L 885,355 L 905,378 L 915,405 L 912,432 L 895,455 L 870,468 L 840,472 L 810,465 L 785,450 L 770,425 L 765,395 L 770,368 Z" 
-                          fill="#4ade80" stroke="#22c55e" stroke-width="1" opacity="0.95"/>
-                    
-                    <!-- 격자선 -->
-                    <g opacity="0.2">
-                        ${Array.from({length: 11}, (_, i) => `<line x1="0" y1="${i * 50}" x2="1000" y2="${i * 50}" stroke="#94a3b8" stroke-width="0.5"/>`).join('')}
-                        ${Array.from({length: 21}, (_, i) => `<line x1="${i * 50}" y1="0" x2="${i * 50}" y2="500" stroke="#94a3b8" stroke-width="0.5"/>`).join('')}
-                    </g>
-                </svg>
-            `;
+            // 실제 세계 지도 이미지 배경
+            mapContainer.style.backgroundImage = 'url(world_map_real.png)';
+            mapContainer.style.backgroundSize = 'cover';
+            mapContainer.style.backgroundPosition = 'center';
+            mapContainer.style.backgroundRepeat = 'no-repeat';
             
             // 국가별 기사 수 표시
             console.log('Adding country list');
