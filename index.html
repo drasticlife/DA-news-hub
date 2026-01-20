@@ -659,7 +659,7 @@
                         <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${n.Summary || ''}</p>
                         <div class="source-links">${sourceLinksHtml}</div>
                     </div>
-                    ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover"></div>` : ''}
+                    ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ''}
                 </article>`;
             }).join('');
             lucide.createIcons();
