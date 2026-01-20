@@ -14,12 +14,12 @@
         .sidebar { width: 280px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: white; }
         .main-content { margin-left: 280px; margin-top: 55px; padding: 30px 40px; max-width: 1200px; }
 
-        /* [핵심 수정] 8열 그리드 레이아웃 고정 (주차 1열 + 요일 7열) */
+        /* [보정] 8열 그리드 강제 고정 시스템 */
+        .calendar-container { width: 100%; user-select: none; }
         .calendar-grid { 
             display: grid !important; 
-            grid-template-cols: 28px repeat(7, 1fr) !important; 
-            gap: 4px; align-items: center; justify-items: center; 
-            width: 100%;
+            grid-template-cols: 25px repeat(7, 1fr) !important; 
+            gap: 2px; align-items: center; justify-items: center; 
         }
         .calendar-grid span { 
             width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; 
@@ -27,22 +27,28 @@
         }
         .week-label { color: #cbd5e1; font-weight: 800; font-size: 8px !important; cursor: default; }
         
-        /* 얄쌍한 가변형 링 디자인 복구 */
+        /* 얄쌍한 링 디자인 유지 */
         .calendar-ring { border: 1.2px solid #1428a0; color: #1428a0; font-weight: 800; cursor: pointer !important; }
         .ring-lv1 { width: 20px !important; height: 20px !important; border-width: 1px; }
         .ring-lv2 { width: 24px !important; height: 24px !important; border-width: 1.8px; }
         .ring-lv3 { width: 28px !important; height: 28px !important; border-width: 2.5px; box-shadow: 0 0 8px rgba(20,40,160,0.1); }
         .calendar-selected { background-color: #1428a0 !important; color: white !important; border: none !important; }
 
-        .cal-select { font-size: 10px; font-weight: 800; color: #1428a0; background: transparent; border: none; cursor: pointer; outline: none; }
+        /* 화살표 버튼 스타일 */
+        .nav-btn { cursor: pointer; padding: 4px; border-radius: 50%; transition: background 0.2s; }
+        .nav-btn:hover { background: #f1f5f9; }
+
+        /* 카드 및 이미지 효과 유지 */
         .news-item { border-bottom: 1px solid #f1f5f9; padding: 24px 0; cursor: pointer; transition: all 0.4s ease; overflow: hidden; max-height: 240px; }
         .news-item.expanded { max-height: 1500px; background: #fcfdfe; border-bottom: 2px solid #1428a0; }
         .summary-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .news-item.expanded .summary-text { -webkit-line-clamp: unset; }
         .news-item img { filter: grayscale(100%); transition: all 0.5s ease; }
         .news-item:hover img { filter: grayscale(0%); transform: scale(1.05); }
+
         .tag-cloud-item { display: inline-block; transition: all 0.3s ease; cursor: pointer; padding: 2px 8px; border-radius: 12px; margin: 2px; font-weight: 700; background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
         .tag-cloud-item:hover { transform: scale(1.1); background: #1428a0; color: white !important; }
+        
         .dark body { background-color: #1a1c1e; color: #e2e8f0; }
         .dark .header, .dark .sidebar, .dark .news-item { background-color: #25282c; border-color: #3f444a; }
     </style>
@@ -69,12 +75,13 @@
     </header>
 
     <aside class="sidebar dark:bg-[#25282c]">
-        <div class="mb-10">
+        <div class="calendar-container mb-10">
             <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400 flex justify-between items-center">
                 Archive Calendar
-                <div class="flex gap-1">
-                    <select id="yearSelect" class="cal-select" onchange="updateCalendarView()"></select>
-                    <select id="monthSelect" class="cal-select" onchange="updateCalendarView()"></select>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="chevron-left" class="w-3 h-3 nav-btn" onclick="changeMonth(-1)"></i>
+                    <span id="currentDateLabel" class="text-[10px] font-bold text-[#1428a0]">2026. 01</span>
+                    <i data-lucide="chevron-right" class="w-3 h-3 nav-btn" onclick="changeMonth(1)"></i>
                 </div>
             </h3>
             <div id="calendarGrid" class="calendar-grid text-slate-400"></div>
@@ -94,7 +101,7 @@
                 <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">Risk</span>
             </div>
         </div>
-        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest uppercase">Analyzing...</div>
+        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest uppercase">Syncing Market Data...</div>
         <div id="news-feed" class="space-y-4"></div>
     </main>
 
@@ -112,11 +119,13 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwpTIuLZcwhQa0eGpeXhX9xGTyp7Q3h84rxufHOGdyIUZUiA3SD7bunjDpmvK6-6OcDxQ/exec";
         let allNews = [], currentFilteredNews = [], currentYear = 2026, currentMonth = 1;
 
+        // [New] 날짜 파싱 로직 강화
         function parseDate(dateStr) {
             if (!dateStr) return new Date();
             const clean = dateStr.toString().replace(/\./g, '-').replace(/\s/g, '');
             const parts = clean.split('T')[0].split('-');
-            return parts.length < 3 ? new Date() : new Date(parts[0], parts[1] - 1, parts[2]);
+            if (parts.length < 3) return new Date();
+            return new Date(parts[0], parts[1] - 1, parts[2]);
         }
 
         async function fetchNews() {
@@ -124,26 +133,28 @@
                 const res = await fetch(GAS_URL);
                 allNews = await res.json();
                 currentFilteredNews = [...allNews];
-                initSelectors();
-                updateCalendarView();
+                renderAll(allNews);
                 sortNews('latest'); 
             } catch(e) { console.error(e); }
             document.getElementById('loading').style.display = 'none';
         }
 
-        function initSelectors() {
-            const ys = document.getElementById('yearSelect'), ms = document.getElementById('monthSelect');
-            for(let y=2024; y<=2026; y++) ys.innerHTML += `<option value="${y}" ${y===2026?'selected':''}>${y}</option>`;
-            for(let m=1; m<=12; m++) ms.innerHTML += `<option value="${m}" ${m===1?'selected':''}>${m}월</option>`;
-        }
-
-        function updateCalendarView() {
-            currentYear = parseInt(document.getElementById('yearSelect').value);
-            currentMonth = parseInt(document.getElementById('monthSelect').value);
+        /* [New] 화살표 월 변경 함수 */
+        function changeMonth(offset) {
+            currentMonth += offset;
+            if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+            else if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+            document.getElementById('currentDateLabel').innerText = `${currentYear}. ${String(currentMonth).padStart(2, '0')}`;
             renderCalendar(allNews);
         }
 
-        /* [핵심 보정] 8열 정렬 및 주차 계산 로직 */
+        function renderAll(data) {
+            renderCalendar(data);
+            renderSummary(data);
+            renderTags(data);
+        }
+
+        /* [핵심] 8열 그리드 기반 달력 렌더링 */
         function renderCalendar(data) {
             const grid = document.getElementById('calendarGrid');
             const dateCounts = data.reduce((acc, n) => {
@@ -161,13 +172,12 @@
             const lastDate = new Date(currentYear, currentMonth, 0).getDate();
             let day = 1, weekNum = 1;
 
-            // 최대 6주까지 8열씩 생성
             for (let i = 0; i < 6; i++) {
                 if (day > lastDate) break;
                 html += `<span class="week-label">W${weekNum++}</span>`; 
                 for (let j = 0; j < 7; j++) {
                     if ((i === 0 && j < firstDay) || day > lastDate) {
-                        html += `<span></span>`; // 빈 칸도 8열 구성 유지
+                        html += `<span></span>`;
                     } else {
                         const count = dateCounts[day] || 0;
                         let lv = count >= 3 ? "calendar-ring ring-lv3" : count === 2 ? "calendar-ring ring-lv2" : count === 1 ? "calendar-ring ring-lv1" : "";
@@ -182,7 +192,7 @@
         function filterByDate(day) {
             document.querySelectorAll('.calendar-grid span').forEach(el => el.classList.remove('calendar-selected'));
             const target = document.getElementById(`cal-${day}`);
-            if (target) target.classList.add('calendar-selected');
+            if(target) target.classList.add('calendar-selected');
             currentFilteredNews = allNews.filter(n => {
                 const d = parseDate(n.Date);
                 return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth && d.getDate() === day;
@@ -190,21 +200,12 @@
             renderFeed(currentFilteredNews);
         }
 
-        function sortNews(type) {
-            const lb = document.getElementById('sortLatest'), rb = document.getElementById('sortRisk');
-            if (type === 'latest') {
-                currentFilteredNews.sort((a, b) => parseDate(b.Date) - parseDate(a.Date));
-                lb.classList.add('text-[#1428a0]'); rb.classList.add('text-slate-400');
-            } else {
-                const p = { 'High': 1, 'Med': 2, 'Low': 3 };
-                currentFilteredNews.sort((a, b) => (p[a.Risk] || 4) - (p[b.Risk] || 4));
-                rb.classList.add('text-[#1428a0]'); lb.classList.add('text-slate-400');
-            }
-            renderFeed(currentFilteredNews);
-        }
-
         function renderFeed(data) {
             const feed = document.getElementById('news-feed');
+            if(!data || data.length === 0) {
+                feed.innerHTML = `<div class="py-20 text-center text-slate-300 text-xs italic font-medium">검색 결과가 없습니다.</div>`;
+                return;
+            }
             feed.innerHTML = data.map(n => `
                 <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
                     <div class="flex-1">
@@ -221,26 +222,31 @@
             lucide.createIcons();
         }
 
+        // [기타 로직 유지]
+        function sortNews(type) {
+            const lb = document.getElementById('sortLatest'), rb = document.getElementById('sortRisk');
+            if (type === 'latest') { currentFilteredNews.sort((a, b) => parseDate(b.Date) - parseDate(a.Date)); lb.classList.add('text-[#1428a0]'); rb.classList.add('text-slate-400'); }
+            else { const p = { 'High': 1, 'Med': 2, 'Low': 3 }; currentFilteredNews.sort((a, b) => (p[a.Risk] || 4) - (p[b.Risk] || 4)); rb.classList.add('text-[#1428a0]'); lb.classList.add('text-slate-400'); }
+            renderFeed(currentFilteredNews);
+        }
         function renderTags(data) {
             const tagMap = {};
             data.forEach(n => { if(n.Tags) n.Tags.split(',').forEach(tag => { const t = tag.trim(); if(t) tagMap[t] = (tagMap[t] || 0) + 1; }); });
             const max = Math.max(...Object.values(tagMap), 1);
-            document.getElementById('tagCloud').innerHTML = Object.entries(tagMap).map(([tag, count]) => 
-                `<span class="tag-cloud-item" style="font-size: ${10 + (count/max)*8}px;" onclick="event.stopPropagation(); showTagReport('${tag}')">${tag}</span>`
-            ).join('');
+            document.getElementById('tagCloud').innerHTML = Object.entries(tagMap).map(([tag, count]) => `<span class="tag-cloud-item" style="font-size: ${10 + (count/max)*8}px;" onclick="event.stopPropagation(); showTagReport('${tag}')">${tag}</span>`).join('');
         }
-
         function showTagReport(tag) {
             const filtered = allNews.filter(n => n.Tags && n.Tags.includes(tag));
             const body = document.getElementById('modalBody');
-            body.innerHTML = `<h4 class="font-bold mb-4">#${tag} 전략 리포트</h4><div class="space-y-3 text-sm">${filtered.map(n => `<div>• ${n.Title}</div>`).join('')}</div>`;
+            body.innerHTML = `<h4 class="font-bold mb-4">#${tag} 전략 브리핑</h4><div class="space-y-3 text-sm">${filtered.map(n => `<div>• ${n.Title}</div>`).join('')}</div>`;
             document.getElementById('reportModal').classList.remove('hidden');
+            lucide.createIcons();
         }
         function closeModal() { document.getElementById('reportModal').classList.add('hidden'); }
         function filterNews(cat) { currentFilteredNews = cat === 'all' ? [...allNews] : allNews.filter(n => n.Category === cat); renderFeed(currentFilteredNews); }
         function renderSummary(data) {
             const highs = data.filter(a => a.Risk === 'High').slice(0, 3);
-            document.getElementById('summaryGrid').innerHTML = highs.map(a => `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-b-lg"><h4 class="font-bold text-sm line-clamp-1">${a.Title}</h4></div>`).join('');
+            document.getElementById('summaryGrid').innerHTML = highs.map(a => `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg"><h4 class="font-bold text-sm line-clamp-1">${a.Title}</h4></div>`).join('');
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); lucide.createIcons(); }
         window.onload = () => { lucide.createIcons(); fetchNews(); };
