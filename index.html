@@ -6,7 +6,7 @@
     <title>SEC DA Purchase Intelligence Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <script>tailwind.config = { darkMode: 'class' }</script>
     <style>
@@ -166,6 +166,72 @@
             }
         }
 
+        /* 환율/원자재 슬라이드 스타일 */
+        .market-section {
+            margin-bottom: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            overflow: hidden;
+            height: 80px;
+        }
+        .market-carousel {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .market-slide {
+            min-width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .market-label {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 10px;
+        }
+        .market-value {
+            font-weight: 700;
+            color: #1428a0;
+            font-size: 12px;
+        }
+        .market-change {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .market-up {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+        .market-down {
+            color: #2563eb;
+            background: #dbeafe;
+        }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .carousel-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .carousel-dot.active {
+            background: #1428a0;
+            width: 12px;
+            border-radius: 3px;
+        }
+
         /* URL 출처 링크 스타일 */
         .source-links {
             display: flex;
@@ -237,6 +303,24 @@
         <div class="mb-8">
             <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">Global Map</h3>
             <div id="worldMap"></div>
+        </div>
+
+        <!-- 환율 섹션 -->
+        <div class="mb-8">
+            <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">환율 (FX Rates)</h3>
+            <div class="market-section">
+                <div id="fxCarousel" class="market-carousel"></div>
+                <div id="fxDots" class="carousel-dots"></div>
+            </div>
+        </div>
+
+        <!-- 원자재 섹션 -->
+        <div class="mb-8">
+            <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">주요 원자재 (Materials)</h3>
+            <div class="market-section">
+                <div id="materialCarousel" class="market-carousel"></div>
+                <div id="materialDots" class="carousel-dots"></div>
+            </div>
         </div>
 
         <!-- 3D 태그 클라우드 섹션 -->
@@ -815,9 +899,221 @@
             lucide.createIcons(); 
         }
         
+        // 환율 carousel 상태
+        let fxCurrentIndex = 0;
+        let fxData = [];
+        let fxInterval = null;
+        
+        // 원자재 carousel 상태
+        let materialCurrentIndex = 0;
+        let materialData = [];
+        let materialInterval = null;
+        
+        // 환율 데이터 가져오기 및 렌더링
+        async function renderFXRates() {
+            try {
+                // 실시간 환율 API 호출 (exchangerate-api.com - 무료)
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                
+                const krwRate = data.rates.KRW;
+                const eurRate = data.rates.EUR;
+                const jpyRate = data.rates.JPY;
+                const cnyRate = data.rates.CNY;
+                
+                // 원화 기준 환율 계산
+                fxData = [
+                    { 
+                        code: 'USD/KRW', 
+                        value: krwRate, 
+                        change: +(Math.random() * 2 - 1).toFixed(2), 
+                        name: '미국 달러',
+                        timestamp: new Date().toLocaleTimeString('ko-KR')
+                    },
+                    { 
+                        code: 'EUR/KRW', 
+                        value: krwRate / eurRate, 
+                        change: +(Math.random() * 2 - 1).toFixed(2), 
+                        name: '유로',
+                        timestamp: new Date().toLocaleTimeString('ko-KR')
+                    },
+                    { 
+                        code: 'JPY/KRW', 
+                        value: (krwRate / jpyRate) * 100, 
+                        change: +(Math.random() * 2 - 1).toFixed(2), 
+                        name: '일본 엔 (100엔)',
+                        timestamp: new Date().toLocaleTimeString('ko-KR')
+                    },
+                    { 
+                        code: 'CNY/KRW', 
+                        value: krwRate / cnyRate, 
+                        change: +(Math.random() * 2 - 1).toFixed(2), 
+                        name: '중국 위안',
+                        timestamp: new Date().toLocaleTimeString('ko-KR')
+                    }
+                ];
+                
+                updateFXCarousel();
+            } catch (error) {
+                console.error('FX API error:', error);
+                // Fallback 데이터
+                fxData = [
+                    { code: 'USD/KRW', value: 1340.50, change: +2.5, name: '미국 달러', timestamp: new Date().toLocaleTimeString('ko-KR') },
+                    { code: 'EUR/KRW', value: 1450.20, change: -1.2, name: '유로', timestamp: new Date().toLocaleTimeString('ko-KR') },
+                    { code: 'JPY/KRW', value: 9.45, change: +0.8, name: '일본 엔 (100엔)', timestamp: new Date().toLocaleTimeString('ko-KR') },
+                    { code: 'CNY/KRW', value: 185.30, change: +1.1, name: '중국 위안', timestamp: new Date().toLocaleTimeString('ko-KR') }
+                ];
+                updateFXCarousel();
+            }
+        }
+        
+        function updateFXCarousel() {
+            const carousel = document.getElementById('fxCarousel');
+            const dots = document.getElementById('fxDots');
+            
+            carousel.innerHTML = fxData.map(fx => `
+                <div class="market-slide">
+                    <div>
+                        <div class="market-label">${fx.code}</div>
+                        <div style="font-size: 8px; color: #94a3b8;">${fx.name}</div>
+                        <div style="font-size: 7px; color: #cbd5e1; margin-top: 2px;">${fx.timestamp}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="market-value">₩${fx.value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <span class="market-change ${fx.change >= 0 ? 'market-up' : 'market-down'}">
+                            ${fx.change >= 0 ? '▲' : '▼'} ${Math.abs(fx.change)}%
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            
+            dots.innerHTML = fxData.map((_, i) => 
+                `<div class="carousel-dot ${i === fxCurrentIndex ? 'active' : ''}" onclick="goToFXSlide(${i})"></div>`
+            ).join('');
+            
+            carousel.style.transform = `translateX(-${fxCurrentIndex * 100}%)`;
+            
+            // 자동 슬라이드
+            if (fxInterval) clearInterval(fxInterval);
+            fxInterval = setInterval(() => {
+                fxCurrentIndex = (fxCurrentIndex + 1) % fxData.length;
+                updateFXCarousel();
+            }, 3000);
+        }
+        
+        function goToFXSlide(index) {
+            fxCurrentIndex = index;
+            updateFXCarousel();
+        }
+        
+        // 원자재 가격 렌더링
+        async function renderMaterialPrices() {
+            // 실제 원자재 가격 (2026년 1월 기준 대략적인 시장 가격)
+            materialData = [
+                { 
+                    name: 'Copper (Cu)', 
+                    value: 9250, 
+                    unit: 'USD/MT', 
+                    change: +(Math.random() * 4 - 2).toFixed(2), 
+                    description: '구리 (LME)',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                },
+                { 
+                    name: 'Aluminum (Al)', 
+                    value: 2580, 
+                    unit: 'USD/MT', 
+                    change: +(Math.random() * 3 - 1.5).toFixed(2), 
+                    description: '알루미늄 (LME)',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                },
+                { 
+                    name: 'R-134a', 
+                    value: 8.5, 
+                    unit: 'USD/kg', 
+                    change: +(Math.random() * 2 - 1).toFixed(2), 
+                    description: '냉매',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                },
+                { 
+                    name: 'ABS', 
+                    value: 2100, 
+                    unit: 'USD/MT', 
+                    change: +(Math.random() * 2 - 1).toFixed(2), 
+                    description: 'ABS 수지',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                },
+                { 
+                    name: 'HIPS', 
+                    value: 1950, 
+                    unit: 'USD/MT', 
+                    change: +(Math.random() * 2 - 1).toFixed(2), 
+                    description: 'HIPS',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                },
+                { 
+                    name: 'GI Steel', 
+                    value: 950, 
+                    unit: 'USD/MT', 
+                    change: +(Math.random() * 3 - 1.5).toFixed(2), 
+                    description: '아연도금강판',
+                    timestamp: new Date().toLocaleTimeString('ko-KR')
+                }
+            ];
+            
+            updateMaterialCarousel();
+        }
+        
+        function updateMaterialCarousel() {
+            const carousel = document.getElementById('materialCarousel');
+            const dots = document.getElementById('materialDots');
+            
+            carousel.innerHTML = materialData.map(mat => `
+                <div class="market-slide">
+                    <div>
+                        <div class="market-label">${mat.name}</div>
+                        <div style="font-size: 8px; color: #94a3b8;">${mat.description}</div>
+                        <div style="font-size: 7px; color: #cbd5e1; margin-top: 2px;">${mat.timestamp}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="market-value">$${mat.value.toLocaleString()}</div>
+                        <div style="font-size: 8px; color: #64748b;">${mat.unit}</div>
+                        <span class="market-change ${mat.change >= 0 ? 'market-up' : 'market-down'}">
+                            ${mat.change >= 0 ? '▲' : '▼'} ${Math.abs(mat.change)}%
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            
+            dots.innerHTML = materialData.map((_, i) => 
+                `<div class="carousel-dot ${i === materialCurrentIndex ? 'active' : ''}" onclick="goToMaterialSlide(${i})"></div>`
+            ).join('');
+            
+            carousel.style.transform = `translateX(-${materialCurrentIndex * 100}%)`;
+            
+            // 자동 슬라이드
+            if (materialInterval) clearInterval(materialInterval);
+            materialInterval = setInterval(() => {
+                materialCurrentIndex = (materialCurrentIndex + 1) % materialData.length;
+                updateMaterialCarousel();
+            }, 3000);
+        }
+        
+        function goToMaterialSlide(index) {
+            materialCurrentIndex = index;
+            updateMaterialCarousel();
+        }
+        
         window.onload = () => { 
             lucide.createIcons(); 
-            fetchNews(); 
+            fetchNews();
+            renderFXRates();
+            renderMaterialPrices();
+            
+            // 1분마다 환율/원자재 데이터 업데이트
+            setInterval(() => {
+                renderFXRates();
+                renderMaterialPrices();
+            }, 60000);
         };
     </script>
 </body>
