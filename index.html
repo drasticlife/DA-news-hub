@@ -57,6 +57,10 @@
             border-radius: 4px !important;
         }
         
+        /* 리스크 필터 버튼 스타일 */
+        .risk-filter-btn.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .dark .risk-filter-btn.active { background: #3f444a; }
+        
         /* 얄쌍한 링 디자인 (LV1~LV3) */
         .calendar-ring { border: 1.2px solid #1428a0; color: #1428a0; font-weight: 800; cursor: pointer !important; }
         .ring-lv1 { width: 20px !important; height: 20px !important; border-width: 1px; }
@@ -278,6 +282,13 @@
                 <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
             </nav>
         </div>
+        <div class="flex items-center gap-4 flex-1 max-w-md mx-8">
+            <div class="relative w-full">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="handleSearch(event)" placeholder="뉴스 키워드 검색..." 
+                    class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-full py-1.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#1428a0] transition-all outline-none">
+            </div>
+        </div>
         <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500"></i>
         </button>
@@ -336,9 +347,18 @@
         <div class="grid grid-cols-3 gap-6 mb-10" id="summaryGrid"></div>
         <div class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700">
             <h2 class="font-bold text-lg" id="feedTitle">Strategic Feed</h2>
-            <div class="text-[10px] flex gap-4 uppercase font-bold text-slate-400">
-                <span id="sortLatest" class="cursor-pointer text-[#1428a0]" onclick="sortNews('latest')">Latest</span>
-                <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">Risk</span>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-lg">
+                    <span class="text-[9px] px-2 text-slate-400">RISK:</span>
+                    <button onclick="filterByRisk('all')" class="risk-filter-btn active px-2 py-0.5 rounded text-[9px] font-bold hover:bg-white dark:hover:bg-slate-700 transition-all">ALL</button>
+                    <button onclick="filterByRisk('High')" class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-red-500 hover:bg-white dark:hover:bg-slate-700 transition-all">HIGH</button>
+                    <button onclick="filterByRisk('Med')" class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-orange-500 hover:bg-white dark:hover:bg-slate-700 transition-all">MED</button>
+                    <button onclick="filterByRisk('Low')" class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all">LOW</button>
+                </div>
+                <div class="text-[10px] flex gap-4 uppercase font-bold text-slate-400 border-l pl-4 dark:border-gray-700">
+                    <span id="sortLatest" class="cursor-pointer text-[#1428a0]" onclick="sortNews('latest')">Latest</span>
+                    <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">Risk</span>
+                </div>
             </div>
         </div>
         <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest">SYNCING DATA...</div>
@@ -617,12 +637,22 @@
                     </a>`
                 ).join('');
                 
+                // 영향도 표시 스타일 결정
+                let impactHtml = '';
+                if (n.Impact) {
+                    const isPositive = n.Impact.includes('+');
+                    const isNegative = n.Impact.includes('-');
+                    const colorClass = isPositive ? 'text-green-600 bg-green-50' : (isNegative ? 'text-red-600 bg-red-50' : 'text-slate-600 bg-slate-50');
+                    impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
+                }
+                
                 return `
                 <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${n.Category || 'N/A'}</span>
-                            ${(n.Region || n.Country) ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-green-50 text-green-600">${n.Region || n.Country}</span>` : ''}
+                            ${(n.Region || n.Country) ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ''}
+                            ${impactHtml}
                             <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split('T')[0] : ''}</span>
                         </div>
                         <h4 class="font-bold text-base mb-3 leading-snug">${n.Title || 'No Title'}</h4>
@@ -876,7 +906,40 @@
             document.getElementById('feedTitle').innerText = `${cat} 카테고리`;
         }
         
+        function filterByRisk(risk) {
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.risk-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText === risk.toUpperCase()) btn.classList.add('active');
+            });
+            
+            currentFilteredNews = risk === 'all' ? [...allNews] : allNews.filter(n => n.Risk === risk);
+            renderFeed(currentFilteredNews);
+            document.getElementById('feedTitle').innerText = `${risk === 'all' ? '전체' : risk} 리스크 뉴스`;
+        }
+
+        function handleSearch(event) {
+            const query = event.target.value.toLowerCase();
+            if (!query) {
+                currentFilteredNews = [...allNews];
+            } else {
+                currentFilteredNews = allNews.filter(n => 
+                    (n.Title && n.Title.toLowerCase().includes(query)) ||
+                    (n.Summary && n.Summary.toLowerCase().includes(query)) ||
+                    (n.Tag && n.Tag.toLowerCase().includes(query)) ||
+                    (n.Region && n.Region.toLowerCase().includes(query))
+                );
+            }
+            renderFeed(currentFilteredNews);
+            document.getElementById('feedTitle').innerText = `'${query}' 검색 결과`;
+        }
+
         function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.risk-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText === 'ALL') btn.classList.add('active');
+            });
             currentFilteredNews = [...allNews];
             sortNews('latest');
             document.getElementById('feedTitle').innerText = 'Strategic Feed';
