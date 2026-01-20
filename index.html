@@ -15,10 +15,27 @@
         .main-content { margin-left: 280px; margin-top: 55px; padding: 30px 40px; max-width: 1200px; }
 
         /* 1. 안정적인 7열 그리드 달력 */
-        .calendar-grid { display: grid; grid-template-cols: repeat(7, 1fr); gap: 4px; align-items: center; justify-items: center; }
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, minmax(32px, 1fr)); 
+            gap: 6px; 
+            align-items: center; 
+            justify-items: center;
+            width: 100%;
+            max-width: 280px;
+        }
         .calendar-grid span { 
-            width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; 
-            border-radius: 50%; transition: all 0.3s ease; font-size: 11px; cursor: default; position: relative;
+            width: 32px; 
+            height: 32px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 50%; 
+            transition: all 0.3s ease; 
+            font-size: 11px; 
+            cursor: default; 
+            position: relative;
+            flex-shrink: 0;
         }
         
         /* 얄쌍한 링 디자인 (LV1~LV3) */
@@ -163,17 +180,32 @@
             }, {});
 
             let html = "";
-            ['S','M','T','W','T','F','S'].forEach(s => html += `<span class="font-bold opacity-30">${s}</span>`);
+            // 요일 헤더 (일~토)
+            ['S','M','T','W','T','F','S'].forEach(s => html += `<span class="font-bold opacity-30 text-[10px]">${s}</span>`);
 
             const firstDay = new Date(curYear, curMonth, 1).getDay();
             const lastDate = new Date(curYear, curMonth + 1, 0).getDate();
 
-            for (let i = 0; i < firstDay; i++) html += `<span></span>`;
+            // 첫 주의 빈 칸 채우기
+            for (let i = 0; i < firstDay; i++) html += `<span class="invisible">-</span>`;
+            
+            // 날짜 렌더링
             for (let d = 1; d <= lastDate; d++) {
                 const count = dateCounts[d] || 0;
                 let lv = count >= 3 ? "calendar-ring ring-lv3" : count === 2 ? "calendar-ring ring-lv2" : count === 1 ? "calendar-ring ring-lv1" : "";
-                html += `<span class="${lv}" id="cal-${d}" onclick="${count > 0 ? `filterByDate(${d})` : ''}">${d}</span>`;
+                const clickEvent = count > 0 ? `onclick="filterByDate(${d})"` : '';
+                html += `<span class="${lv}" id="cal-${d}" ${clickEvent}>${d}</span>`;
             }
+            
+            // 마지막 주의 빈 칸 채우기 (7의 배수로 맞추기)
+            const totalCells = 7 + firstDay + lastDate; // 헤더 7개 + 빈칸 + 날짜들
+            const remainder = totalCells % 7;
+            if (remainder !== 0) {
+                for (let i = 0; i < (7 - remainder); i++) {
+                    html += `<span class="invisible">-</span>`;
+                }
+            }
+            
             grid.innerHTML = html;
         }
 
