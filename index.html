@@ -14,10 +14,10 @@
         .sidebar { width: 280px; position: fixed; left: 0; top: 55px; height: calc(100vh - 55px); border-right: 1px solid #eee; padding: 25px; overflow-y: auto; background: white; }
         .main-content { margin-left: 280px; margin-top: 55px; padding: 30px 40px; max-width: 1200px; }
 
-        /* 1. 주차 표시가 포함된 8열 그리드 달력 */
+        /* 1. 8열 그리드 달력 보정 (주차 + 7일) */
         .calendar-grid { 
             display: grid; 
-            grid-template-cols: 25px repeat(7, 1fr); /* W열(25px) + 요일 7열 */
+            grid-template-cols: 25px repeat(7, 1fr); 
             gap: 2px; align-items: center; justify-items: center; 
         }
         .calendar-grid span { 
@@ -26,14 +26,14 @@
         }
         .week-label { color: #cbd5e1; font-weight: 800; font-size: 8px !important; cursor: default; }
         
-        /* 가변형 링 디자인 복구 */
+        /* 링 디자인 및 가변 크기 로직 복구 */
         .calendar-ring { border: 1.2px solid #1428a0; color: #1428a0; font-weight: 800; cursor: pointer !important; }
         .ring-lv1 { width: 20px !important; height: 20px !important; border-width: 1px; }
         .ring-lv2 { width: 24px !important; height: 24px !important; border-width: 1.8px; }
-        .ring-lv3 { width: 28px !important; height: 28px !important; border-width: 2.5px; box-shadow: 0 0 8px rgba(20,40,160,0.15); }
+        .ring-lv3 { width: 28px !important; height: 28px !important; border-width: 2.5px; box-shadow: 0 0 8px rgba(20,40,160,0.1); }
         .calendar-selected { background-color: #1428a0 !important; color: white !important; border: none !important; }
 
-        /* 2. 동적 확장 카드 및 이미지 호버 */
+        /* 2. 동적 확장 카드 효과 */
         .news-item { border-bottom: 1px solid #f1f5f9; padding: 24px 0; cursor: pointer; transition: all 0.4s ease; overflow: hidden; max-height: 240px; }
         .news-item.expanded { max-height: 1500px; background: #fcfdfe; border-bottom: 2px solid #1428a0; }
         .summary-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -41,9 +41,9 @@
         .news-item img { filter: grayscale(100%); transition: all 0.5s ease; }
         .news-item:hover img { filter: grayscale(0%); transform: scale(1.05); }
 
-        /* 년/월 셀렉터 */
         .cal-select { font-size: 10px; font-weight: 800; color: #1428a0; background: transparent; border: none; cursor: pointer; outline: none; }
-        
+        .tag-cloud-item { display: inline-block; transition: all 0.3s ease; cursor: pointer; padding: 2px 8px; border-radius: 12px; margin: 2px; font-weight: 700; background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
+        .tag-cloud-item:hover { transform: scale(1.1); background: #1428a0; color: white !important; }
         .dark body { background-color: #1a1c1e; color: #e2e8f0; }
         .dark .header, .dark .sidebar, .dark .news-item { background-color: #25282c; border-color: #3f444a; }
     </style>
@@ -89,13 +89,13 @@
     <main class="main-content">
         <div class="grid grid-cols-3 gap-6 mb-10" id="summaryGrid"></div>
         <div class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700">
-            <h2 class="font-bold text-lg" id="feedTitle">Strategic Feed</h2>
+            <h2 class="font-bold text-lg" id="feedTitle">Market Intelligence Feed</h2>
             <div class="text-[10px] flex gap-4 uppercase font-bold text-slate-400">
                 <span id="sortLatest" class="cursor-pointer text-[#1428a0]" onclick="sortNews('latest')">Latest</span>
                 <span id="sortRisk" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('risk')">Risk</span>
             </div>
         </div>
-        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest">SYNCING DATA...</div>
+        <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest uppercase">Analyzing Market Intelligence...</div>
         <div id="news-feed" class="space-y-4"></div>
     </main>
 
@@ -105,7 +105,7 @@
                 <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="file-text" class="w-5 h-5"></i> 전략 요약 보고서</h3>
                 <button onclick="closeModal()" class="hover:bg-white/20 p-1 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            <div class="p-8 max-h-[70vh] overflow-y-auto space-y-6" id="modalBody"></div>
+            <div id="modalBody" class="p-8 max-h-[70vh] overflow-y-auto space-y-6"></div>
         </div>
     </div>
 
@@ -113,6 +113,7 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwpTIuLZcwhQa0eGpeXhX9xGTyp7Q3h84rxufHOGdyIUZUiA3SD7bunjDpmvK6-6OcDxQ/exec";
         let allNews = [], currentFilteredNews = [], currentYear = 2026, currentMonth = 1;
 
+        // [New] 모든 형식을 대응하는 철통 날짜 파싱
         function parseDate(dateStr) {
             if (!dateStr) return new Date();
             const clean = dateStr.toString().replace(/\./g, '-').replace(/\s/g, '');
@@ -124,6 +125,7 @@
             try {
                 const res = await fetch(GAS_URL);
                 allNews = await res.json();
+                currentFilteredNews = [...allNews];
                 initSelectors();
                 updateCalendarView();
                 sortNews('latest'); 
@@ -143,7 +145,7 @@
             renderCalendar(allNews);
         }
 
-        /* 주차 표시 로직 보완 */
+        /* 8열 그리드 기반 링 달력 렌더링 */
         function renderCalendar(data) {
             const grid = document.getElementById('calendarGrid');
             const dateCounts = data.reduce((acc, n) => {
@@ -170,8 +172,8 @@
                         html += `<span></span>`;
                     } else {
                         const count = dateCounts[day] || 0;
-                        let lv = count >= 3 ? "ring-lv3" : count === 2 ? "ring-lv2" : count === 1 ? "ring-lv1" : "";
-                        html += `<span class="${lv ? 'calendar-ring ' + lv : ''}" id="cal-${day}" onclick="${count > 0 ? `filterByDate(${day})` : ''}">${day}</span>`;
+                        let lv = count >= 3 ? "calendar-ring ring-lv3" : count === 2 ? "calendar-ring ring-lv2" : count === 1 ? "calendar-ring ring-lv1" : "";
+                        html += `<span class="${lv}" id="cal-${day}" onclick="${count > 0 ? `filterByDate(${day})` : ''}">${day}</span>`;
                         day++;
                     }
                 }
@@ -179,37 +181,18 @@
             grid.innerHTML = html;
         }
 
-        function filterByDate(day) {
-            document.querySelectorAll('.calendar-grid span').forEach(el => el.classList.remove('calendar-selected'));
-            document.getElementById(`cal-${day}`).classList.add('calendar-selected');
-            currentFilteredNews = allNews.filter(n => {
-                const d = parseDate(n.Date);
-                return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth && d.getDate() === day;
-            });
-            renderFeed(currentFilteredNews);
-        }
-
-        function sortNews(type) {
-            const lb = document.getElementById('sortLatest'), rb = document.getElementById('sortRisk');
-            if (type === 'latest') {
-                currentFilteredNews.sort((a, b) => parseDate(b.Date) - parseDate(a.Date));
-                lb.classList.add('text-[#1428a0]'); rb.classList.add('text-slate-400');
-            } else {
-                const p = { 'High': 1, 'Med': 2, 'Low': 3 };
-                currentFilteredNews.sort((a, b) => (p[a.Risk] || 4) - (p[b.Risk] || 4));
-                rb.classList.add('text-[#1428a0]'); lb.classList.add('text-slate-400');
-            }
-            renderFeed(currentFilteredNews);
-        }
-
         function renderFeed(data) {
             const feed = document.getElementById('news-feed');
+            if (!data || data.length === 0) {
+                feed.innerHTML = `<div class="py-20 text-center text-slate-300 text-xs italic font-medium">검색 결과가 없습니다.</div>`;
+                return;
+            }
             feed.innerHTML = data.map(n => `
                 <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === 'High' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${n.Category}</span>
-                            <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date.toString().split('T')[0]}</span>
+                            <span class="text-[10px] text-slate-400 ml-auto font-medium tracking-tight">${n.Date.toString().split('T')[0]}</span>
                         </div>
                         <h4 class="font-bold text-base mb-3 leading-snug">${n.Title}</h4>
                         <p class="summary-text text-[13px] text-slate-500 leading-relaxed mb-4">${n.Summary}</p>
@@ -220,26 +203,40 @@
             lucide.createIcons();
         }
 
+        // [기타 기능: 정렬, 필터, 태그 리포트 동일하게 유지]
+        function filterByDate(day) {
+            document.querySelectorAll('.calendar-grid span').forEach(el => el.classList.remove('calendar-selected'));
+            document.getElementById(`cal-${day}`).classList.add('calendar-selected');
+            currentFilteredNews = allNews.filter(n => {
+                const d = parseDate(n.Date);
+                return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth && d.getDate() === day;
+            });
+            renderFeed(currentFilteredNews);
+        }
+        function filterNews(cat) { currentFilteredNews = cat === 'all' ? [...allNews] : allNews.filter(n => n.Category === cat); renderFeed(currentFilteredNews); }
+        function sortNews(type) {
+            const lb = document.getElementById('sortLatest'), rb = document.getElementById('sortRisk');
+            if (type === 'latest') { currentFilteredNews.sort((a, b) => parseDate(b.Date) - parseDate(a.Date)); lb.classList.add('text-[#1428a0]'); rb.classList.add('text-slate-400'); }
+            else { const p = { 'High': 1, 'Med': 2, 'Low': 3 }; currentFilteredNews.sort((a, b) => (p[a.Risk] || 4) - (p[b.Risk] || 4)); rb.classList.add('text-[#1428a0]'); lb.classList.add('text-slate-400'); }
+            renderFeed(currentFilteredNews);
+        }
         function renderTags(data) {
             const tagMap = {};
             data.forEach(n => { if(n.Tags) n.Tags.split(',').forEach(tag => { const t = tag.trim(); if(t) tagMap[t] = (tagMap[t] || 0) + 1; }); });
             const max = Math.max(...Object.values(tagMap), 1);
-            document.getElementById('tagCloud').innerHTML = Object.entries(tagMap).map(([tag, count]) => 
-                `<span class="tag-cloud-item" style="font-size: ${10 + (count/max)*8}px;" onclick="event.stopPropagation(); showTagReport('${tag}')">${tag}</span>`
-            ).join('');
+            document.getElementById('tagCloud').innerHTML = Object.entries(tagMap).map(([tag, count]) => `<span class="tag-cloud-item" style="font-size: ${10 + (count/max)*8}px;" onclick="event.stopPropagation(); showTagReport('${tag}')">${tag}</span>`).join('');
         }
-
         function showTagReport(tag) {
             const filtered = allNews.filter(n => n.Tags && n.Tags.includes(tag));
             const body = document.getElementById('modalBody');
-            body.innerHTML = `<h4 class="font-bold mb-4">#${tag} 전략 리포트</h4><div class="space-y-3 text-sm">${filtered.map(n => `<div>• ${n.Title}</div>`).join('')}</div>`;
+            body.innerHTML = `<h4 class="font-bold mb-4">#${tag} 전략 브리핑</h4><div class="space-y-3 text-sm">${filtered.map(n => `<div>• ${n.Title}</div>`).join('')}</div>`;
             document.getElementById('reportModal').classList.remove('hidden');
+            lucide.createIcons();
         }
         function closeModal() { document.getElementById('reportModal').classList.add('hidden'); }
-        function filterNews(cat) { currentFilteredNews = cat === 'all' ? [...allNews] : allNews.filter(n => n.Category === cat); renderFeed(currentFilteredNews); }
         function renderSummary(data) {
             const highs = data.filter(a => a.Risk === 'High').slice(0, 3);
-            document.getElementById('summaryGrid').innerHTML = highs.map(a => `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-b-lg"><h4 class="font-bold text-sm">${a.Title}</h4></div>`).join('');
+            document.getElementById('summaryGrid').innerHTML = highs.map(a => `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg"><h4 class="font-bold text-sm line-clamp-1">${a.Title}</h4></div>`).join('');
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); lucide.createIcons(); }
         window.onload = () => { lucide.createIcons(); fetchNews(); };
