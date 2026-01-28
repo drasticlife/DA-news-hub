@@ -429,7 +429,7 @@
         <h3
           class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400 flex justify-between items-center"
         >
-          Archive Calendar
+          <span onclick="goToday()" class="cursor-pointer hover:text-[#1428a0] transition-colors">TODAY</span>
           <div
             class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md"
           >
@@ -1218,6 +1218,18 @@
 
       function closeModal() {
         document.getElementById("reportModal").classList.add("hidden");
+      }
+
+      function goToday() {
+        const today = new Date();
+        curYear = today.getFullYear();
+        curMonth = today.getMonth();
+        
+        document.getElementById("calHeader").innerText =
+          `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+          
+        renderCalendar(allNews);
+        filterByDate(today.getDate());
       }
 
       function filterNews(cat) {
