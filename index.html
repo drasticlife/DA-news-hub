@@ -940,36 +940,38 @@
       let tag3DSpeed = { x: 0.5, y: 0.3 };
       let isDraggingTag = false;
       let tagDragStart = { x: 0, y: 0 };
+      let tagAnimationId = null;
 
       function renderTags(data) {
+        if (tagAnimationId) cancelAnimationFrame(tagAnimationId);
+        
         console.log("renderTags called with", data.length, "items");
         const tagMap = {};
         
-        // 데이터가 없는 경우 처리
         if (!data || data.length === 0) {
-             document.getElementById("tagCloudContainer").innerHTML =
-            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">데이터 없음</div>';
+            const container = document.getElementById("tagCloud3D");
+            if (container) container.innerHTML = '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">데이터 없음</div>';
             return;
         }
 
         data.forEach((n) => {
-          // 태그 키 대소문자/복수형 등 다양하게 시도
+          // 태그 필드 확인
           const tagField = n.Tag || n.tag || n.Tags || n.tags || n.KEYWORD || n.Keyword || n.keyword;
           if (tagField) {
             tagField.split(",").forEach((tag) => {
               const t = tag.trim();
-              if (t) tagMap[t] = (tagMap[t] || 0) + 1;
+              if (t && t.length > 0) tagMap[t] = (tagMap[t] || 0) + 1;
             });
           }
         });
         
         const sortedTags = Object.entries(tagMap)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 15); // 태그 개수 감소 (가시성 확보)
+          .slice(0, 15);
 
         if (sortedTags.length === 0) {
-          document.getElementById("tagCloudContainer").innerHTML =
-            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">태그 데이터 없음</div>';
+          const container = document.getElementById("tagCloud3D");
+          if (container) container.innerHTML = '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">태그 데이터 없음</div>';
           return;
         }
 
@@ -977,13 +979,12 @@
         const container = document.getElementById("tagCloud3D");
         container.innerHTML = "";
 
-        // 3D 구 좌표 생성 (피보나치 구면 분포 알고리즘 적용 - 균등 분포)
+        // 3D 구 좌표 생성 (피보나치 구면 분포 알고리즘)
         const tags3D = sortedTags.map(([tag, count], i) => {
           const k = i + 1;
-          const phi = Math.acos(1 - (2 * k) / sortedTags.length);
+          const phi = Math.acos(1 - (2 * k) / (sortedTags.length + 1));
           const theta = Math.PI * (1 + Math.sqrt(5)) * k;
-          
-          const radius = 90; // 반지름
+          const radius = 80; // 200px 컨테이너에 적합한 반지름
 
           return {
             tag,
@@ -999,23 +1000,93 @@
           const elem = document.createElement("div");
           elem.className = "tag3d";
           elem.textContent = tagObj.tag;
-          elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 4}px`; // 폰트 크기 편차 줄임
-          elem.dataset.tag = tagObj.tag;
+          elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 8}px`; // 폰트 크기 가독성 개선
           elem.dataset.x = tagObj.x;
           elem.dataset.y = tagObj.y;
           elem.dataset.z = tagObj.z;
-          elem.onclick = () => showTagReport(tagObj.tag);
+          elem.onclick = (e) => {
+            e.stopPropagation();
+            showTagReport(tagObj.tag);
+          };
           container.appendChild(elem);
         });
 
-        // 마우스 드래그 이벤트 등록 (기존 로직 유지)
+        // 애니메이션 루프 시작
+        animateTagCloud();
+
+        // 드래그 및 마우스 조작 이벤트 (전역 등록)
         if (!window.isTagEventRegistered) {
-             container.addEventListener("mousedown", (e) => {
-                isDraggingTag = true;
-                tagDragStart = { x: e.clientX, y: e.clientY };
-             });
-             window.isTagEventRegistered = true;
+          const cloudBox = document.getElementById("tagCloudContainer");
+          
+          cloudBox.addEventListener("mousedown", (e) => {
+            isDraggingTag = true;
+            tagDragStart = { x: e.clientX, y: e.clientY };
+          });
+          
+          window.addEventListener("mousemove", (e) => {
+            if (isDraggingTag) {
+              const dx = e.clientX - tagDragStart.x;
+              const dy = e.clientY - tagDragStart.y;
+              // 회전 감도 조절
+              tag3DRotation.y += dx * 0.005;
+              tag3DRotation.x -= dy * 0.005;
+              tagDragStart = { x: e.clientX, y: e.clientY };
+            }
+          });
+          
+          window.addEventListener("mouseup", () => {
+            isDraggingTag = false;
+          });
+          
+          window.isTagEventRegistered = true;
         }
+      }
+
+      function animateTagCloud() {
+        if (!isDraggingTag) {
+          // 자연스러운 자동 회전
+          tag3DRotation.x += 0.002;
+          tag3DRotation.y += 0.003;
+        }
+
+        const tags = document.querySelectorAll(".tag3d");
+        const radius = 80;
+
+        tags.forEach((tag) => {
+          const x0 = parseFloat(tag.dataset.x);
+          const y0 = parseFloat(tag.dataset.y);
+          const z0 = parseFloat(tag.dataset.z);
+
+          // 3D 회전 행렬 계산 (X, Y축 기준)
+          const cosX = Math.cos(tag3DRotation.x);
+          const sinX = Math.sin(tag3DRotation.x);
+          let y1 = y0 * cosX - z0 * sinX;
+          let z1 = y0 * sinX + z0 * cosX;
+
+          const cosY = Math.cos(tag3DRotation.y);
+          const sinY = Math.sin(tag3DRotation.y);
+          let x2 = x0 * cosY + z1 * sinY;
+          let z2 = -x0 * sinY + z1 * cosY;
+
+          // 투영 및 스타일 업데이트 (Z축 깊이에 따른 효과)
+          const depth = (z2 + radius) / (2 * radius); // 0 (뒤) ~ 1 (앞)
+          const scale = 0.5 + depth * 0.8; // 0.5x ~ 1.3x
+          const opacity = 0.2 + depth * 0.8; // 0.2 ~ 1.0
+
+          // translate3d를 사용하여 GPU 가속 활용
+          tag.style.transform = `translate3d(${x2}px, ${y1}px, ${z2}px) scale(${scale})`;
+          tag.style.opacity = opacity;
+          tag.style.zIndex = Math.round(depth * 100);
+          
+          // 흐림 효과 (선택적: 깊이 표현 강조)
+          if (depth < 0.3) {
+            tag.style.filter = `blur(0.5px)`;
+          } else {
+            tag.style.filter = 'none';
+          }
+        });
+
+        tagAnimationId = requestAnimationFrame(animateTagCloud);
       }
 
       // 글로벌 지도 렌더링
