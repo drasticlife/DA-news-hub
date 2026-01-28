@@ -192,10 +192,12 @@
         font-weight: 600;
         color: #e2e8f0;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: color 0.3s;
         white-space: nowrap;
         user-select: none;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        transform-origin: center center;
+        will-change: transform, opacity;
       }
       .tag3d:hover {
         color: #60a5fa;
@@ -556,10 +558,10 @@
               >Latest</span
             >
             <span
-              id="sortRisk"
+              id="sortOldest"
               class="cursor-pointer hover:text-[#1428a0]"
-              onclick="sortNews('risk')"
-              >Risk</span
+              onclick="sortNews('oldest')"
+              >Oldest</span
             >
           </div>
         </div>
@@ -602,9 +604,20 @@
 
     <script>
       const GAS_URL =
-        "https://script.google.com/macros/s/AKfycbwu-VJ5l9w1bfw_Gaw1bgvJyn9XixGh_4C97gd_COzUBgPB4QxJfFZWU5YChJTAPKbrCw/exec";
+        "https://script.google.com/macros/s/AKfycbzNJA_s6YGI2Blt6b_gaDLbOFbyzqIl7c4MDlFUjoKjDn8uCQrpkXtSba4-FHVL7HVJ7g/exec";
       let allNews = [],
         currentFilteredNews = [];
+      
+      // 통합 필터 상태 관리
+      let filterState = {
+        category: "all",
+        risk: "all",
+        sort: "latest",
+        search: "",
+        dateType: null, // null | 'week' | 'day'
+        dateValue: null
+      };
+
       let curYear = 2026,
         curMonth = 0;
       let tagCloudInstance = null;
@@ -700,6 +713,11 @@
         try {
           const res = await fetch(GAS_URL);
           allNews = await res.json();
+          // 고유 ID 부여
+          allNews.forEach((n, i) => {
+             n._uId = `news-${i}-${Math.random().toString(36).substr(2, 9)}`;
+          });
+          
           console.log("Fetched news:", allNews.length, "items");
           console.log("Sample:", allNews[0]);
           currentFilteredNews = [...allNews];
@@ -814,20 +832,11 @@
         const weekLabel = document.getElementById(`week-${weekNum}`);
         if (weekLabel) weekLabel.classList.add("week-selected");
 
-        const dateRange = getDateRangeForWeek(curYear, curMonth, weekNum);
-
-        currentFilteredNews = allNews.filter((n) => {
-          const d = parseDate(n.Date);
-          if (d.getFullYear() === curYear && d.getMonth() === curMonth) {
-            const day = d.getDate();
-            return day >= dateRange.start && day <= dateRange.end;
-          }
-          return false;
-        });
-
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText =
-          `Week ${weekNum} - ${curYear}.${String(curMonth + 1).padStart(2, "0")}`;
+        // 상태 업데이트
+        filterState.dateType = 'week';
+        filterState.dateValue = weekNum;
+        filterState.category = 'all'; // 달력 선택 시 카테고리 해제
+        applyFilters();
       }
 
       function filterByDate(day) {
@@ -837,42 +846,16 @@
         const target = document.getElementById(`cal-${day}`);
         if (target) target.classList.add("calendar-selected");
 
-        currentFilteredNews = allNews.filter((n) => {
-          const d = parseDate(n.Date);
-          return (
-            d.getFullYear() === curYear &&
-            d.getMonth() === curMonth &&
-            d.getDate() === day
-          );
-        });
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText =
-          `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(day).padStart(2, "0")}`;
+        // 상태 업데이트
+        filterState.dateType = 'day';
+        filterState.dateValue = day;
+        filterState.category = 'all';
+        applyFilters();
       }
 
       function sortNews(type) {
-        const lb = document.getElementById("sortLatest"),
-          rb = document.getElementById("sortRisk");
-        lb.classList.remove("text-[#1428a0]");
-        rb.classList.remove("text-[#1428a0]");
-        lb.classList.add("text-slate-400");
-        rb.classList.add("text-slate-400");
-
-        if (type === "latest") {
-          currentFilteredNews.sort(
-            (a, b) => parseDate(b.Date) - parseDate(a.Date),
-          );
-          lb.classList.add("text-[#1428a0]");
-          lb.classList.remove("text-slate-400");
-        } else {
-          const p = { High: 1, Med: 2, Low: 3 };
-          currentFilteredNews.sort(
-            (a, b) => (p[a.Risk] || 4) - (p[b.Risk] || 4),
-          );
-          rb.classList.add("text-[#1428a0]");
-          rb.classList.remove("text-slate-400");
-        }
-        renderFeed(currentFilteredNews);
+        filterState.sort = type;
+        applyFilters();
       }
 
       // 다중 URL 파싱 함수
@@ -933,7 +916,7 @@
             }
 
             return `
-                <article class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
+                <article id="${n._uId}" class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-3">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${n.Category || "N/A"}</span>
@@ -961,8 +944,17 @@
       function renderTags(data) {
         console.log("renderTags called with", data.length, "items");
         const tagMap = {};
+        
+        // 데이터가 없는 경우 처리
+        if (!data || data.length === 0) {
+             document.getElementById("tagCloudContainer").innerHTML =
+            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">데이터 없음</div>';
+            return;
+        }
+
         data.forEach((n) => {
-          const tagField = n.Tag || n.Tags;
+          // 태그 키 대소문자/복수형 등 다양하게 시도
+          const tagField = n.Tag || n.tag || n.Tags || n.tags || n.KEYWORD || n.Keyword || n.keyword;
           if (tagField) {
             tagField.split(",").forEach((tag) => {
               const t = tag.trim();
@@ -970,11 +962,10 @@
             });
           }
         });
-        console.log("Tag map:", tagMap);
-
+        
         const sortedTags = Object.entries(tagMap)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 25);
+          .slice(0, 15); // 태그 개수 감소 (가시성 확보)
 
         if (sortedTags.length === 0) {
           document.getElementById("tagCloudContainer").innerHTML =
@@ -986,11 +977,13 @@
         const container = document.getElementById("tagCloud3D");
         container.innerHTML = "";
 
-        // 3D 구 좌표 생성
+        // 3D 구 좌표 생성 (피보나치 구면 분포 알고리즘 적용 - 균등 분포)
         const tags3D = sortedTags.map(([tag, count], i) => {
-          const phi = Math.acos(-1 + (2 * i) / sortedTags.length);
-          const theta = Math.sqrt(sortedTags.length * Math.PI) * phi;
-          const radius = 80;
+          const k = i + 1;
+          const phi = Math.acos(1 - (2 * k) / sortedTags.length);
+          const theta = Math.PI * (1 + Math.sqrt(5)) * k;
+          
+          const radius = 90; // 반지름
 
           return {
             tag,
@@ -1006,7 +999,7 @@
           const elem = document.createElement("div");
           elem.className = "tag3d";
           elem.textContent = tagObj.tag;
-          elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 8}px`;
+          elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 4}px`; // 폰트 크기 편차 줄임
           elem.dataset.tag = tagObj.tag;
           elem.dataset.x = tagObj.x;
           elem.dataset.y = tagObj.y;
@@ -1015,70 +1008,30 @@
           container.appendChild(elem);
         });
 
-        // 마우스 드래그 이벤트
-        container.addEventListener("mousedown", (e) => {
-          isDraggingTag = true;
-          tagDragStart = { x: e.clientX, y: e.clientY };
-        });
-
-        document.addEventListener("mousemove", (e) => {
-          if (isDraggingTag) {
-            const dx = e.clientX - tagDragStart.x;
-            const dy = e.clientY - tagDragStart.y;
-            tag3DSpeed.y += dx * 0.001;
-            tag3DSpeed.x += dy * 0.001;
-            tagDragStart = { x: e.clientX, y: e.clientY };
-          }
-        });
-
-        document.addEventListener("mouseup", () => {
-          isDraggingTag = false;
-        });
-
-        // 애니메이션 루프
-        function animate3DTags() {
-          tag3DRotation.x += tag3DSpeed.x;
-          tag3DRotation.y += tag3DSpeed.y;
-
-          const tags = container.querySelectorAll(".tag3d");
-          tags.forEach((elem) => {
-            const x = parseFloat(elem.dataset.x);
-            const y = parseFloat(elem.dataset.y);
-            const z = parseFloat(elem.dataset.z);
-
-            // 회전 변환
-            const cosX = Math.cos(tag3DRotation.x * 0.01);
-            const sinX = Math.sin(tag3DRotation.x * 0.01);
-            const cosY = Math.cos(tag3DRotation.y * 0.01);
-            const sinY = Math.sin(tag3DRotation.y * 0.01);
-
-            const y1 = y * cosX - z * sinX;
-            const z1 = y * sinX + z * cosX;
-            const x1 = x * cosY + z1 * sinY;
-            const z2 = -x * sinY + z1 * cosY;
-
-            // 원근 투영
-            const scale = 300 / (300 + z2);
-            const opacity = (z2 + 100) / 200;
-
-            elem.style.transform = `translate(-50%, -50%) translate(${x1 * scale}px, ${y1 * scale}px) scale(${scale})`;
-            elem.style.opacity = Math.max(0.3, Math.min(1, opacity));
-            elem.style.zIndex = Math.floor(z2);
-          });
-
-          requestAnimationFrame(animate3DTags);
+        // 마우스 드래그 이벤트 등록 (기존 로직 유지)
+        if (!window.isTagEventRegistered) {
+             container.addEventListener("mousedown", (e) => {
+                isDraggingTag = true;
+                tagDragStart = { x: e.clientX, y: e.clientY };
+             });
+             window.isTagEventRegistered = true;
         }
-
-        animate3DTags();
-        console.log("3D Tag Cloud initialized with", tags3D.length, "tags");
       }
 
       // 글로벌 지도 렌더링
       function renderWorldMap(data) {
         console.log("renderWorldMap called with", data.length, "items");
+        
+        if (!data || data.length === 0) {
+             document.getElementById("worldMap").innerHTML =
+            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">데이터 없음</div>';
+            return;
+        }
+        
         const countryMap = {};
         data.forEach((n) => {
-          const regionField = n.Region || n.Country; // Region 또는 Country 필드 지원
+          // 다양한 대소문자/필드명 지원
+          const regionField = n.Region || n.region || n.Country || n.country || n.Place || n.place || n.Location || n.location;
           if (regionField) {
             const countries = regionField.split(",").map((c) => c.trim());
             countries.forEach((country) => {
@@ -1086,8 +1039,7 @@
             });
           }
         });
-        console.log("Country map:", countryMap);
-
+        
         const mapContainer = document.getElementById("worldMap");
 
         if (Object.keys(countryMap).length === 0) {
@@ -1198,71 +1150,175 @@
       }
 
       function filterNews(cat) {
-        currentFilteredNews =
-          cat === "all"
-            ? [...allNews]
-            : allNews.filter((n) => n.Category === cat);
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText = `${cat} 카테고리`;
+        filterState.category = cat;
+        filterState.dateType = null; // 카테고리 변경 시 날짜 필터 해제
+        
+        // 달력 선택 UI 해제
+        document.querySelectorAll(".calendar-grid span").forEach((el) => {
+          el.classList.remove("calendar-selected", "week-selected");
+        });
+        
+        applyFilters();
       }
 
       function filterByRisk(risk) {
-        // 버튼 상태 업데이트
-        document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
-          btn.classList.remove("active");
-          if (btn.innerText === risk.toUpperCase()) btn.classList.add("active");
-        });
-
-        currentFilteredNews =
-          risk === "all"
-            ? [...allNews]
-            : allNews.filter((n) => n.Risk === risk);
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText =
-          `${risk === "all" ? "전체" : risk} 리스크 뉴스`;
+        filterState.risk = risk;
+        applyFilters();
       }
 
       function handleSearch(event) {
-        const query = event.target.value.toLowerCase();
-        if (!query) {
-          currentFilteredNews = [...allNews];
-        } else {
-          currentFilteredNews = allNews.filter(
-            (n) =>
-              (n.Title && n.Title.toLowerCase().includes(query)) ||
-              (n.Summary && n.Summary.toLowerCase().includes(query)) ||
-              (n.Tag && n.Tag.toLowerCase().includes(query)) ||
-              (n.Region && n.Region.toLowerCase().includes(query)),
-          );
-        }
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText = `'${query}' 검색 결과`;
+        filterState.search = event.target.value.toLowerCase();
+        applyFilters();
       }
 
       function resetFilters() {
         document.getElementById("searchInput").value = "";
-        document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
-          btn.classList.remove("active");
-          if (btn.innerText === "ALL") btn.classList.add("active");
-        });
-        currentFilteredNews = [...allNews];
-        sortNews("latest");
-        document.getElementById("feedTitle").innerText = "Strategic Feed";
+        
+        // 상태 초기화
+        filterState = {
+            category: "all",
+            risk: "all",
+            sort: "latest",
+            search: "",
+            dateType: null,
+            dateValue: null
+        };
+
+        // 달력 UI 초기화
         document.querySelectorAll(".calendar-grid span").forEach((el) => {
           el.classList.remove("calendar-selected", "week-selected");
         });
+
+        // 달력 헤더 리셋 (현재 연월로)
+        curYear = 2026; 
+        curMonth = 0;
+        document.getElementById("calHeader").innerText = "2026. 01";
+        renderCalendar(allNews);
+
+        applyFilters();
+      }
+
+      // [핵심] 통합 필터링 로직
+      function applyFilters() {
+        let result = [...allNews];
+
+        // 1. 카테고리 필터 (날짜 필터가 없을 때만)
+        if (!filterState.dateType && filterState.category !== "all") {
+             result = result.filter(n => {
+                if (!n.Category) return false;
+                return n.Category.split(":")[0].trim() === filterState.category;
+             });
+        }
+
+        // 2. 날짜 필터 (Calendar)
+        let title = "Strategic Feed";
+        if (filterState.dateType === 'week') {
+            const range = getDateRangeForWeek(curYear, curMonth, filterState.dateValue);
+            result = result.filter(n => {
+                 const d = parseDate(n.Date);
+                 return d.getFullYear() === curYear && d.getMonth() === curMonth && d.getDate() >= range.start && d.getDate() <= range.end;
+            });
+            title = `Week ${filterState.dateValue} - ${curYear}.${String(curMonth + 1).padStart(2, "0")}`;
+        } else if (filterState.dateType === 'day') {
+            result = result.filter(n => {
+                const d = parseDate(n.Date);
+                return d.getFullYear() === curYear && d.getMonth() === curMonth && d.getDate() === filterState.dateValue;
+            });
+            title = `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`;
+        } else if (filterState.category !== "all") {
+            title = `${filterState.category} 카테고리`;
+        }
+
+        // 3. 리스크 필터 (Nav/Date 필터 결과 위에서 동작)
+        // 버튼 UI 업데이트
+        document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.innerText === filterState.risk.toUpperCase()) btn.classList.add("active");
+        });
+
+        if (filterState.risk !== "all") {
+            result = result.filter(n => n.Risk === filterState.risk);
+            title += ` (${filterState.risk} Risk)`; // 제목에 리스크 상태 반영
+        }
+
+        // 4. 검색 필터
+        if (filterState.search) {
+            const q = filterState.search;
+            result = result.filter(n => 
+                (n.Title && n.Title.toLowerCase().includes(q)) ||
+                (n.Summary && n.Summary.toLowerCase().includes(q)) ||
+                (n.Tag && n.Tag.toLowerCase().includes(q)) ||
+                (n.Region && n.Region.toLowerCase().includes(q))
+            );
+            title = `'${q}' 검색 결과`;
+        }
+
+        document.getElementById("feedTitle").innerText = title;
+
+        // 5. 정렬 (Latest / Oldest)
+        const lb = document.getElementById("sortLatest");
+        const rb = document.getElementById("sortOldest");
+        if (lb && rb) {
+            lb.classList.remove("text-[#1428a0]", "text-slate-400");
+            rb.classList.remove("text-[#1428a0]", "text-slate-400");
+            
+            if (filterState.sort === "latest") {
+                lb.classList.add("text-[#1428a0]");
+                rb.classList.add("text-slate-400");
+                result.sort((a, b) => parseDate(b.Date) - parseDate(a.Date));
+            } else {
+                rb.classList.add("text-[#1428a0]");
+                lb.classList.add("text-slate-400");
+                result.sort((a, b) => parseDate(a.Date) - parseDate(b.Date));
+            }
+        }
+
+        currentFilteredNews = result;
+        renderFeed(result);
+        renderSummary(result);
+        renderWorldMap(result);
+        renderTags(result);
       }
 
       function renderSummary(data) {
-        const highs = data.filter((a) => a.Risk === "High").slice(0, 3);
-        document.getElementById("summaryGrid").innerHTML = highs
+        // 리스크 가중치 맵
+        const riskMap = { High: 3, Med: 2, Low: 1 };
+        
+        // 현재 필터링된 데이터 중에서 리스크 순으로 정렬하여 상위 3개 추출
+        const topRisks = [...data]
+            .sort((a, b) => (riskMap[b.Risk] || 0) - (riskMap[a.Risk] || 0))
+            .slice(0, 3);
+
+        document.getElementById("summaryGrid").innerHTML = topRisks
           .map(
             (a) =>
-              `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg">
-                    <h4 class="font-bold text-sm line-clamp-1">${a.Title || "No Title"}</h4>
+              `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg cursor-pointer transform hover:scale-[1.02] transition-all" 
+                    onclick="focusNews('${a._uId}')">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${a.Risk === 'High' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${a.Risk || 'Info'}</span>
+                        <span class="text-[9px] text-gray-400">${a.Date ? a.Date.toString().split("T")[0] : ""}</span>
+                    </div>
+                    <h4 class="font-bold text-sm line-clamp-2 hover:text-[#1428a0]">${a.Title || "No Title"}</h4>
                 </div>`,
           )
           .join("");
+      }
+
+      function focusNews(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            // 부드럽게 스크롤 이동
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 카드 강조 효과 (반짝임)
+            el.classList.add('ring-2', 'ring-[#1428a0]', 'ring-offset-2');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-[#1428a0]', 'ring-offset-2'), 2000);
+            
+            // 내용 펼치기
+            if (!el.classList.contains('expanded')) {
+                el.classList.add('expanded');
+            }
+        }
       }
 
       function toggleDarkMode() {

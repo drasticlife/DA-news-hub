@@ -1,23 +1,63 @@
 /**
- * DA News Hub 이미지 자동화 스크립트 (v12.0 - GitHub 호스팅 이미지)
+ * DA News Hub 통합 스크립트 (v13.0)
  * 
- * [v12.0 업데이트]
- * - 구글 드라이브 링크가 웹사이트에서 차단(엑박)되는 문제를 해결하기 위해
- *   GitHub Pages에 호스팅된 이미지를 사용하도록 변경했습니다.
- * - 중요: 'default_news_cover.jpg' 파일이 GitHub에 업로드되어야 정상 표시됩니다.
+ * [기능 1] 웹 앱 (JSON API)
+ * - 구글 시트의 모든 데이터를 JSON 형태로 제공합니다.
+ * - doGet 함수가 이 역할을 수행합니다.
+ * - 반드시 [배포] > [새 배포] > [웹 앱]으로 배포 후 URL을 index.html에 업데이트해야 합니다.
+ * 
+ * [기능 2] 이미지 자동화
+ * - 외부 링크에서 이미지를 가져와 시트에 저장합니다.
  */
+
+// ==========================================
+// [기능 1] 웹 앱 API (데이터 서빙)
+// ==========================================
+function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  // 모든 데이터 범위 가져오기 (A열~마지막열)
+  // I열(Region), J열(Tag)이 포함되려면 시트 1행에 헤더(Region, Tag)가 있어야 합니다.
+  const data = sheet.getDataRange().getValues();
+  
+  if (data.length === 0) {
+    return ContentService.createTextOutput(JSON.stringify([]))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const headers = data[0];
+  const rows = data.slice(1);
+  
+  const result = rows.map(row => {
+    const obj = {};
+    headers.forEach((header, index) => {
+      // 헤더 이름이 있는 열만 객체에 담습니다.
+      // 예: Date, Title, Category, Summary, URL, Risk, Impact, Image, Region, Tag
+      if(header) {
+        obj[header] = row[index];
+      }
+    });
+    return obj;
+  });
+  
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ==========================================
+// [기능 2] 이미지 자동화 도구
+// ==========================================
 
 const FOLDER_ID = "11OsMn-4WoNhg9QfxgraLQSJtkmG7PXTj";
 const MAX_RUNTIME = 1000 * 60 * 3.5; 
 
 // ⭐ 확정된 대표 이미지 (GitHub Pages 호스팅)
-// 파일이 GitHub에 업로드되면 이 주소가 작동합니다.
 const DEFAULT_IMAGE_URL = "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg";
 
 // 🚫 스킵할 파일 확장자 
 const SKIP_EXTENSIONS = ['.pdf', '.xls', '.xlsx', '.doc', '.docx', '.zip', '.hwp', '.ppt', '.pptx'];
 
-// 🚫 스킵할 도메인 (응답 없음/보안 차단 사이트)
+// 🚫 스킵할 도메인
 const SKIP_DOMAINS = [
     'cmegroup.com', 
     'tradingeconomics.com', 'lme.com', 'bloomberg.com', 'metal.com', 'sunsirs.com', 'ptonline.com', 'reuters.com', 'wsj.com',
@@ -35,9 +75,6 @@ function onOpen() {
     .addToUi();
 }
 
-/**
- * [Main] 핫링크 방식
- */
 function updateNewsImages() {
   const startTime = new Date().getTime();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -48,6 +85,8 @@ function updateNewsImages() {
     return;
   }
 
+  // 데이터 범위: H열(8번째)까지만 쓰는 것이 아니라 전체 로직상 URL은 E열(5번째), 이미지는 H열(8번째)
+  // I, J열이 추가되어도 이 로직은 H열까지만 건드리므로 안전합니다.
   const range = sheet.getRange(2, 1, lastRow - 1, 8);
   const data = range.getValues(); 
   let updateCount = 0;
@@ -62,14 +101,13 @@ function updateNewsImages() {
         SpreadsheetApp.getActiveSpreadsheet().toast(msg, "🔍 진행 현황");
     }
     
-    // 타임아웃
     if (new Date().getTime() - startTime > MAX_RUNTIME) {
       isTimeOut = true;
       break;
     }
 
-    let urlInput = data[i][4]; 
-    let currentImageVal = data[i][7];
+    let urlInput = data[i][4]; // E열 URL
+    let currentImageVal = data[i][7]; // H열 Image
 
     if (currentImageVal && currentImageVal.toString() !== "") {
         console.log(`[PASS] ${i+2}행: 완료됨`);
@@ -93,18 +131,8 @@ function updateNewsImages() {
 
     for (let targetUrl of urls) {
       let lowerUrl = targetUrl.toLowerCase();
-      // 1. 파일 확장자 체크
-      if (SKIP_EXTENSIONS.some(ext => lowerUrl.endsWith(ext))) {
-         console.log(`  [SKIP-FILE] 파일 링크 건너뜀: ${targetUrl}`);
-         continue;
-      }
-      // 2. 차단 도메인 체크
-      if (SKIP_DOMAINS.some(domain => lowerUrl.includes(domain))) {
-          console.log(`  [SKIP-DOMAIN] 접속 차단 사이트 건너뜀: ${targetUrl}`);
-          continue; 
-      }
-
-      console.log(`  >> 접속 시도: ${targetUrl}`); 
+      if (SKIP_EXTENSIONS.some(ext => lowerUrl.endsWith(ext))) continue;
+      if (SKIP_DOMAINS.some(domain => lowerUrl.includes(domain))) continue;
 
       try {
         let response = UrlFetchApp.fetch(targetUrl, { 
@@ -128,7 +156,6 @@ function updateNewsImages() {
                     let domainMatch = targetUrl.match(/^https?:\/\/[^\/]+/);
                     if(domainMatch) finalImgUrl = (finalImgUrl.startsWith('/') ? domainMatch[0] : domainMatch[0] + '/') + finalImgUrl;
                 }
-                console.log(`  [SUCCESS] 이미지 찾음!`);
                 break; 
             }
         }
@@ -140,7 +167,6 @@ function updateNewsImages() {
     if (!finalImgUrl) {
         finalImgUrl = DEFAULT_IMAGE_URL;
         defaultCount++;
-        console.log(`[DEFAULT] ${i+2}행: 대표 이미지 적용`);
     }
 
     if (finalImgUrl) {
