@@ -15,6 +15,72 @@
       tailwind.config = { darkMode: "class" };
     </script>
     <style>
+      /* 랜딩 페이지 스타일 */
+      #landing-page {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 1s ease-out, visibility 1s;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      #landing-page.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      #globe-container {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .landing-content {
+        position: relative;
+        z-index: 10000;
+        text-align: center;
+        pointer-events: none;
+        color: white;
+      }
+      .landing-title {
+        font-size: 2.8rem;
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin-bottom: 2rem;
+        text-transform: uppercase;
+        /* 더 선명한 흰색-파란색 그라데이션 */
+        background: linear-gradient(to bottom, #ffffff 30%, #44aaff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        max-width: 1000px;
+        filter: drop-shadow(0 0 20px rgba(0, 170, 255, 0.4));
+      }
+      .click-hint {
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.2em;
+        color: rgba(255, 255, 255, 0.6);
+        animation: pulse-hint 2s infinite;
+      }
+      @keyframes pulse-hint {
+        0%, 100% { opacity: 0.3; transform: scale(0.95); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+      
+      body.landing-active {
+        overflow: hidden;
+      }
+
       body {
         font-family: "Pretendard", sans-serif;
         transition: all 0.3s ease;
@@ -367,7 +433,198 @@
       }
     </style>
   </head>
-  <body class="bg-[#fcfcfc] text-[#333]">
+  <body class="bg-[#fcfcfc] text-[#333] landing-active">
+    <!-- 3D 지구 랜딩 페이지 -->
+    <div id="landing-page" onclick="enterDashboard()">
+      <div id="globe-container"></div>
+      <div class="landing-content">
+        <h1 class="landing-title">SAMSUNG DA PROCUREMENT<br>INSIGHT DAILY REPORT</h1>
+        <p class="click-hint">CLICK TO EXPLORE</p>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // 3D 지구 초기화 logic (세계 지도 파티클 버전)
+      function initLandingGlobe() {
+        const container = document.getElementById('globe-container');
+        if (!container) return;
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const globeRadius = 5;
+        const particlesGroup = new THREE.Group();
+        scene.add(particlesGroup);
+
+        // --- 1. 배경 가이드 구체 ---
+        const sphereGeo = new THREE.SphereGeometry(globeRadius - 0.05, 48, 48);
+        const sphereMat = new THREE.MeshBasicMaterial({ 
+          color: 0x002244, 
+          transparent: true, 
+          opacity: 0.15,
+          wireframe: true 
+        });
+        const backgroundSphere = new THREE.Mesh(sphereGeo, sphereMat);
+        scene.add(backgroundSphere);
+
+        // --- 2. 입자 생성용 메테리얼 ---
+        const particleMaterial = new THREE.PointsMaterial({
+          color: 0x00ccff,
+          size: 0.05,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending
+        });
+
+        // --- 3. 절차적 지도 생성 함수 (Fallback) ---
+        function generateProceduralMap() {
+          const posArray = [];
+          const continents = [
+            { lat: 40, lon: 70, r: 35 },  // 유라시아
+            { lat: 0, lon: 20, r: 25 },   // 아프리카
+            { lat: 45, lon: -100, r: 25 }, // 북미
+            { lat: -20, lon: -60, r: 20 }, // 남미
+            { lat: -25, lon: 135, r: 15 }, // 호주
+            { lat: -80, lon: 0, r: 60 }    // 안타르티카
+          ];
+
+          for (let i = 0; i < 9000; i++) {
+            const lat = (Math.random() - 0.5) * Math.PI;
+            const lon = (Math.random() - 0.5) * Math.PI * 2;
+            const latDeg = lat * (180 / Math.PI);
+            const lonDeg = lon * (180 / Math.PI);
+            
+            let isLand = continents.some(c => {
+               const dx = latDeg - c.lat;
+               const dy = lonDeg - c.lon;
+               return (dx * dx * 0.5 + dy * dy) < (c.r * c.r);
+            });
+
+            if (isLand || Math.random() < 0.03) {
+              posArray.push(
+                globeRadius * Math.cos(lat) * Math.cos(lon),
+                -globeRadius * Math.sin(lat),
+                -globeRadius * Math.cos(lat) * Math.sin(lon)
+              );
+            }
+          }
+          updateParticles(posArray);
+        }
+
+        function updateParticles(posArray) {
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(posArray, 3));
+          const mapParticles = new THREE.Points(geometry, particleMaterial);
+          while(particlesGroup.children.length > 0) particlesGroup.remove(particlesGroup.children[0]);
+          particlesGroup.add(mapParticles);
+        }
+
+        // --- 4. 실제 이미지 기반 샘플링 시도 ---
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = 'world_map_real.png';
+        
+        img.onload = function() {
+          try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            const posArray = [];
+            const density = 180;
+            for (let i = 0; i < density; i++) {
+              for (let j = 0; j < density; j++) {
+                const u = i / density;
+                const v = j / density;
+                const x = Math.floor(u * canvas.width);
+                const y = Math.floor(v * canvas.height);
+                const idx = (y * canvas.width + x) * 4;
+                
+                // 육지 조건: 밝기 또는 알파값
+                if (data[idx] > 50 || data[idx+3] > 128) {
+                  const lat = (v - 0.5) * Math.PI;
+                  const lon = (u - 0.5) * Math.PI * 2;
+                  posArray.push(
+                    globeRadius * Math.cos(lat) * Math.cos(lon),
+                    -globeRadius * Math.sin(lat),
+                    -globeRadius * Math.cos(lat) * Math.sin(lon)
+                  );
+                }
+              }
+            }
+            if (posArray.length > 100) updateParticles(posArray);
+            else generateProceduralMap();
+          } catch (e) {
+            generateProceduralMap();
+          }
+        };
+
+        img.onerror = () => generateProceduralMap();
+
+        // --- 5. 배경 별무리 ---
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1200;
+        const starPos = new Float32Array(starCount * 3);
+        for(let i=0; i<starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 100;
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.4 }));
+        scene.add(stars);
+
+        camera.position.z = 12;
+
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+          mouseX = (e.clientX - window.innerWidth / 2);
+          mouseY = (e.clientY - window.innerHeight / 2);
+        });
+
+        function animate() {
+          if (document.getElementById('landing-page').classList.contains('hidden')) return;
+          requestAnimationFrame(animate);
+
+          targetX = mouseX * 0.0003;
+          targetY = mouseY * 0.0003;
+
+          particlesGroup.rotation.y += 0.0015;
+          particlesGroup.rotation.x += 0.05 * (targetY - particlesGroup.rotation.x);
+          particlesGroup.rotation.y += 0.05 * (targetX - particlesGroup.rotation.y);
+          
+          backgroundSphere.rotation.copy(particlesGroup.rotation);
+          renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+      }
+
+      function enterDashboard() {
+        const lp = document.getElementById('landing-page');
+        lp.classList.add('hidden');
+        document.body.classList.remove('landing-active');
+        setTimeout(() => { lp.style.display = 'none'; }, 1000);
+      }
+
+      // DOM 로드 시 지구본 초기화
+      document.addEventListener('DOMContentLoaded', () => {
+        initLandingGlobe();
+      });
+    </script>
+
     <header
       class="header flex items-center px-6 justify-between bg-white dark:bg-[#25282c] shadow-sm"
     >
