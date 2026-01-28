@@ -1,0 +1,175 @@
+/**
+ * DA News Hub 이미지 자동화 스크립트 (v12.0 - GitHub 호스팅 이미지)
+ * 
+ * [v12.0 업데이트]
+ * - 구글 드라이브 링크가 웹사이트에서 차단(엑박)되는 문제를 해결하기 위해
+ *   GitHub Pages에 호스팅된 이미지를 사용하도록 변경했습니다.
+ * - 중요: 'default_news_cover.jpg' 파일이 GitHub에 업로드되어야 정상 표시됩니다.
+ */
+
+const FOLDER_ID = "11OsMn-4WoNhg9QfxgraLQSJtkmG7PXTj";
+const MAX_RUNTIME = 1000 * 60 * 3.5; 
+
+// ⭐ 확정된 대표 이미지 (GitHub Pages 호스팅)
+// 파일이 GitHub에 업로드되면 이 주소가 작동합니다.
+const DEFAULT_IMAGE_URL = "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg";
+
+// 🚫 스킵할 파일 확장자 
+const SKIP_EXTENSIONS = ['.pdf', '.xls', '.xlsx', '.doc', '.docx', '.zip', '.hwp', '.ppt', '.pptx'];
+
+// 🚫 스킵할 도메인 (응답 없음/보안 차단 사이트)
+const SKIP_DOMAINS = [
+    'cmegroup.com', 
+    'tradingeconomics.com', 'lme.com', 'bloomberg.com', 'metal.com', 'sunsirs.com', 'ptonline.com', 'reuters.com', 'wsj.com',
+    'investing.com', 'marketwatch.com', 'cnbc.com', 'ft.com', 
+    'chosun.com', 'yna.co.kr', 'donga.com', 'hani.co.kr', 'mk.co.kr', 'hankyung.com', 'joins.com', 'khan.co.kr'
+];
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('News Image Tools')
+    .addItem('이미지 가져오기 (기본: 원본 링크)', 'updateNewsImages')
+    .addItem('이미지 백업하기 (드라이브 저장)', 'updateNewsImages_DriveBackup')
+    .addSeparator()
+    .addItem('기존 드라이브 파일 권한 수정', 'fixExistingImagePermissions')
+    .addToUi();
+}
+
+/**
+ * [Main] 핫링크 방식
+ */
+function updateNewsImages() {
+  const startTime = new Date().getTime();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const lastRow = sheet.getLastRow();
+  
+  if (lastRow < 2) {
+    SpreadsheetApp.getUi().alert("처리할 데이터가 없습니다.");
+    return;
+  }
+
+  const range = sheet.getRange(2, 1, lastRow - 1, 8);
+  const data = range.getValues(); 
+  let updateCount = 0;
+  let defaultCount = 0;
+  let isTimeOut = false;
+
+  SpreadsheetApp.getActiveSpreadsheet().toast("이미지 링크 가져오기(Hotlink)를 시작합니다...", "🚀 시작");
+
+  for (let i = 0; i < data.length; i++) {
+    if (i % 5 === 0) {
+        let msg = `진행 중: ${i + 1}행 / ${data.length}행`;
+        SpreadsheetApp.getActiveSpreadsheet().toast(msg, "🔍 진행 현황");
+    }
+    
+    // 타임아웃
+    if (new Date().getTime() - startTime > MAX_RUNTIME) {
+      isTimeOut = true;
+      break;
+    }
+
+    let urlInput = data[i][4]; 
+    let currentImageVal = data[i][7];
+
+    if (currentImageVal && currentImageVal.toString() !== "") {
+        console.log(`[PASS] ${i+2}행: 완료됨`);
+        continue;
+    }
+    
+    if (!urlInput || typeof urlInput !== 'string') {
+        sheet.getRange(i + 2, 8).setValue(DEFAULT_IMAGE_URL);
+        defaultCount++;
+        console.log(`[EMPTY->DEFAULT] ${i+2}행: URL 없어 대표 이미지 적용`);
+        continue;
+    }
+
+    console.log(`[START] ${i+2}행 작업 시작...`);
+
+    let urls = urlInput.split(/[\n,]+/)
+        .map(u => u.trim())
+        .filter(u => u.startsWith('http'));
+
+    let finalImgUrl = null;
+
+    for (let targetUrl of urls) {
+      let lowerUrl = targetUrl.toLowerCase();
+      // 1. 파일 확장자 체크
+      if (SKIP_EXTENSIONS.some(ext => lowerUrl.endsWith(ext))) {
+         console.log(`  [SKIP-FILE] 파일 링크 건너뜀: ${targetUrl}`);
+         continue;
+      }
+      // 2. 차단 도메인 체크
+      if (SKIP_DOMAINS.some(domain => lowerUrl.includes(domain))) {
+          console.log(`  [SKIP-DOMAIN] 접속 차단 사이트 건너뜀: ${targetUrl}`);
+          continue; 
+      }
+
+      console.log(`  >> 접속 시도: ${targetUrl}`); 
+
+      try {
+        let response = UrlFetchApp.fetch(targetUrl, { 
+            muteHttpExceptions: true, 
+            validateHttpsCertificates: false,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } 
+        });
+        
+        if (response.getResponseCode() === 200) {
+            let html = response.getContentText();
+            let imgMatch = 
+                html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+                html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
+                html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i) ||
+                html.match(/<meta[^>]+itemprop=["']image["'][^>]+content=["']([^"']+)["']/i);
+            
+            if (imgMatch && imgMatch[1]) {
+                finalImgUrl = imgMatch[1];
+                if (!finalImgUrl.startsWith('http')) {
+                    let domainMatch = targetUrl.match(/^https?:\/\/[^\/]+/);
+                    if(domainMatch) finalImgUrl = (finalImgUrl.startsWith('/') ? domainMatch[0] : domainMatch[0] + '/') + finalImgUrl;
+                }
+                console.log(`  [SUCCESS] 이미지 찾음!`);
+                break; 
+            }
+        }
+      } catch (e) {
+        console.log(`  [ERROR] 접속 실패: ${e.toString()}`);
+      }
+    }
+
+    if (!finalImgUrl) {
+        finalImgUrl = DEFAULT_IMAGE_URL;
+        defaultCount++;
+        console.log(`[DEFAULT] ${i+2}행: 대표 이미지 적용`);
+    }
+
+    if (finalImgUrl) {
+      sheet.getRange(i + 2, 8).setValue(finalImgUrl);
+      updateCount++;
+      if(updateCount % 10 === 0) SpreadsheetApp.flush();
+    }
+  }
+  
+  SpreadsheetApp.flush();
+  
+  let msg = `✅ 완료! 총 ${updateCount}건 처리됨`;
+  if (defaultCount > 0) msg += ` (대표 이미지 ${defaultCount}건)`;
+  if (isTimeOut) msg += "\n⏳ 시간 제한 중단. 다시 실행하세요.";
+  
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+function updateNewsImages_DriveBackup() {
+    SpreadsheetApp.getUi().alert("백업 기능은 현재 유지보수 중입니다.");
+}
+
+function fixExistingImagePermissions() {
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const files = folder.getFiles();
+  let count = 0;
+  while (files.hasNext()) {
+    files.next().setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    count++;
+  }
+  SpreadsheetApp.getUi().alert(count + "개 파일 권한 수정 완료.");
+}
