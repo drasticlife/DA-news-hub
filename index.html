@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/globe.gl"></script>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
@@ -24,10 +25,6 @@
         height: 100%;
         background: #000;
         z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
         transition: opacity 1s ease-out, visibility 1s;
         cursor: pointer;
         overflow: hidden;
@@ -36,45 +33,35 @@
         opacity: 0;
         visibility: hidden;
       }
-      #globe-container {
-        width: 100%;
-        height: 100%;
+      #globeViz { width: 100vw; height: 100vh; }
+    
+      #center-title {
         position: absolute;
-        top: 0;
-        left: 0;
-      }
-      .landing-content {
-        position: relative;
-        z-index: 10000;
-        text-align: center;
-        pointer-events: none;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         color: white;
+        text-align: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        pointer-events: none;
+        z-index: 10;
+        text-shadow: 0 0 10px rgba(0, 169, 224, 0.8);
       }
-      .landing-title {
-        font-size: 2.8rem;
-        line-height: 1.1;
-        font-weight: 900;
-        letter-spacing: -0.02em;
-        margin-bottom: 2rem;
+      
+      #center-title h1 {
+        margin: 0;
+        font-size: 3rem;
+        font-weight: 300;
+        letter-spacing: 2px;
         text-transform: uppercase;
-        /* 더 선명한 흰색-파란색 그라데이션 */
-        background: linear-gradient(to bottom, #ffffff 30%, #44aaff 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        max-width: 1000px;
-        filter: drop-shadow(0 0 20px rgba(0, 170, 255, 0.4));
       }
-      .click-hint {
-        font-size: 1rem;
-        font-weight: 500;
-        letter-spacing: 0.2em;
-        color: rgba(255, 255, 255, 0.6);
-        animation: pulse-hint 2s infinite;
-      }
-      @keyframes pulse-hint {
-        0%, 100% { opacity: 0.3; transform: scale(0.95); }
-        50% { opacity: 1; transform: scale(1); }
+
+      #center-title p {
+        margin: 10px 0 0;
+        font-size: 1.2rem;
+        font-weight: 100;
+        opacity: 0.8;
+        font-style: italic;
       }
       
       body.landing-active {
@@ -221,11 +208,13 @@
       .summary-text {
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
       .news-item.expanded .summary-text {
         -webkit-line-clamp: unset;
+        line-clamp: unset;
       }
       .news-item img {
         filter: grayscale(100%);
@@ -431,185 +420,91 @@
         background-color: #25282c;
         border-color: #3f444a;
       }
+      
+      /* Investing.com 위젯 마스킹 스타일 제거됨 */
+      /* Index Modal Styles */
+      #indexModal .tradingview-widget-copyright {
+        display: none !important;
+      }
     </style>
   </head>
   <body class="bg-[#fcfcfc] text-[#333] landing-active">
     <!-- 3D 지구 랜딩 페이지 -->
     <div id="landing-page" onclick="enterDashboard()">
-      <div id="globe-container"></div>
-      <div class="landing-content">
-        <h1 class="landing-title">SAMSUNG DA PROCUREMENT<br>INSIGHT DAILY REPORT</h1>
-        <p class="click-hint">CLICK TO EXPLORE</p>
+      <div id="center-title">
+        <h1>DA Procurement</h1>
+        <p>Daily Insight Journal</p>
       </div>
+
+      <div id="globeViz"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-      // 3D 지구 초기화 logic (세계 지도 파티클 버전)
       function initLandingGlobe() {
-        const container = document.getElementById('globe-container');
-        if (!container) return;
-        
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        container.appendChild(renderer.domElement);
+        // [데이터 설정]
+        // lat/lng: 실제 공장 위치
+        // txtLat/txtLng: 글자가 표시될 위치 (겹침 방지용)
+        const places = [
+          // 1. 한국 (수원 vs 광주 상하 분리)
+          { name: "Samsung Digital City", country: "Korea", product: "HQ / R&D", lat: 37.263, lng: 127.028, txtLat: 39.5, txtLng: 127.0 },
+          { name: "Gwangju Plant", country: "Korea", product: "Premium DA", lat: 35.159, lng: 126.852, txtLat: 33.5, txtLng: 127.5 },
 
-        const globeRadius = 5;
-        const particlesGroup = new THREE.Group();
-        scene.add(particlesGroup);
-
-        // --- 1. 배경 가이드 구체 ---
-        const sphereGeo = new THREE.SphereGeometry(globeRadius - 0.05, 48, 48);
-        const sphereMat = new THREE.MeshBasicMaterial({ 
-          color: 0x002244, 
-          transparent: true, 
-          opacity: 0.15,
-          wireframe: true 
-        });
-        const backgroundSphere = new THREE.Mesh(sphereGeo, sphereMat);
-        scene.add(backgroundSphere);
-
-        // --- 2. 입자 생성용 메테리얼 ---
-        const particleMaterial = new THREE.PointsMaterial({
-          color: 0x00ccff,
-          size: 0.05,
-          transparent: true,
-          opacity: 0.8,
-          blending: THREE.AdditiveBlending
-        });
-
-        // --- 3. 절차적 지도 생성 함수 (Fallback) ---
-        function generateProceduralMap() {
-          const posArray = [];
-          const continents = [
-            { lat: 40, lon: 70, r: 35 },  // 유라시아
-            { lat: 0, lon: 20, r: 25 },   // 아프리카
-            { lat: 45, lon: -100, r: 25 }, // 북미
-            { lat: -20, lon: -60, r: 20 }, // 남미
-            { lat: -25, lon: 135, r: 15 }, // 호주
-            { lat: -80, lon: 0, r: 60 }    // 안타르티카
-          ];
-
-          for (let i = 0; i < 9000; i++) {
-            const lat = (Math.random() - 0.5) * Math.PI;
-            const lon = (Math.random() - 0.5) * Math.PI * 2;
-            const latDeg = lat * (180 / Math.PI);
-            const lonDeg = lon * (180 / Math.PI);
-            
-            let isLand = continents.some(c => {
-               const dx = latDeg - c.lat;
-               const dy = lonDeg - c.lon;
-               return (dx * dx * 0.5 + dy * dy) < (c.r * c.r);
-            });
-
-            if (isLand || Math.random() < 0.03) {
-              posArray.push(
-                globeRadius * Math.cos(lat) * Math.cos(lon),
-                -globeRadius * Math.sin(lat),
-                -globeRadius * Math.cos(lat) * Math.sin(lon)
-              );
-            }
-          }
-          updateParticles(posArray);
-        }
-
-        function updateParticles(posArray) {
-          const geometry = new THREE.BufferGeometry();
-          geometry.setAttribute('position', new THREE.Float32BufferAttribute(posArray, 3));
-          const mapParticles = new THREE.Points(geometry, particleMaterial);
-          while(particlesGroup.children.length > 0) particlesGroup.remove(particlesGroup.children[0]);
-          particlesGroup.add(mapParticles);
-        }
-
-        // --- 4. 실제 이미지 기반 샘플링 시도 ---
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        img.src = 'world_map_real.png';
-        
-        img.onload = function() {
-          try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-            const posArray = [];
-            const density = 180;
-            for (let i = 0; i < density; i++) {
-              for (let j = 0; j < density; j++) {
-                const u = i / density;
-                const v = j / density;
-                const x = Math.floor(u * canvas.width);
-                const y = Math.floor(v * canvas.height);
-                const idx = (y * canvas.width + x) * 4;
-                
-                // 육지 조건: 밝기 또는 알파값
-                if (data[idx] > 50 || data[idx+3] > 128) {
-                  const lat = (v - 0.5) * Math.PI;
-                  const lon = (u - 0.5) * Math.PI * 2;
-                  posArray.push(
-                    globeRadius * Math.cos(lat) * Math.cos(lon),
-                    -globeRadius * Math.sin(lat),
-                    -globeRadius * Math.cos(lat) * Math.sin(lon)
-                  );
-                }
-              }
-            }
-            if (posArray.length > 100) updateParticles(posArray);
-            else generateProceduralMap();
-          } catch (e) {
-            generateProceduralMap();
-          }
-        };
-
-        img.onerror = () => generateProceduralMap();
-
-        // --- 5. 배경 별무리 ---
-        const starGeo = new THREE.BufferGeometry();
-        const starCount = 1200;
-        const starPos = new Float32Array(starCount * 3);
-        for(let i=0; i<starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 100;
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.02, transparent: true, opacity: 0.4 }));
-        scene.add(stars);
-
-        camera.position.z = 12;
-
-        let mouseX = 0, mouseY = 0;
-        let targetX = 0, targetY = 0;
-
-        document.addEventListener('mousemove', (e) => {
-          mouseX = (e.clientX - window.innerWidth / 2);
-          mouseY = (e.clientY - window.innerHeight / 2);
-        });
-
-        function animate() {
-          if (document.getElementById('landing-page').classList.contains('hidden')) return;
-          requestAnimationFrame(animate);
-
-          targetX = mouseX * 0.0003;
-          targetY = mouseY * 0.0003;
-
-          particlesGroup.rotation.y += 0.0015;
-          particlesGroup.rotation.x += 0.05 * (targetY - particlesGroup.rotation.x);
-          particlesGroup.rotation.y += 0.05 * (targetX - particlesGroup.rotation.y);
+          // 2. 중국 (신규 추가) - 한국과 겹치지 않게 왼쪽(서쪽)으로 글자 이동
+          { name: "SSEC", country: "China", product: "DA Complex", lat: 31.298, lng: 120.585, txtLat: 31.3, txtLng: 116.0 },
           
-          backgroundSphere.rotation.copy(particlesGroup.rotation);
-          renderer.render(scene, camera);
-        }
-        animate();
+          // 3. 동남아 (태국 vs 베트남 대각선 분리)
+          { name: "TSE", country: "Thailand", product: "A/C, Ref", lat: 13.111, lng: 100.927, txtLat: 16.5, txtLng: 98.0 },
+          { name: "SEHC", country: "Vietnam", product: "TV/DA Complex", lat: 10.762, lng: 106.660, txtLat: 8.5, txtLng: 109.0 },
 
-        window.addEventListener('resize', () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+          // 4. 남미 (신규 추가) - 브라질
+          { name: "SEDA", country: "Brazil", product: "DA/TV", lat: -3.119, lng: -60.021, txtLat: -3.119, txtLng: -60.021 },
+
+          // 5. 그 외 지역
+          { name: "SEPM", country: "Poland", product: "Ref/W/M", lat: 52.711, lng: 16.381, txtLat: 52.711, txtLng: 16.381 },
+          { name: "SAMEX", country: "Mexico", product: "Ref", lat: 20.588, lng: -100.389, txtLat: 20.588, txtLng: -100.389 },
+          { name: "SEM", country: "Mexico", product: "TV/Monitor", lat: 32.514, lng: -117.038, txtLat: 32.514, txtLng: -117.038 },
+          { name: "SEHA", country: "USA", product: "W/M", lat: 34.274, lng: -81.618, txtLat: 34.274, txtLng: -81.618 },
+          { name: "SIEL", country: "India", product: "DA/TV", lat: 12.971, lng: 80.015, txtLat: 12.971, txtLng: 80.015 }
+        ];
+
+        const world = Globe()
+          (document.getElementById('globeViz'))
+          .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+          .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+          .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+          .atmosphereColor('#3a228a')
+          .atmosphereAltitude(0.2)
+
+          // [점]
+          .pointsData(places)
+          .pointLat('lat')
+          .pointLng('lng')
+          .pointColor(() => '#00a9e0')
+          .pointAltitude(0.01)
+          .pointRadius(0.6)
+          
+          // [글자]
+          .labelsData(places)
+          .labelLat('txtLat')
+          .labelLng('txtLng')
+          .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
+          .labelSize(1.0)
+          .labelDotRadius(0.3)
+          .labelColor(() => 'rgba(255, 255, 255, 0.9)')
+          .labelResolution(2)
+          .labelAltitude(0.02)
+
+          .onPointClick(point => {
+            // 클릭 시 더 가까이 줌인
+            world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 1000);
+          });
+
+        // [초기 시점 설정] 
+        // altitude 값을 1.8 -> 1.4로 낮춰서 더 확대된 상태로 시작
+        world.pointOfView({ lat: 25, lng: 110, altitude: 1.1 });
+
+        world.controls().autoRotate = true;
+        world.controls().autoRotateSpeed = 0.6;
       }
 
       function enterDashboard() {
@@ -655,9 +550,19 @@
           <a href="#" onclick="filterNews('거시경제')">거시/정책</a>
           <a href="#" onclick="filterNews('생산지역')">생산지역</a>
           <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
+          <a href="#" onclick="showIndexModal()" class="text-[#1428a0]">INDEX</a>
         </nav>
       </div>
-      <div class="flex items-center gap-4 flex-1 max-w-md mx-8">
+      <div class="flex items-center gap-2 flex-1 max-w-md mx-8">
+        <select
+          id="searchScope"
+          onchange="handleSearchScope(event)"
+          class="bg-gray-50 dark:bg-gray-800 border-none rounded-lg py-1.5 px-3 text-xs font-bold text-gray-500 focus:ring-2 focus:ring-[#1428a0] outline-none cursor-pointer h-[34px]"
+        >
+          <option value="all">제목+본문</option>
+          <option value="title">제목</option>
+          <option value="content">본문</option>
+        </select>
         <div class="relative w-full">
           <i
             data-lucide="search"
@@ -730,30 +635,135 @@
         <div id="worldMap"></div>
       </div>
 
-      <!-- 환율 섹션 -->
-      <div class="mb-8">
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400"
-        >
-          환율 (FX Rates)
-        </h3>
-        <div class="market-section">
-          <div id="fxCarousel" class="market-carousel"></div>
-          <div id="fxDots" class="carousel-dots"></div>
+      <!-- TradingView Tickers Widget -->
+      <div class="mb-4">
+        <!-- TradingView Widget BEGIN -->
+      <!-- Vertical Carousel Widget -->
+      <style>
+        .carousel-container {
+          width: 100%;
+          height: 126px; /* Single widget height */
+          overflow: hidden;
+          position: relative;
+          background: transparent;
+        }
+        .carousel-track {
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .carousel-item {
+          height: 126px;
+          width: 100%;
+          flex-shrink: 0;
+        }
+        /* Hide TradingView copyright for cleaner look */
+        .carousel-item .tradingview-widget-copyright {
+          display: none !important;
+        }
+      </style>
+
+      <div class="carousel-container mb-4">
+        <div class="carousel-track" id="ticker-track">
+          <!-- 1. USDKRW -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+              {
+                "symbol": "FX_IDC:USDKRW",
+                "width": "100%",
+                "colorTheme": "light",
+                "isTransparent": true,
+                "locale": "kr"
+              }
+              </script>
+            </div>
+          </div>
+          <!-- 2. USDCNY -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+              {
+                "symbol": "FX_IDC:USDCNY",
+                "width": "100%",
+                "colorTheme": "light",
+                "isTransparent": true,
+                "locale": "kr"
+              }
+              </script>
+            </div>
+          </div>
+          <!-- 3. USDTHB -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+              {
+                "symbol": "FX_IDC:USDTHB",
+                "width": "100%",
+                "colorTheme": "light",
+                "isTransparent": true,
+                "locale": "kr"
+              }
+              </script>
+            </div>
+          </div>
+          <!-- 4. USDINR -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+              {
+                "symbol": "FX_IDC:USDINR",
+                "width": "100%",
+                "colorTheme": "light",
+                "isTransparent": true,
+                "locale": "kr"
+              }
+              </script>
+            </div>
+          </div>
+          <!-- 5. USDBRL -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+              {
+                "symbol": "FX_IDC:USDBRL",
+                "width": "100%",
+                "colorTheme": "light",
+                "isTransparent": true,
+                "locale": "kr"
+              }
+              </script>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 원자재 섹션 -->
-      <div class="mb-8">
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400"
-        >
-          주요 원자재 (Materials)
-        </h3>
-        <div class="market-section">
-          <div id="materialCarousel" class="market-carousel"></div>
-          <div id="materialDots" class="carousel-dots"></div>
-        </div>
+      <script>
+        (function() {
+          // Initialize carousel if container exists
+          const track = document.getElementById('ticker-track');
+          if (track) {
+            const items = track.children;
+            const itemCount = items.length;
+            const itemHeight = 126;
+            let index = 0;
+
+            setInterval(() => {
+              index++;
+              if (index >= itemCount) {
+                index = 0;
+              }
+              track.style.transform = `translateY(-${index * itemHeight}px)`;
+            }, 4000); 
+          }
+        })();
+      </script>
+        <!-- TradingView Widget END -->
       </div>
 
       <!-- 3D 태그 클라우드 섹션 -->
@@ -871,6 +881,7 @@
         risk: "all",
         sort: "latest",
         search: "",
+        scope: "all",
         dateType: null, // null | 'week' | 'day'
         dateValue: null
       };
@@ -1477,6 +1488,16 @@
         document.getElementById("reportModal").classList.add("hidden");
       }
 
+      function showIndexModal() {
+        document.getElementById("indexModal").classList.remove("hidden");
+      }
+
+      function closeIndexModal(event) {
+        if (!event || event.target.id === "indexModal" || event.target.closest('button')) {
+             document.getElementById("indexModal").classList.add("hidden");
+        }
+      }
+
       function goToday() {
         const today = new Date();
         curYear = today.getFullYear();
@@ -1511,6 +1532,11 @@
         applyFilters();
       }
 
+      function handleSearchScope(event) {
+        filterState.scope = event.target.value;
+        applyFilters();
+      }
+
       function resetFilters() {
         document.getElementById("searchInput").value = "";
         
@@ -1520,9 +1546,12 @@
             risk: "all",
             sort: "latest",
             search: "",
+            scope: "all",
             dateType: null,
             dateValue: null
         };
+        
+        document.getElementById("searchScope").value = "all";
 
         // 달력 UI 초기화
         document.querySelectorAll(".calendar-grid span").forEach((el) => {
@@ -1584,13 +1613,23 @@
         // 4. 검색 필터
         if (filterState.search) {
             const q = filterState.search;
-            result = result.filter(n => 
-                (n.Title && n.Title.toLowerCase().includes(q)) ||
-                (n.Summary && n.Summary.toLowerCase().includes(q)) ||
-                (n.Tag && n.Tag.toLowerCase().includes(q)) ||
-                (n.Region && n.Region.toLowerCase().includes(q))
-            );
-            title = `'${q}' 검색 결과`;
+            const scope = filterState.scope || "all";
+            
+            result = result.filter(n => {
+                const titleMatch = n.Title && n.Title.toLowerCase().includes(q);
+                const summaryMatch = n.Summary && n.Summary.toLowerCase().includes(q);
+                
+                // 제목+본문(all)일 때는 태그/지역도 포함하여 검색 (기본 동작 유지)
+                const tagMatch = n.Tag && n.Tag.toLowerCase().includes(q);
+                const regionMatch = n.Region && n.Region.toLowerCase().includes(q);
+
+                if (scope === "title") return titleMatch;
+                if (scope === "content") return summaryMatch;
+                return titleMatch || summaryMatch || tagMatch || regionMatch;
+            });
+
+            const scopeMap = { "title": "제목", "content": "본문", "all": "전체" };
+            title = `'${q}' 검색 결과 (${scopeMap[scope]})`;
         }
 
         document.getElementById("feedTitle").innerText = title;
@@ -1666,263 +1705,69 @@
         lucide.createIcons();
       }
 
-      // 환율 carousel 상태
-      let fxCurrentIndex = 0;
-      let fxData = [];
-      let fxInterval = null;
 
-      // 원자재 carousel 상태
-      let materialCurrentIndex = 0;
-      let materialData = [];
-      let materialInterval = null;
 
-      // 환율 데이터 가져오기 및 렌더링
-      async function renderFXRates() {
-        try {
-          // 실시간 환율 API 호출 (exchangerate-api.com - 무료)
-          const response = await fetch(
-            "https://api.exchangerate-api.com/v4/latest/USD",
-          );
-          const data = await response.json();
+      function showIndexModal() {
+        document.getElementById("indexModal").classList.remove("hidden");
+      }
 
-          const krwRate = data.rates.KRW;
-          const eurRate = data.rates.EUR;
-          const jpyRate = data.rates.JPY;
-          const cnyRate = data.rates.CNY;
-
-          // 원화 기준 환율 계산
-          fxData = [
-            {
-              code: "USD/KRW",
-              value: krwRate,
-              change: +(Math.random() * 2 - 1).toFixed(2),
-              name: "미국 달러",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "EUR/KRW",
-              value: krwRate / eurRate,
-              change: +(Math.random() * 2 - 1).toFixed(2),
-              name: "유로",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "JPY/KRW",
-              value: (krwRate / jpyRate) * 100,
-              change: +(Math.random() * 2 - 1).toFixed(2),
-              name: "일본 엔 (100엔)",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "CNY/KRW",
-              value: krwRate / cnyRate,
-              change: +(Math.random() * 2 - 1).toFixed(2),
-              name: "중국 위안",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-          ];
-
-          updateFXCarousel();
-        } catch (error) {
-          console.error("FX API error:", error);
-          // Fallback 데이터
-          fxData = [
-            {
-              code: "USD/KRW",
-              value: 1340.5,
-              change: +2.5,
-              name: "미국 달러",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "EUR/KRW",
-              value: 1450.2,
-              change: -1.2,
-              name: "유로",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "JPY/KRW",
-              value: 9.45,
-              change: +0.8,
-              name: "일본 엔 (100엔)",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-            {
-              code: "CNY/KRW",
-              value: 185.3,
-              change: +1.1,
-              name: "중국 위안",
-              timestamp: new Date().toLocaleTimeString("ko-KR"),
-            },
-          ];
-          updateFXCarousel();
+      function closeIndexModal(event) {
+        if (!event || event.target.id === "indexModal" || event.target.closest('button')) {
+             document.getElementById("indexModal").classList.add("hidden");
         }
-      }
-
-      function updateFXCarousel() {
-        const carousel = document.getElementById("fxCarousel");
-        const dots = document.getElementById("fxDots");
-
-        carousel.innerHTML = fxData
-          .map(
-            (fx) => `
-                <div class="market-slide">
-                    <div>
-                        <div class="market-label">${fx.code}</div>
-                        <div style="font-size: 8px; color: #94a3b8;">${fx.name}</div>
-                        <div style="font-size: 7px; color: #cbd5e1; margin-top: 2px;">${fx.timestamp}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div class="market-value">₩${fx.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <span class="market-change ${fx.change >= 0 ? "market-up" : "market-down"}">
-                            ${fx.change >= 0 ? "▲" : "▼"} ${Math.abs(fx.change)}%
-                        </span>
-                    </div>
-                </div>
-            `,
-          )
-          .join("");
-
-        dots.innerHTML = fxData
-          .map(
-            (_, i) =>
-              `<div class="carousel-dot ${i === fxCurrentIndex ? "active" : ""}" onclick="goToFXSlide(${i})"></div>`,
-          )
-          .join("");
-
-        carousel.style.transform = `translateX(-${fxCurrentIndex * 100}%)`;
-
-        // 자동 슬라이드
-        if (fxInterval) clearInterval(fxInterval);
-        fxInterval = setInterval(() => {
-          fxCurrentIndex = (fxCurrentIndex + 1) % fxData.length;
-          updateFXCarousel();
-        }, 3000);
-      }
-
-      function goToFXSlide(index) {
-        fxCurrentIndex = index;
-        updateFXCarousel();
-      }
-
-      // 원자재 가격 렌더링
-      async function renderMaterialPrices() {
-        // 실제 원자재 가격 (2026년 1월 기준 대략적인 시장 가격)
-        materialData = [
-          {
-            name: "Copper (Cu)",
-            value: 9250,
-            unit: "USD/MT",
-            change: +(Math.random() * 4 - 2).toFixed(2),
-            description: "구리 (LME)",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-          {
-            name: "Aluminum (Al)",
-            value: 2580,
-            unit: "USD/MT",
-            change: +(Math.random() * 3 - 1.5).toFixed(2),
-            description: "알루미늄 (LME)",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-          {
-            name: "R-134a",
-            value: 8.5,
-            unit: "USD/kg",
-            change: +(Math.random() * 2 - 1).toFixed(2),
-            description: "냉매",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-          {
-            name: "ABS",
-            value: 2100,
-            unit: "USD/MT",
-            change: +(Math.random() * 2 - 1).toFixed(2),
-            description: "ABS 수지",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-          {
-            name: "HIPS",
-            value: 1950,
-            unit: "USD/MT",
-            change: +(Math.random() * 2 - 1).toFixed(2),
-            description: "HIPS",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-          {
-            name: "GI Steel",
-            value: 950,
-            unit: "USD/MT",
-            change: +(Math.random() * 3 - 1.5).toFixed(2),
-            description: "아연도금강판",
-            timestamp: new Date().toLocaleTimeString("ko-KR"),
-          },
-        ];
-
-        updateMaterialCarousel();
-      }
-
-      function updateMaterialCarousel() {
-        const carousel = document.getElementById("materialCarousel");
-        const dots = document.getElementById("materialDots");
-
-        carousel.innerHTML = materialData
-          .map(
-            (mat) => `
-                <div class="market-slide">
-                    <div>
-                        <div class="market-label">${mat.name}</div>
-                        <div style="font-size: 8px; color: #94a3b8;">${mat.description}</div>
-                        <div style="font-size: 7px; color: #cbd5e1; margin-top: 2px;">${mat.timestamp}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div class="market-value">$${mat.value.toLocaleString()}</div>
-                        <div style="font-size: 8px; color: #64748b;">${mat.unit}</div>
-                        <span class="market-change ${mat.change >= 0 ? "market-up" : "market-down"}">
-                            ${mat.change >= 0 ? "▲" : "▼"} ${Math.abs(mat.change)}%
-                        </span>
-                    </div>
-                </div>
-            `,
-          )
-          .join("");
-
-        dots.innerHTML = materialData
-          .map(
-            (_, i) =>
-              `<div class="carousel-dot ${i === materialCurrentIndex ? "active" : ""}" onclick="goToMaterialSlide(${i})"></div>`,
-          )
-          .join("");
-
-        carousel.style.transform = `translateX(-${materialCurrentIndex * 100}%)`;
-
-        // 자동 슬라이드
-        if (materialInterval) clearInterval(materialInterval);
-        materialInterval = setInterval(() => {
-          materialCurrentIndex =
-            (materialCurrentIndex + 1) % materialData.length;
-          updateMaterialCarousel();
-        }, 3000);
-      }
-
-      function goToMaterialSlide(index) {
-        materialCurrentIndex = index;
-        updateMaterialCarousel();
       }
 
       window.onload = () => {
         lucide.createIcons();
         fetchNews();
-        renderFXRates();
-        renderMaterialPrices();
+        // renderFXRates();
+        // renderMaterialPrices();
 
         // 1분마다 환율/원자재 데이터 업데이트
-        setInterval(() => {
-          renderFXRates();
-          renderMaterialPrices();
-        }, 60000);
+        // setInterval(() => {
+        //   renderFXRates();
+        //   renderMaterialPrices();
+        // }, 60000);
       };
     </script>
+
+    <div
+      id="indexModal"
+      class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
+      onclick="closeIndexModal(event)"
+    >
+      <div class="bg-white dark:bg-[#25282c] p-6 rounded-2xl shadow-2xl relative" onclick="event.stopPropagation()">
+          <button
+            onclick="closeIndexModal()"
+            class="absolute top-4 right-4 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full transition-colors"
+          >
+            <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
+          </button>
+          
+          <!-- TradingView Widget BEGIN -->
+          <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <div class="tradingview-widget-copyright"><a href="https://kr.tradingview.com/markets/currencies/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js" async>
+            {
+            "colorTheme": "light",
+            "isTransparent": false,
+            "locale": "kr",
+            "currencies": [
+              "USD",
+              "JPY",
+              "CNY",
+              "KRW",
+              "THB"
+            ],
+            "backgroundColor": "#ffffff",
+            "width": 800,
+            "height": 600
+          }
+            </script>
+          </div>
+          <!-- TradingView Widget END -->
+      </div>
+    </div>
   </body>
 </html>
