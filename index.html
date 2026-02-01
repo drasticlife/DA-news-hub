@@ -550,6 +550,7 @@
           <a href="#" onclick="filterNews('거시경제')">거시/정책</a>
           <a href="#" onclick="filterNews('생산지역')">생산지역</a>
           <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
+          <a href="#" onclick="filterNews('신기술동향')">신기술동향</a>
           <a href="#" onclick="showIndexModal()" class="text-[#1428a0]">INDEX</a>
         </nav>
       </div>
@@ -1574,8 +1575,13 @@
         // 1. 카테고리 필터 (날짜 필터가 없을 때만)
         if (!filterState.dateType && filterState.category !== "all") {
              result = result.filter(n => {
-                if (!n.Category) return false;
-                return n.Category.split(":")[0].trim() === filterState.category;
+                const cat = n.Category ? n.Category.split(":")[0].trim() : "";
+                
+                if (filterState.category === "신기술동향") {
+                    return cat === "AI기술" || cat === "신기술";
+                }
+                
+                return cat === filterState.category;
              });
         }
 
