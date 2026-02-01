@@ -87,7 +87,7 @@
         top: 55px;
         height: calc(100vh - 55px);
         border-right: 1px solid #eee;
-        padding: 25px;
+        padding: 20px;
         overflow-y: auto;
         background: white;
       }
@@ -101,16 +101,16 @@
       /* 1. 안정적인 8열 그리드 달력 (주차 포함) */
       .calendar-grid {
         display: grid;
-        grid-template-columns: 28px repeat(7, minmax(28px, 1fr));
-        gap: 4px;
+        grid-template-columns: 24px repeat(7, minmax(24px, 1fr));
+        gap: 2px;
         align-items: center;
         justify-items: center;
         width: 100%;
         max-width: 280px;
       }
       .calendar-grid span {
-        width: 28px;
-        height: 28px;
+        width: 24px;
+        height: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -534,24 +534,19 @@
             DA
           </div>
           <h1
-            class="text-base font-black text-[#1428a0] dark:text-blue-400 tracking-tighter uppercase"
+            class="text-base font-black text-[#1428a0] dark:text-blue-400 tracking-tighter uppercase whitespace-nowrap"
           >
             Purchase Intelligence
           </h1>
         </div>
-        <nav class="flex gap-8 text-sm font-bold text-gray-400">
-          <a
-            href="#"
-            class="text-[#1428a0] border-b-2 border-[#1428a0] pb-1"
-            onclick="resetFilters()"
-            >전략 시황</a
-          >
+        <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-bold text-slate-400 whitespace-nowrap">
+          <a href="#" onclick="filterNews('전략 시황')" class="text-[#1428a0] border-b-2 border-[#1428a0] pb-0.5">전략 시황</a>
           <a href="#" onclick="filterNews('원자재')">원자재</a>
           <a href="#" onclick="filterNews('거시경제')">거시/정책</a>
           <a href="#" onclick="filterNews('생산지역')">생산지역</a>
           <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
-          <a href="#" onclick="filterNews('신기술동향')">신기술동향</a>
-          <a href="#" onclick="showIndexModal()" class="text-[#1428a0]">INDEX</a>
+          <a href="#" onclick="filterNews('신기술동향')" class="text-[#1428a0]">신기술동향</a>
+          <a href="#" onclick="filterNews('INDEX')" class="text-[#1428a0]">INDEX</a>
         </nav>
       </div>
       <div class="flex items-center gap-2 flex-1 max-w-md mx-8">
@@ -578,12 +573,21 @@
           />
         </div>
       </div>
-      <button
-        onclick="toggleDarkMode()"
-        class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-      >
-        <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          onclick="toggleLanguage()"
+          id="langBtn"
+          class="px-2 py-1 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-slate-500 hover:text-[#1428a0] transition-colors"
+        >
+          KO
+        </button>
+        <button
+          onclick="toggleDarkMode()"
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500"></i>
+        </button>
+      </div>
     </header>
 
     <aside class="sidebar dark:bg-[#25282c]">
@@ -854,7 +858,7 @@
           class="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-[#1428a0] text-white"
         >
           <h3 class="font-bold text-lg flex items-center gap-2">
-            <i data-lucide="file-text" class="w-5 h-5"></i> 전략 요약 보고서
+            <i data-lucide="file-text" class="w-5 h-5"></i> <span id="modalTitleText">전략 요약 보고서</span>
           </h3>
           <button
             onclick="closeModal()"
@@ -886,6 +890,120 @@
         dateType: null, // null | 'week' | 'day'
         dateValue: null
       };
+
+      // 언어 상태 및 번역 사전
+      let currentLang = 'ko'; // 'ko' | 'en'
+      const translations = {
+        ko: {
+          nav_strategy: "전략 시황",
+          nav_material: "원자재",
+          nav_macro: "거시/정책",
+          nav_region: "생산지역",
+          nav_competitor: "경쟁사",
+          nav_tech: "신기술동향",
+          nav_index: "INDEX",
+          search_scope_all: "제목+본문",
+          search_scope_title: "제목",
+          search_scope_content: "본문",
+          search_placeholder: "뉴스 키워드 검색...",
+          today: "TODAY",
+          global_map: "Global Map",
+          cloud_title: "Intelligence Cloud",
+          feed_title: "Strategic Feed",
+          risk_all: "ALL",
+          sort_latest: "Latest",
+          sort_oldest: "Oldest",
+          syncing: "SYNCING DATA...",
+          modal_title: "전략 요약 보고서",
+          country_news_suffix: " 관련 뉴스",
+          data_error: "데이터 없음",
+          tag_data_error: "태그 데이터 없음",
+          region_data_error: "지역 데이터 없음",
+          briefing_suffix: " 전략 브리핑"
+        },
+        en: {
+          nav_strategy: "Strategy",
+          nav_material: "Material",
+          nav_macro: "Macro",
+          nav_region: "Region",
+          nav_competitor: "Competitors", 
+          nav_tech: "New Tech",
+          nav_index: "Index",
+          search_scope_all: "Title+Content",
+          search_scope_title: "Title",
+          search_scope_content: "Content",
+          search_placeholder: "Search keywords...",
+          today: "TODAY",
+          global_map: "Global Map",
+          cloud_title: "Intelligence Cloud",
+          feed_title: "Strategic Feed",
+          risk_all: "ALL",
+          sort_latest: "Latest",
+          sort_oldest: "Oldest",
+          syncing: "SYNCING DATA...",
+          modal_title: "Strategy Summary Report",
+          country_news_suffix: " News",
+          data_error: "No Data",
+          tag_data_error: "No Tag Data",
+          region_data_error: "No Regional Data",
+          briefing_suffix: " Briefing"
+        }
+      };
+
+      function toggleLanguage() {
+        currentLang = currentLang === 'ko' ? 'en' : 'ko';
+        document.getElementById('langBtn').innerText = currentLang.toUpperCase();
+        
+        applyTranslations();
+        renderAllow(); // Re-render content
+      }
+
+      function applyTranslations() {
+        const t = translations[currentLang];
+        
+        // Static UI Elements (Update logic)
+        // Note: For cleaner code, we will select elements by ID or data-i18n in a separate pass strictly if needed,
+        // but for now we'll update specific IDs directly or re-render components that contain them.
+
+        // Navbar
+        const navLinks = document.querySelectorAll('nav a');
+        if(navLinks.length >= 7) {
+            navLinks[0].innerText = t.nav_strategy;
+            navLinks[1].innerText = t.nav_material;
+            navLinks[2].innerText = t.nav_macro;
+            navLinks[3].innerText = t.nav_region;
+            navLinks[4].innerText = t.nav_competitor;
+            navLinks[5].innerText = t.nav_tech;
+            navLinks[6].innerText = t.nav_index;
+        }
+
+        // Search Scope
+        const scopeOpts = document.getElementById('searchScope').options;
+        scopeOpts[0].text = t.search_scope_all;
+        scopeOpts[1].text = t.search_scope_title;
+        scopeOpts[2].text = t.search_scope_content;
+        
+        // Search Placeholder
+        document.getElementById('searchInput').placeholder = t.search_placeholder;
+
+        // Feed Title (Default)
+        if(document.getElementById('feedTitle').innerText === translations['ko'].feed_title || 
+           document.getElementById('feedTitle').innerText === translations['en'].feed_title) {
+            document.getElementById('feedTitle').innerText = t.feed_title;
+        }
+
+        // Modal Title
+        const modalTitle = document.getElementById('modalTitleText');
+        if(modalTitle) modalTitle.innerText = t.modal_title;
+
+        // Loading Text
+        const loadingEl = document.getElementById('loading');
+        if(loadingEl) loadingEl.innerText = t.syncing;
+      }
+
+      function renderAllow() {
+          renderAll(currentFilteredNews); // Re-use the existing renderAll logic but with current data
+      }
 
       let curYear = 2026,
         curMonth = 0;
@@ -1004,6 +1122,7 @@
         renderSummary(data);
         renderTags(data);
         renderWorldMap(data);
+        renderFeed(data);
       }
 
       function moveCalendar(yOff, mOff) {
@@ -1158,6 +1277,8 @@
 
       function renderFeed(data) {
         const feed = document.getElementById("news-feed");
+        const t = translations[currentLang];
+        
         feed.innerHTML = data
           .map((n) => {
             const urls = parseUrls(n.URL);
@@ -1184,6 +1305,15 @@
               impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
             }
 
+            // 언어에 따른 제목/요약/날짜 처리
+            let displayTitle = n.Title;
+            let displaySummary = n.Summary;
+            
+            if (currentLang === 'en') {
+                if (n.Title_en) displayTitle = n.Title_en;
+                if (n.Summary_en) displaySummary = n.Summary_en;
+            }
+
             return `
                 <article id="${n._uId}" class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
                     <div class="flex-1">
@@ -1193,8 +1323,8 @@
                             ${impactHtml}
                             <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
                         </div>
-                        <h4 class="font-bold text-base mb-3 leading-snug">${n.Title || "No Title"}</h4>
-                        <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${n.Summary || ""}</p>
+                        <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
+                        <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
                         <div class="source-links">${sourceLinksHtml}</div>
                     </div>
                     ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
@@ -1216,16 +1346,20 @@
         
         console.log("renderTags called with", data.length, "items");
         const tagMap = {};
+
+        const t = translations[currentLang];
         
         if (!data || data.length === 0) {
             const container = document.getElementById("tagCloud3D");
-            if (container) container.innerHTML = '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">데이터 없음</div>';
+            if (container) container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
             return;
         }
 
         data.forEach((n) => {
           // 태그 필드 확인
-          const tagField = n.Tag || n.tag || n.Tags || n.tags || n.KEYWORD || n.Keyword || n.keyword;
+          let tagField = n.Tag || n.tag || n.Tags || n.tags || n.KEYWORD || n.Keyword || n.keyword;
+          if (currentLang === 'en' && n.Tag_en) tagField = n.Tag_en; // 영문 태그 우선
+
           if (tagField) {
             tagField.split(",").forEach((tag) => {
               const t = tag.trim();
@@ -1240,7 +1374,7 @@
 
         if (sortedTags.length === 0) {
           const container = document.getElementById("tagCloud3D");
-          if (container) container.innerHTML = '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">태그 데이터 없음</div>';
+          if (container) container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
           return;
         }
 
@@ -1361,17 +1495,20 @@
       // 글로벌 지도 렌더링
       function renderWorldMap(data) {
         console.log("renderWorldMap called with", data.length, "items");
+        const t = translations[currentLang];
         
         if (!data || data.length === 0) {
              document.getElementById("worldMap").innerHTML =
-            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">데이터 없음</div>';
+            `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">${t.region_data_error}</div>`;
             return;
         }
         
         const countryMap = {};
         data.forEach((n) => {
           // 다양한 대소문자/필드명 지원
-          const regionField = n.Region || n.region || n.Country || n.country || n.Place || n.place || n.Location || n.location;
+          let regionField = n.Region || n.region || n.Country || n.country || n.Place || n.place || n.Location || n.location;
+          if (currentLang === 'en' && n.Region_en) regionField = n.Region_en;
+
           if (regionField) {
             const countries = regionField.split(",").map((c) => c.trim());
             countries.forEach((country) => {
@@ -1384,7 +1521,7 @@
 
         if (Object.keys(countryMap).length === 0) {
           mapContainer.innerHTML =
-            '<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">지역 데이터 없음</div>';
+            `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">${t.region_data_error}</div>`;
           console.log("No countries found");
           return;
         }
@@ -1402,15 +1539,21 @@
         const countryList = document.createElement("div");
         countryList.style.cssText =
           "position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.95); padding: 8px; border-radius: 6px; font-size: 9px; max-height: 180px; overflow-y: auto; z-index: 10;";
+        
+        // 국가별 리스트 제목 번역은 생략하거나 추가 필요 (여기서는 하드코딩된 부분이라 수정)
+        // '국가별 기사' -> t.region_data_error 같은걸 쓸순 없고... 'By Country' 정도?
+        // 일단 유지하되 'Country'로 변경 고려.
+        const listTitle = currentLang === 'en' ? "By Country" : "국가별 기사";
+        
         countryList.innerHTML =
-          `<div style="font-weight: 700; margin-bottom: 4px; color: #1428a0;">국가별 기사</div>` +
+          `<div style="font-weight: 700; margin-bottom: 4px; color: #1428a0;">${listTitle}</div>` +
           Object.entries(countryMap)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10)
             .map(
               ([country, count]) =>
                 `<div style="cursor: pointer; padding: 2px 0; color: #64748b;" onclick="filterByCountry('${country}')" onmouseover="this.style.color='#1428a0'" onmouseout="this.style.color='#64748b'">
-                            ${country}: ${count}건
+                            ${country}: ${count}
                         </div>`,
             )
             .join("");
@@ -1461,19 +1604,23 @@
       }
 
       function showTagReport(tag) {
+        const t = translations[currentLang];
         const filtered = allNews.filter((n) => {
           const tagField = n.Tag || n.Tags;
           return tagField && tagField.includes(tag);
         });
         const body = document.getElementById("modalBody");
+        
+        let headerText = `#${tag}${t.briefing_suffix} (${filtered.length})`;
+        
         body.innerHTML = `
-                <h4 class="font-bold mb-4 text-lg">#${tag} 전략 브리핑 (${filtered.length}건)</h4>
+                <h4 class="font-bold mb-4 text-lg">${headerText}</h4>
                 <div class="space-y-3 text-sm">
                     ${filtered
                       .map(
                         (n) => `
                         <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div class="font-bold mb-1">${n.Title}</div>
+                            <div class="font-bold mb-1">${currentLang === 'en' && n.Title_en ? n.Title_en : n.Title}</div>
                             <div class="text-xs text-gray-500">${n.Date ? n.Date.toString().split("T")[0] : ""} | ${n.Category || "N/A"}</div>
                         </div>
                     `,
@@ -1570,6 +1717,7 @@
 
       // [핵심] 통합 필터링 로직
       function applyFilters() {
+        const t = translations[currentLang];
         let result = [...allNews];
 
         // 1. 카테고리 필터 (날짜 필터가 없을 때만)
@@ -1586,7 +1734,7 @@
         }
 
         // 2. 날짜 필터 (Calendar)
-        let title = "Strategic Feed";
+        let title = t.feed_title;
         if (filterState.dateType === 'week') {
             const range = getDateRangeForWeek(curYear, curMonth, filterState.dateValue);
             result = result.filter(n => {
@@ -1601,7 +1749,14 @@
             });
             title = `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`;
         } else if (filterState.category !== "all") {
-            title = `${filterState.category} 카테고리`;
+            // 카테고리 이름도 번역이 필요하면 맵핑해야 하지만, 현재는 데이터 원문(한글 카테고리)을 그대로 쓰거나 
+            // 별도 처리가 필요함. 일단은 카테고리명은 그대로 둠.
+            // 다만 '신기술동향'의 경우 네비게이션은 'New Tech Trends'이지만 필터값은 '신기술동향'임
+            if(filterState.category === "신기술동향" && currentLang === 'en') {
+                title = t.nav_tech;
+            } else {
+                title = filterState.category; 
+            }
         }
 
         // 3. 리스크 필터 (Nav/Date 필터 결과 위에서 동작)
@@ -1613,7 +1768,7 @@
 
         if (filterState.risk !== "all") {
             result = result.filter(n => n.Risk === filterState.risk);
-            title += ` (${filterState.risk} Risk)`; // 제목에 리스크 상태 반영
+            title += ` (${filterState.risk} Risk)`; 
         }
 
         // 4. 검색 필터
@@ -1622,8 +1777,11 @@
             const scope = filterState.scope || "all";
             
             result = result.filter(n => {
-                const titleMatch = n.Title && n.Title.toLowerCase().includes(q);
-                const summaryMatch = n.Summary && n.Summary.toLowerCase().includes(q);
+                // 한글/영문 모두 검색 (데이터가 있으면)
+                // 영문 상태라도 한글 검색이 필요할 수 있으므로 둘 다 체크 or 영문만 체크?
+                // 사용자 편의상 모든 필드 검색이 나음.
+                const titleMatch = (n.Title && n.Title.toLowerCase().includes(q)) || (n.Title_en && n.Title_en.toLowerCase().includes(q));
+                const summaryMatch = (n.Summary && n.Summary.toLowerCase().includes(q)) || (n.Summary_en && n.Summary_en.toLowerCase().includes(q));
                 
                 // 제목+본문(all)일 때는 태그/지역도 포함하여 검색 (기본 동작 유지)
                 const tagMatch = n.Tag && n.Tag.toLowerCase().includes(q);
@@ -1634,8 +1792,15 @@
                 return titleMatch || summaryMatch || tagMatch || regionMatch;
             });
 
-            const scopeMap = { "title": "제목", "content": "본문", "all": "전체" };
-            title = `'${q}' 검색 결과 (${scopeMap[scope]})`;
+            const scopeMap = { 
+                "title": t.search_scope_title, 
+                "content": t.search_scope_content, 
+                "all": currentLang === 'en' ? "All" : "전체" 
+            };
+            title = `'${q}' Search Result (${scopeMap[scope]})`;
+            if(currentLang === 'ko') {
+                title = `'${q}' 검색 결과 (${scopeMap[scope]})`;
+            }
         }
 
         document.getElementById("feedTitle").innerText = title;
@@ -1676,15 +1841,19 @@
 
         document.getElementById("summaryGrid").innerHTML = topRisks
           .map(
-            (a) =>
-              `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg cursor-pointer transform hover:scale-[1.02] transition-all" 
+            (a) => {
+                let displayTitle = a.Title;
+                if(currentLang === 'en' && a.Title_en) displayTitle = a.Title_en;
+
+                return `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg cursor-pointer transform hover:scale-[1.02] transition-all" 
                     onclick="focusNews('${a._uId}')">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${a.Risk === 'High' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}">${a.Risk || 'Info'}</span>
                         <span class="text-[9px] text-gray-400">${a.Date ? a.Date.toString().split("T")[0] : ""}</span>
                     </div>
-                    <h4 class="font-bold text-sm line-clamp-2 hover:text-[#1428a0]">${a.Title || "No Title"}</h4>
-                </div>`,
+                    <h4 class="font-bold text-sm line-clamp-2 hover:text-[#1428a0]">${displayTitle || "No Title"}</h4>
+                </div>`;
+            }
           )
           .join("");
       }
