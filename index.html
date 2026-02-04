@@ -196,12 +196,20 @@
         border-bottom: 1px solid #f1f5f9;
         padding: 24px 0;
         cursor: pointer;
+        /* Remove overflow hidden to allow outside bubble */
+        position: relative; 
+      }
+      .news-inner {
         transition: all 0.4s ease;
         overflow: hidden;
         max-height: 240px;
+        /* Ensure inner content clips properly */
+      }
+      /* Expanded state targets the INNER wrapper */
+      .news-item.expanded .news-inner {
+        max-height: 1500px;
       }
       .news-item.expanded {
-        max-height: 1500px;
         background: #fcfdfe;
         border-bottom: 2px solid #1428a0;
       }
@@ -426,6 +434,73 @@
       #indexModal .tradingview-widget-copyright {
         display: none !important;
       }
+
+      /* Bot Bubble UI */
+      .bot-container {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 20;
+      }
+      .bot-icon {
+        font-size: 24px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+      }
+      .bot-icon:hover {
+        transform: scale(1.2) rotate(-10deg);
+      }
+      /* Improved Bot Layout (In-Card) */
+      .news-body-grid {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .news-content-col {
+        flex: 1; /* Takes almost all space by default or 70% if bot exists */
+        min-width: 0; /* Prevent flex overflow */
+      }
+      .news-bot-col {
+        width: 260px; /* Fixed width for bot side */
+        flex-shrink: 0;
+        display: none;
+        padding-top: 8px;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.4s ease 0.1s;
+      }
+      /* Only show bot column when expanded and it exists */
+      .news-item.expanded .news-bot-col {
+        display: block;
+        opacity: 1;
+        transform: translateX(0);
+      }
+      
+      .bot-inner-bubble {
+        background: #fff0f5;
+        border: 2px solid #ffb6c1;
+        border-radius: 12px;
+        border-top-left-radius: 2px;
+        padding: 16px;
+        font-size: 13px;
+        color: #d63384;
+        line-height: 1.6;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        position: relative;
+      }
+      .bot-inner-bubble::before {
+        content: "🤖";
+        position: absolute;
+        top: -14px;
+        left: -8px;
+        font-size: 24px;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+      }
+
+      /* Dark mode adjustment */
+
+
     </style>
   </head>
   <body class="bg-[#fcfcfc] text-[#333] landing-active">
@@ -511,7 +586,15 @@
         const lp = document.getElementById('landing-page');
         lp.classList.add('hidden');
         document.body.classList.remove('landing-active');
-        setTimeout(() => { lp.style.display = 'none'; }, 1000);
+        
+        // Stop the heavy 3D globe rendering
+        setTimeout(() => { 
+            lp.style.display = 'none';
+            const globeContainer = document.getElementById('globeViz');
+            if(globeContainer) {
+                globeContainer.innerHTML = ''; // Kill the WebGL context
+            }
+        }, 1000);
       }
 
       // DOM 로드 시 지구본 초기화
@@ -546,7 +629,7 @@
           <a href="#" onclick="filterNews('생산지역')">생산지역</a>
           <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
           <a href="#" onclick="filterNews('신기술동향')" class="text-[#1428a0]">신기술동향</a>
-          <a href="#" onclick="filterNews('INDEX')" class="text-[#1428a0]">INDEX</a>
+          <a href="TradingView Widget.html" class="text-[#1428a0]">INDEX</a>
         </nav>
       </div>
       <div class="flex items-center gap-2 flex-1 max-w-md mx-8">
@@ -638,6 +721,16 @@
           Global Map
         </h3>
         <div id="worldMap"></div>
+      </div>
+
+      <!-- 3D Tag Cloud Section -->
+      <div class="mb-8">
+        <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">
+            Trend Keywords
+        </h3>
+        <div id="tagCloudContainer">
+            <div id="tagCloud3D"></div>
+        </div>
       </div>
 
       <!-- TradingView Tickers Widget -->
@@ -744,11 +837,6 @@
               }
               </script>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <script>
         (function() {
           // Initialize carousel if container exists
           const track = document.getElementById('ticker-track');
@@ -873,6 +961,18 @@
         ></div>
       </div>
     </div>
+
+    <div id="indexModal" class="modal-overlay hidden" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modal-body"></div>
+            <button class="close-btn" onclick="closeModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Global Bot Follower Element -->
+    <div id="global-bot-follower" class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150"></div>
 
     <script>
       const GAS_URL =
@@ -1005,8 +1105,9 @@
           renderAll(currentFilteredNews); // Re-use the existing renderAll logic but with current data
       }
 
-      let curYear = 2026,
-        curMonth = 0;
+      const todayDate = new Date();
+      let curYear = todayDate.getFullYear(),
+        curMonth = todayDate.getMonth();
       let tagCloudInstance = null;
 
       // 국가 좌표 맵핑 (실제 세계 지도 이미지 기준, %)
@@ -1314,25 +1415,54 @@
                 if (n.Summary_en) displaySummary = n.Summary_en;
             }
 
+            // 1. 봇 데이터 존재 여부
+            const botContent = n.BOT || n.Bot || n.bot;
+            // Escape quotes for attribute safety
+            const safeBotContent = botContent ? botContent.replace(/"/g, '&quot;') : '';
+
             return `
-                <article id="${n._uId}" class="news-item flex gap-8 items-start bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all" onclick="this.classList.toggle('expanded')">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${n.Category || "N/A"}</span>
-                            ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
-                            ${impactHtml}
-                            <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
+                <article id="${n._uId}" 
+                    class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? 'has-bot' : ''}" 
+                    onclick="this.classList.toggle('expanded')">
+                    <div class="news-inner">
+                        <div class="flex gap-8 items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${n.Category || "N/A"}</span>
+                                    ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
+                                    ${impactHtml}
+                                    <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
+                                </div>
+                                
+                                <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
+                                
+                                <div class="news-body-grid">
+                                    <div class="news-content-col">
+                                        <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
+                                        <div class="source-links">${sourceLinksHtml}</div>
+                                    </div>
+                                    
+                                    ${botContent ? `
+                                    <div class="news-bot-col" onclick="event.stopPropagation()">
+                                        <div class="bot-inner-bubble">
+                                            <div class="font-black mb-1 text-xs opacity-70">💡 AI Insight</div>
+                                            ${botContent}
+                                        </div>
+                                    </div>
+                                    ` : ""}
+                                </div>
+                            </div>
+                            
+                            ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
                         </div>
-                        <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
-                        <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
-                        <div class="source-links">${sourceLinksHtml}</div>
                     </div>
-                    ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
                 </article>`;
           })
           .join("");
         lucide.createIcons();
       }
+
+      /* Global Bot Follower Logic */
 
       // 3D 인터랙티브 태그 클라우드 - 순수 JavaScript 구현
       let tag3DRotation = { x: 0, y: 0 };
@@ -1707,9 +1837,10 @@
         });
 
         // 달력 헤더 리셋 (현재 연월로)
-        curYear = 2026; 
-        curMonth = 0;
-        document.getElementById("calHeader").innerText = "2026. 01";
+        const now = new Date();
+        curYear = now.getFullYear();
+        curMonth = now.getMonth();
+        document.getElementById("calHeader").innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
         renderCalendar(allNews);
 
         applyFilters();
@@ -1882,18 +2013,13 @@
 
 
 
-      function showIndexModal() {
-        document.getElementById("indexModal").classList.remove("hidden");
-      }
-
-      function closeIndexModal(event) {
-        if (!event || event.target.id === "indexModal" || event.target.closest('button')) {
-             document.getElementById("indexModal").classList.add("hidden");
-        }
-      }
 
       window.onload = () => {
         lucide.createIcons();
+        
+        // 초기 캘린더 헤더 설정 (JS 로드 시점에 즉시 반영)
+        document.getElementById("calHeader").innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+        
         fetchNews();
         // renderFXRates();
         // renderMaterialPrices();
@@ -1905,6 +2031,7 @@
         // }, 60000);
       };
     </script>
+
 
     <div
       id="indexModal"
