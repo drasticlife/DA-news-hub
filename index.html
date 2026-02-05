@@ -1444,10 +1444,13 @@
                 if (n.Summary_en) displaySummary = n.Summary_en;
             }
 
-            // 1. 봇 데이터 존재 여부
-            const botContent = n.BOT || n.Bot || n.bot;
+            // 1. 봇 데이터 존재 여부 및 언어별 매핑
+            let botContent = n.BOT || n.Bot || n.bot;
+            if (currentLang === 'en') {
+                botContent = n.BOT_en || n["BOT(eng)"] || botContent; 
+            }
             // Escape quotes for attribute safety
-            const safeBotContent = botContent ? botContent.replace(/"/g, '&quot;') : '';
+            const safeBotContent = botContent ? botContent.toString().replace(/"/g, '&quot;') : '';
 
             return `
                 <article id="${n._uId}" 
