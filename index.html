@@ -623,13 +623,13 @@
           </h1>
         </div>
         <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-bold text-slate-400 whitespace-nowrap">
-          <a href="#" onclick="filterNews('전략 시황')" class="text-[#1428a0] border-b-2 border-[#1428a0] pb-0.5">전략 시황</a>
+          <a href="#" onclick="resetFilters()" id="nav-all">전략 시황</a>
           <a href="#" onclick="filterNews('원자재')">원자재</a>
           <a href="#" onclick="filterNews('거시경제')">거시/정책</a>
           <a href="#" onclick="filterNews('생산지역')">생산지역</a>
           <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
-          <a href="#" onclick="filterNews('신기술동향')" class="text-[#1428a0]">신기술동향</a>
-          <a href="TradingView Widget.html" class="text-[#1428a0]">INDEX</a>
+          <a href="#" onclick="filterNews('신기술동향')">신기술동향</a>
+          <a href="#" onclick="showIndexModal()">INDEX</a>
         </nav>
       </div>
       <div class="flex items-center gap-2 flex-1 max-w-md mx-8">
@@ -962,9 +962,10 @@
       </div>
     </div>
 
-    <div id="indexModal" class="modal-overlay hidden" onclick="closeModal()">
+    <!-- Dynamic Report Modal -->
+    <div id="reportModal" class="modal-overlay hidden" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="modal-body"></div>
+            <div id="modalBody"></div>
             <button class="close-btn" onclick="closeModal()">
                 <i data-lucide="x"></i>
             </button>
@@ -975,8 +976,9 @@
     <div id="global-bot-follower" class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150"></div>
 
     <script>
-      const GAS_URL =
-        "https://script.google.com/macros/s/AKfycbzNJA_s6YGI2Blt6b_gaDLbOFbyzqIl7c4MDlFUjoKjDn8uCQrpkXtSba4-FHVL7HVJ7g/exec";
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbzNJA_s6YGI2Blt6b_gaDLbOFbyzqIl7c4MDlFUjoKjDn8uCQrpkXtSba4-FHVL7HVJ7g/exec";
+      const GITHUB_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+      
       let allNews = [],
         currentFilteredNews = [];
       
@@ -988,7 +990,9 @@
         search: "",
         scope: "all",
         dateType: null, // null | 'week' | 'day'
-        dateValue: null
+        dateValue: null,
+        country: "all",
+        tag: "all"
       };
 
       // 언어 상태 및 번역 사전
@@ -1198,23 +1202,45 @@
       }
 
       async function fetchNews() {
-        try {
-          const res = await fetch(GAS_URL);
-          allNews = await res.json();
+        const sources = [
+          { name: 'Local JSON', url: 'data.json' },
+          { name: 'GitHub JSON', url: GITHUB_DATA_URL },
+          { name: 'Google Sheets (GAS)', url: GAS_URL }
+        ];
+
+        let success = false;
+
+        for (const source of sources) {
+          try {
+            console.log(`Attempting to fetch from ${source.name}...`);
+            const res = await fetch(source.url);
+            
+            if (res.ok) {
+              allNews = await res.json();
+              console.log(`Successfully loaded news from ${source.name}:`, allNews.length, "items");
+              success = true;
+              break;
+            } else {
+              console.warn(`Failed to fetch from ${source.name}: ${res.status} ${res.statusText}`);
+            }
+          } catch (e) {
+            console.error(`Error fetching from ${source.name}:`, e);
+          }
+        }
+
+        if (success) {
           // 고유 ID 부여
           allNews.forEach((n, i) => {
-             n._uId = `news-${i}-${Math.random().toString(36).substr(2, 9)}`;
+            n._uId = `news-${i}-${Math.random().toString(36).substr(2, 9)}`;
           });
           
-          console.log("Fetched news:", allNews.length, "items");
-          console.log("Sample:", allNews[0]);
           currentFilteredNews = [...allNews];
           renderAll(allNews);
           sortNews("latest");
-        } catch (e) {
-          console.error("Fetch error:", e);
-          document.getElementById("loading").innerText = "ERROR LOADING DATA";
+        } else {
+          document.getElementById("loading").innerHTML = "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스(Local, GitHub, GAS)를 불러오는데 실패했습니다.</span>";
         }
+        
         document.getElementById("loading").style.display = "none";
       }
 
@@ -1313,18 +1339,22 @@
 
       function filterByWeek(weekNum) {
         // 모든 선택 해제
-        document.querySelectorAll(".calendar-grid span").forEach((el) => {
-          el.classList.remove("calendar-selected", "week-selected");
+        document.querySelectorAll(".calendar-grid .week-label").forEach((el) => {
+          el.classList.remove("week-selected");
         });
 
         // 주차 라벨 선택 표시
         const weekLabel = document.getElementById(`week-${weekNum}`);
         if (weekLabel) weekLabel.classList.add("week-selected");
 
+        // 날짜 선택 상태면 해제 (주차와 일자는 상충)
+        document.querySelectorAll(".calendar-grid span:not(.week-label)").forEach((el) => {
+          el.classList.remove("calendar-selected");
+        });
+
         // 상태 업데이트
         filterState.dateType = 'week';
         filterState.dateValue = weekNum;
-        filterState.category = 'all'; // 달력 선택 시 카테고리 해제
         applyFilters();
       }
 
@@ -1338,7 +1368,6 @@
         // 상태 업데이트
         filterState.dateType = 'day';
         filterState.dateValue = day;
-        filterState.category = 'all';
         applyFilters();
       }
 
@@ -1725,41 +1754,21 @@
       }
 
       function filterByCountry(country) {
-        currentFilteredNews = allNews.filter((n) => {
-          const region = n.Region || n.Country;
-          return region && region.includes(country);
-        });
-        renderFeed(currentFilteredNews);
-        document.getElementById("feedTitle").innerText = `${country} 관련 뉴스`;
+        if (filterState.country === country) {
+            filterState.country = "all"; // Toggle off
+        } else {
+            filterState.country = country;
+        }
+        applyFilters();
       }
 
       function showTagReport(tag) {
-        const t = translations[currentLang];
-        const filtered = allNews.filter((n) => {
-          const tagField = n.Tag || n.Tags;
-          return tagField && tagField.includes(tag);
-        });
-        const body = document.getElementById("modalBody");
-        
-        let headerText = `#${tag}${t.briefing_suffix} (${filtered.length})`;
-        
-        body.innerHTML = `
-                <h4 class="font-bold mb-4 text-lg">${headerText}</h4>
-                <div class="space-y-3 text-sm">
-                    ${filtered
-                      .map(
-                        (n) => `
-                        <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div class="font-bold mb-1">${currentLang === 'en' && n.Title_en ? n.Title_en : n.Title}</div>
-                            <div class="text-xs text-gray-500">${n.Date ? n.Date.toString().split("T")[0] : ""} | ${n.Category || "N/A"}</div>
-                        </div>
-                    `,
-                      )
-                      .join("")}
-                </div>
-            `;
-        document.getElementById("reportModal").classList.remove("hidden");
-        lucide.createIcons();
+        if (filterState.tag === tag) {
+            filterState.tag = "all"; // Toggle off
+        } else {
+            filterState.tag = tag;
+        }
+        applyFilters();
       }
 
       function closeModal() {
@@ -1790,13 +1799,7 @@
 
       function filterNews(cat) {
         filterState.category = cat;
-        filterState.dateType = null; // 카테고리 변경 시 날짜 필터 해제
-        
-        // 달력 선택 UI 해제
-        document.querySelectorAll(".calendar-grid span").forEach((el) => {
-          el.classList.remove("calendar-selected", "week-selected");
-        });
-        
+        // 카테고리 선택 시 달력 상태는 유지 (중첩 필터)
         applyFilters();
       }
 
@@ -1826,7 +1829,9 @@
             search: "",
             scope: "all",
             dateType: null,
-            dateValue: null
+            dateValue: null,
+            country: "all",
+            tag: "all"
         };
         
         document.getElementById("searchScope").value = "all";
@@ -1840,7 +1845,8 @@
         const now = new Date();
         curYear = now.getFullYear();
         curMonth = now.getMonth();
-        document.getElementById("calHeader").innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+        const header = document.getElementById("calHeader");
+        if (header) header.innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
         renderCalendar(allNews);
 
         applyFilters();
@@ -1851,47 +1857,57 @@
         const t = translations[currentLang];
         let result = [...allNews];
 
-        // 1. 카테고리 필터 (날짜 필터가 없을 때만)
-        if (!filterState.dateType && filterState.category !== "all") {
+        // 0. 내비게이션 UI 하이라이트 업데이트
+        document.querySelectorAll('nav a').forEach(a => {
+            a.classList.remove('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
+            a.classList.add('text-slate-400');
+            
+            if (filterState.category === 'all' && a.id === 'nav-all') {
+                a.classList.add('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
+                a.classList.remove('text-slate-400');
+            } else if (a.innerText === filterState.category || 
+                     (filterState.category === '신기술동향' && (a.innerText === '신기술동향' || a.innerText === t.nav_tech))) {
+                a.classList.add('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
+                a.classList.remove('text-slate-400');
+            }
+        });
+
+        const breadcrumbs = [];
+
+        // 1. 카테고리 필터
+        if (filterState.category !== "all") {
              result = result.filter(n => {
                 const cat = n.Category ? n.Category.split(":")[0].trim() : "";
-                
                 if (filterState.category === "신기술동향") {
                     return cat === "AI기술" || cat === "신기술";
                 }
-                
                 return cat === filterState.category;
              });
+             
+             let catName = filterState.category;
+             if (catName === "신기술동향" && currentLang === 'en') catName = t.nav_tech;
+             breadcrumbs.push(`[${catName}]`);
+        } else {
+             breadcrumbs.push(`[${currentLang === 'en' ? 'Strategy' : '전략 시황'}]`);
         }
 
         // 2. 날짜 필터 (Calendar)
-        let title = t.feed_title;
         if (filterState.dateType === 'week') {
             const range = getDateRangeForWeek(curYear, curMonth, filterState.dateValue);
             result = result.filter(n => {
                  const d = parseDate(n.Date);
                  return d.getFullYear() === curYear && d.getMonth() === curMonth && d.getDate() >= range.start && d.getDate() <= range.end;
             });
-            title = `Week ${filterState.dateValue} - ${curYear}.${String(curMonth + 1).padStart(2, "0")}`;
+            breadcrumbs.push(`Week ${filterState.dateValue} (${curYear}.${String(curMonth + 1).padStart(2, "0")})`);
         } else if (filterState.dateType === 'day') {
             result = result.filter(n => {
                 const d = parseDate(n.Date);
                 return d.getFullYear() === curYear && d.getMonth() === curMonth && d.getDate() === filterState.dateValue;
             });
-            title = `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`;
-        } else if (filterState.category !== "all") {
-            // 카테고리 이름도 번역이 필요하면 맵핑해야 하지만, 현재는 데이터 원문(한글 카테고리)을 그대로 쓰거나 
-            // 별도 처리가 필요함. 일단은 카테고리명은 그대로 둠.
-            // 다만 '신기술동향'의 경우 네비게이션은 'New Tech Trends'이지만 필터값은 '신기술동향'임
-            if(filterState.category === "신기술동향" && currentLang === 'en') {
-                title = t.nav_tech;
-            } else {
-                title = filterState.category; 
-            }
+            breadcrumbs.push(`${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`);
         }
 
-        // 3. 리스크 필터 (Nav/Date 필터 결과 위에서 동작)
-        // 버튼 UI 업데이트
+        // 3. 리스크 필터
         document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
           btn.classList.remove("active");
           if (btn.innerText === filterState.risk.toUpperCase()) btn.classList.add("active");
@@ -1899,22 +1915,35 @@
 
         if (filterState.risk !== "all") {
             result = result.filter(n => n.Risk === filterState.risk);
-            title += ` (${filterState.risk} Risk)`; 
+            breadcrumbs.push(`(${filterState.risk} Risk)`);
         }
 
-        // 4. 검색 필터
+        // 4. 국가/지역 필터
+        if (filterState.country !== "all") {
+            result = result.filter(n => {
+                const region = n.Region || n.Country;
+                return region && region.includes(filterState.country);
+            });
+            breadcrumbs.push(`[${filterState.country}]`);
+        }
+
+        // 5. 태그 필터
+        if (filterState.tag !== "all") {
+            result = result.filter(n => {
+                const tags = n.Tag || n.Tags;
+                return tags && tags.includes(filterState.tag);
+            });
+            breadcrumbs.push(`#${filterState.tag}`);
+        }
+
+        // 6. 검색 필터
         if (filterState.search) {
             const q = filterState.search;
             const scope = filterState.scope || "all";
             
             result = result.filter(n => {
-                // 한글/영문 모두 검색 (데이터가 있으면)
-                // 영문 상태라도 한글 검색이 필요할 수 있으므로 둘 다 체크 or 영문만 체크?
-                // 사용자 편의상 모든 필드 검색이 나음.
                 const titleMatch = (n.Title && n.Title.toLowerCase().includes(q)) || (n.Title_en && n.Title_en.toLowerCase().includes(q));
                 const summaryMatch = (n.Summary && n.Summary.toLowerCase().includes(q)) || (n.Summary_en && n.Summary_en.toLowerCase().includes(q));
-                
-                // 제목+본문(all)일 때는 태그/지역도 포함하여 검색 (기본 동작 유지)
                 const tagMatch = n.Tag && n.Tag.toLowerCase().includes(q);
                 const regionMatch = n.Region && n.Region.toLowerCase().includes(q);
 
@@ -1928,12 +1957,15 @@
                 "content": t.search_scope_content, 
                 "all": currentLang === 'en' ? "All" : "전체" 
             };
-            title = `'${q}' Search Result (${scopeMap[scope]})`;
-            if(currentLang === 'ko') {
-                title = `'${q}' 검색 결과 (${scopeMap[scope]})`;
-            }
+            const searchLabel = currentLang === 'en' ? `Search: '${q}'` : `'${q}' 검색 (${scopeMap[scope]})`;
+            breadcrumbs.push(searchLabel);
         }
 
+        // 브레드크럼 타이틀 생성
+        let title = breadcrumbs.join(" ");
+        if (breadcrumbs.length === 0 || (breadcrumbs.length === 1 && breadcrumbs[0].includes(currentLang === 'en' ? 'Strategy' : '전략 시황'))) {
+            title = t.feed_title;
+        }
         document.getElementById("feedTitle").innerText = title;
 
         // 5. 정렬 (Latest / Oldest)
@@ -2046,29 +2078,10 @@
             <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
           </button>
           
-          <!-- TradingView Widget BEGIN -->
-          <div class="tradingview-widget-container">
-            <div class="tradingview-widget-container__widget"></div>
-            <div class="tradingview-widget-copyright"><a href="https://kr.tradingview.com/markets/currencies/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js" async>
-            {
-            "colorTheme": "light",
-            "isTransparent": false,
-            "locale": "kr",
-            "currencies": [
-              "USD",
-              "JPY",
-              "CNY",
-              "KRW",
-              "THB"
-            ],
-            "backgroundColor": "#ffffff",
-            "width": 800,
-            "height": 600
-          }
-            </script>
+          <!-- Load the TradingView Widget.html inside an iframe -->
+          <div class="w-full flex justify-center items-center">
+             <iframe src="TradingView Widget.html" style="width: 580px; height: 430px; border: none; overflow: hidden;" scrolling="no"></iframe>
           </div>
-          <!-- TradingView Widget END -->
       </div>
     </div>
   </body>
