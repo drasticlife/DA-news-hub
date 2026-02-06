@@ -151,8 +151,8 @@ colMap[c] = sheet.getLastColumn() - 1;
 }
 });
 
-var idxT = colMap["Title"], idxS = colMap["Summary"], idxC = colMap["Category"];
-var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Category_en"];
+var idxT = colMap["Title"], idxS = colMap["Summary"], idxC = colMap["Category"], idxR = colMap["Region"];
+var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Category_en"], idxRe = colMap["Region_en"];
 var count = 0;
 
 for (var i = 1; i < data.length; i++) {
@@ -171,6 +171,10 @@ var trans = CATEGORY_MAP_EN[data[i][idxC]] || LanguageApp.translate(data[i][idxC
 sheet.getRange(rowNum, idxCe + 1).setValue(trans);
 count++;
 }
+if (idxR !== undefined && data[i][idxR] && !data[i][idxRe]) {
+sheet.getRange(rowNum, idxRe + 1).setValue(LanguageApp.translate(data[i][idxR], "ko", "en"));
+count++;
+}
 }
 SpreadsheetApp.getUi().alert("번역 완료: " + count + "건");
 }
@@ -183,10 +187,61 @@ var headers = data[0];
 var idxU = headers.indexOf("URL"), idxI = headers.indexOf("Image");
 if (idxU === -1 || idxI === -1) return;
 var count = 0;
+
 for (var i = 1; i < data.length; i++) {
 if (new Date().getTime() - startTime > MAX_RUNTIME) break;
+
 if (!data[i][idxI] && data[i][idxU]) {
-sheet.getRange(i + 1, idxI + 1).setValue(DEFAULT_IMAGE_URL);
+// URL 셀에 여러 개가 있을 경우 첫 번째 것만 사용 & 공백 제거
+var rawUrl = String(data[i][idxU]);
+var url = rawUrl.split(/[\n,]/)[0].trim();
+
+var imageUrl = DEFAULT_IMAGE_URL; // 기본값
+
+// 1. 스킵 조건 확인
+var shouldSkip = false;
+for (var k = 0; k < SKIP_EXTENSIONS.length; k++) {
+if (url.toLowerCase().indexOf(SKIP_EXTENSIONS[k]) !== -1) { shouldSkip = true; break; }
+}
+if (!shouldSkip) {
+for (var k = 0; k < SKIP_DOMAINS.length; k++) {
+if (url.toLowerCase().indexOf(SKIP_DOMAINS[k]) !== -1) { shouldSkip = true; break; }
+}
+}
+
+// 2. 이미지 가져오기 시도
+if (!shouldSkip) {
+try {
+// User-Agent 추가로 봇 차단 우회 시도
+var options = {
+"muteHttpExceptions": true,
+"followRedirects": true,
+"headers": {
+"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+};
+var response = UrlFetchApp.fetch(url, options);
+if (response.getResponseCode() === 200) {
+var html = response.getContentText();
+
+// og:image 또는 twitter:image 추출 (정규식 개선)
+var match = html.match(/<meta\s+(?:name|property)=["'](?:og:image|twitter:image)["']\s+content=["']([^"']+)["']/i) ||
+html.match(/<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:image|twitter:image)["']/i);
+if (match && match[1]) {
+imageUrl = match[1];
+// 상대 경로인 경우 절대 경로로 변환 (간단한 처리)
+if (imageUrl.indexOf("http") !== 0) {
+var baseUrl = url.match(/^https?:\/\/[^/]+/)[0];
+imageUrl = baseUrl + (imageUrl.indexOf("/") === 0 ? "" : "/") + imageUrl;
+}
+}
+}
+} catch (e) {
+// fetch 실패 시 기본값 유지 (Logger.log(e)로 확인 가능)
+}
+}
+
+sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
 count++;
 }
 }

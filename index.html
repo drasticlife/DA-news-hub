@@ -1438,10 +1438,12 @@
             // 언어에 따른 제목/요약/날짜 처리
             let displayTitle = n.Title;
             let displaySummary = n.Summary;
+            let displayCategory = n.Category || "N/A";
             
             if (currentLang === 'en') {
                 if (n.Title_en) displayTitle = n.Title_en;
                 if (n.Summary_en) displaySummary = n.Summary_en;
+                if (n.Category_en) displayCategory = n.Category_en;
             }
 
             // 1. 봇 데이터 존재 여부 및 언어별 매핑
@@ -1460,7 +1462,7 @@
                         <div class="flex gap-8 items-start">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-3">
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${n.Category || "N/A"}</span>
+                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${displayCategory}</span>
                                     ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
                                     ${impactHtml}
                                     <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
