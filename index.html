@@ -729,6 +729,133 @@
     </header>
 
     <aside class="sidebar dark:bg-[#25282c]">
+      <!-- TradingView Tickers Widget -->
+      <div class="mb-1">
+        <!-- Vertical Carousel Widget -->
+        <style>
+          .carousel-container {
+            width: 100%;
+            height: 100px; /* Single widget height */
+            overflow: hidden;
+            position: relative;
+            background: transparent;
+          }
+          .carousel-track {
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+          }
+          .carousel-item {
+            height: 100px;
+            width: 100%;
+            flex-shrink: 0;
+          }
+          /* Hide TradingView copyright for cleaner look */
+          .carousel-item .tradingview-widget-copyright {
+            display: none !important;
+          }
+        </style>
+
+        <div class="carousel-container">
+          <div class="carousel-track" id="ticker-track">
+            <!-- 1. USDKRW -->
+            <div class="carousel-item">
+              <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                {
+                  "symbol": "FX_IDC:USDKRW",
+                  "width": "100%",
+                  "colorTheme": "light",
+                  "isTransparent": true,
+                  "locale": "kr"
+                }
+                </script>
+              </div>
+            </div>
+            <!-- 2. USDCNY -->
+            <div class="carousel-item">
+              <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                {
+                  "symbol": "FX_IDC:USDCNY",
+                  "width": "100%",
+                  "colorTheme": "light",
+                  "isTransparent": true,
+                  "locale": "kr"
+                }
+                </script>
+              </div>
+            </div>
+            <!-- 3. USDTHB -->
+            <div class="carousel-item">
+              <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                {
+                  "symbol": "FX_IDC:USDTHB",
+                  "width": "100%",
+                  "colorTheme": "light",
+                  "isTransparent": true,
+                  "locale": "kr"
+                }
+                </script>
+              </div>
+            </div>
+            <!-- 4. USDINR -->
+            <div class="carousel-item">
+              <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                {
+                  "symbol": "FX_IDC:USDINR",
+                  "width": "100%",
+                  "colorTheme": "light",
+                  "isTransparent": true,
+                  "locale": "kr"
+                }
+                </script>
+              </div>
+            </div>
+            <!-- 5. USDBRL -->
+            <div class="carousel-item">
+              <div class="tradingview-widget-container">
+                <div class="tradingview-widget-container__widget"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                {
+                  "symbol": "FX_IDC:USDBRL",
+                  "width": "100%",
+                  "colorTheme": "light",
+                  "isTransparent": true,
+                  "locale": "kr"
+                }
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function() {
+            // Initialize carousel if container exists
+            const track = document.getElementById('ticker-track');
+            if (track) {
+              const items = track.children;
+              const itemCount = items.length;
+              const itemHeight = 100;
+              let index = 0;
+
+              setInterval(() => {
+                index++;
+                if (index >= itemCount) {
+                  index = 0;
+                }
+                track.style.transform = `translateY(-${index * itemHeight}px)`;
+              }, 4000); 
+            }
+          })();
+        </script>
+      </div>
       <!-- 달력 섹션 -->
       <div class="mb-8">
         <h3
@@ -787,144 +914,6 @@
         </h3>
         <div id="tagCloudContainer">
             <div id="tagCloud3D"></div>
-        </div>
-      </div>
-
-      <!-- TradingView Tickers Widget -->
-      <div class="mb-4">
-        <!-- TradingView Widget BEGIN -->
-      <!-- Vertical Carousel Widget -->
-      <style>
-        .carousel-container {
-          width: 100%;
-          height: 126px; /* Single widget height */
-          overflow: hidden;
-          position: relative;
-          background: transparent;
-        }
-        .carousel-track {
-          display: flex;
-          flex-direction: column;
-          transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .carousel-item {
-          height: 126px;
-          width: 100%;
-          flex-shrink: 0;
-        }
-        /* Hide TradingView copyright for cleaner look */
-        .carousel-item .tradingview-widget-copyright {
-          display: none !important;
-        }
-      </style>
-
-      <div class="carousel-container mb-4">
-        <div class="carousel-track" id="ticker-track">
-          <!-- 1. USDKRW -->
-          <div class="carousel-item">
-            <div class="tradingview-widget-container">
-              <div class="tradingview-widget-container__widget"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-              {
-                "symbol": "FX_IDC:USDKRW",
-                "width": "100%",
-                "colorTheme": "light",
-                "isTransparent": true,
-                "locale": "kr"
-              }
-              </script>
-            </div>
-          </div>
-          <!-- 2. USDCNY -->
-          <div class="carousel-item">
-            <div class="tradingview-widget-container">
-              <div class="tradingview-widget-container__widget"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-              {
-                "symbol": "FX_IDC:USDCNY",
-                "width": "100%",
-                "colorTheme": "light",
-                "isTransparent": true,
-                "locale": "kr"
-              }
-              </script>
-            </div>
-          </div>
-          <!-- 3. USDTHB -->
-          <div class="carousel-item">
-            <div class="tradingview-widget-container">
-              <div class="tradingview-widget-container__widget"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-              {
-                "symbol": "FX_IDC:USDTHB",
-                "width": "100%",
-                "colorTheme": "light",
-                "isTransparent": true,
-                "locale": "kr"
-              }
-              </script>
-            </div>
-          </div>
-          <!-- 4. USDINR -->
-          <div class="carousel-item">
-            <div class="tradingview-widget-container">
-              <div class="tradingview-widget-container__widget"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-              {
-                "symbol": "FX_IDC:USDINR",
-                "width": "100%",
-                "colorTheme": "light",
-                "isTransparent": true,
-                "locale": "kr"
-              }
-              </script>
-            </div>
-          </div>
-          <!-- 5. USDBRL -->
-          <div class="carousel-item">
-            <div class="tradingview-widget-container">
-              <div class="tradingview-widget-container__widget"></div>
-              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
-              {
-                "symbol": "FX_IDC:USDBRL",
-                "width": "100%",
-                "colorTheme": "light",
-                "isTransparent": true,
-                "locale": "kr"
-              }
-              </script>
-            </div>
-        (function() {
-          // Initialize carousel if container exists
-          const track = document.getElementById('ticker-track');
-          if (track) {
-            const items = track.children;
-            const itemCount = items.length;
-            const itemHeight = 126;
-            let index = 0;
-
-            setInterval(() => {
-              index++;
-              if (index >= itemCount) {
-                index = 0;
-              }
-              track.style.transform = `translateY(-${index * itemHeight}px)`;
-            }, 4000); 
-          }
-        })();
-      </script>
-        <!-- TradingView Widget END -->
-      </div>
-
-      <!-- 3D 태그 클라우드 섹션 -->
-      <div>
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400"
-        >
-          Intelligence Cloud
-        </h3>
-        <div id="tagCloudContainer" style="width: 100%; height: 200px">
-          <div id="tagCloud3D"></div>
         </div>
       </div>
     </aside>
