@@ -33,7 +33,12 @@
         opacity: 0;
         visibility: hidden;
       }
-      #globeViz { width: 100vw; height: 100vh; }
+      #globeViz { 
+        width: 100vw; 
+        height: 100vh; 
+        opacity: 0; /* JS에서 페이드인 처리 */
+        transition: opacity 2.5s ease-in-out;
+      }
     
       #center-title {
         position: absolute;
@@ -524,6 +529,35 @@
 
       /* Dark mode adjustment */
 
+      /* Custom subtle scrollbar for small containers */
+      .subtle-scroll::-webkit-scrollbar {
+        width: 3px;
+        height: 3px;
+      }
+      .subtle-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .subtle-scroll::-webkit-scrollbar-thumb {
+        background: rgba(20, 40, 160, 0.2);
+        border-radius: 10px;
+      }
+      .subtle-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(20, 40, 160, 0.4);
+      }
+      .subtle-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(20, 40, 160, 0.2) transparent;
+      }
+
+      .dark .subtle-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .dark .subtle-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .dark .subtle-scroll {
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+      }
 
     </style>
   </head>
@@ -540,25 +574,13 @@
 
     <script>
       function initLandingGlobe() {
-        // [데이터 설정]
-        // lat/lng: 실제 공장 위치
-        // txtLat/txtLng: 글자가 표시될 위치 (겹침 방지용)
         const places = [
-          // 1. 한국 (수원 vs 광주 상하 분리)
           { name: "Samsung Digital City", country: "Korea", product: "HQ / R&D", lat: 37.263, lng: 127.028, txtLat: 39.5, txtLng: 127.0 },
           { name: "Gwangju Plant", country: "Korea", product: "Premium DA", lat: 35.159, lng: 126.852, txtLat: 33.5, txtLng: 127.5 },
-
-          // 2. 중국 (신규 추가) - 한국과 겹치지 않게 왼쪽(서쪽)으로 글자 이동
           { name: "SSEC", country: "China", product: "DA Complex", lat: 31.298, lng: 120.585, txtLat: 31.3, txtLng: 116.0 },
-          
-          // 3. 동남아 (태국 vs 베트남 대각선 분리)
           { name: "TSE", country: "Thailand", product: "A/C, Ref", lat: 13.111, lng: 100.927, txtLat: 16.5, txtLng: 98.0 },
           { name: "SEHC", country: "Vietnam", product: "TV/DA Complex", lat: 10.762, lng: 106.660, txtLat: 8.5, txtLng: 109.0 },
-
-          // 4. 남미 (신규 추가) - 브라질
           { name: "SEDA", country: "Brazil", product: "DA/TV", lat: -3.119, lng: -60.021, txtLat: -3.119, txtLng: -60.021 },
-
-          // 5. 그 외 지역
           { name: "SEPM", country: "Poland", product: "Ref/W/M", lat: 52.711, lng: 16.381, txtLat: 52.711, txtLng: 16.381 },
           { name: "SAMEX", country: "Mexico", product: "Ref", lat: 20.588, lng: -100.389, txtLat: 20.588, txtLng: -100.389 },
           { name: "SEM", country: "Mexico", product: "TV/Monitor", lat: 32.514, lng: -117.038, txtLat: 32.514, txtLng: -117.038 },
@@ -572,38 +594,47 @@
           .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
           .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
           .atmosphereColor('#3a228a')
-          .atmosphereAltitude(0.2)
-
-          // [점]
-          .pointsData(places)
-          .pointLat('lat')
-          .pointLng('lng')
-          .pointColor(() => '#00a9e0')
-          .pointAltitude(0.01)
-          .pointRadius(0.6)
-          
-          // [글자]
-          .labelsData(places)
-          .labelLat('txtLat')
-          .labelLng('txtLng')
-          .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
-          .labelSize(1.0)
-          .labelDotRadius(0.3)
-          .labelColor(() => 'rgba(255, 255, 255, 0.9)')
-          .labelResolution(2)
-          .labelAltitude(0.02)
-
-          .onPointClick(point => {
-            // 클릭 시 더 가까이 줌인
-            world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 1000);
-          });
+          .atmosphereAltitude(0.2);
 
         // [초기 시점 설정] 
-        // altitude 값을 1.8 -> 1.4로 낮춰서 더 확대된 상태로 시작
-        world.pointOfView({ lat: 25, lng: 110, altitude: 1.1 });
+        world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 });
+        
+        // 바로 보이게 설정 (CSS transition에 의해 서서히 나타남)
+        document.getElementById('globeViz').style.opacity = '1';
 
-        world.controls().autoRotate = true;
-        world.controls().autoRotateSpeed = 0.6;
+        // [애니메이션 및 데이터 로드]
+        setTimeout(() => {
+          world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 3500); 
+        }, 500);
+
+        setTimeout(() => {
+          world
+            .pointsData(places)
+            .pointLat('lat')
+            .pointLng('lng')
+            .pointColor(() => '#00a9e0')
+            .pointAltitude(0.01)
+            .pointRadius(0.6)
+            
+            .labelsData(places)
+            .labelLat('txtLat')
+            .labelLng('txtLng')
+            .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
+            .labelSize(1.0)
+            .labelDotRadius(0.3)
+            .labelColor(() => 'rgba(255, 255, 255, 0.9)')
+            .labelResolution(2)
+            .labelAltitude(0.02)
+
+            .onPointClick(point => {
+              world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 1000);
+            });
+
+          setTimeout(() => {
+            world.controls().autoRotate = true;
+            world.controls().autoRotateSpeed = 0.6;
+          }, 1000);
+        }, 2000);
       }
 
       function enterDashboard() {
@@ -744,7 +775,9 @@
         >
           Global Map
         </h3>
-        <div id="worldMap"></div>
+        <div id="worldMap" style="height: 180px; overflow: hidden;">
+          <iframe id="mapFrame" src="InteractiveMap.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
       </div>
 
       <!-- 3D Tag Cloud Section -->
@@ -1019,6 +1052,8 @@
         tag: "all"
       };
 
+      let isDashboardActive = false;
+
       // 언어 상태 및 번역 사전
       let currentLang = 'ko'; // 'ko' | 'en'
       const translations = {
@@ -1259,13 +1294,22 @@
           });
           
           currentFilteredNews = [...allNews];
-          renderAll(allNews);
-          sortNews("latest");
+          
+          // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
+          console.log("Starting staggered background rendering...");
+          setTimeout(() => renderCalendar(allNews), 100);
+          setTimeout(() => renderSummary(allNews), 300);
+          setTimeout(() => renderTags(allNews), 500);
+          setTimeout(() => renderWorldMap(allNews), 700);
+          setTimeout(() => {
+              applyFilters(); // Initial filter apply
+              document.getElementById("loading").style.display = "none";
+          }, 900);
+          
         } else {
           document.getElementById("loading").innerHTML = "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스(Local, GitHub, GAS)를 불러오는데 실패했습니다.</span>";
+          document.getElementById("loading").style.display = "none";
         }
-        
-        document.getElementById("loading").style.display = "none";
       }
 
       function renderAll(data) {
@@ -1433,91 +1477,93 @@
         const feed = document.getElementById("news-feed");
         const t = translations[currentLang];
         
-        feed.innerHTML = data
-          .map((n) => {
-            const urls = parseUrls(n.URL);
-            const sourceLinksHtml = urls
-              .map(
-                (src) =>
-                  `<a href="${src.url}" target="_blank" class="source-link" onclick="event.stopPropagation()">
+        // 초기 렌더링 성능을 위해 청크 단위로 나누어 처리
+        const chunkSize = 15;
+        let renderedCount = 0;
+        
+        function renderChunk() {
+            const chunk = data.slice(renderedCount, renderedCount + chunkSize);
+            const html = chunk.map((n) => {
+                const urls = parseUrls(n.URL);
+                const sourceLinksHtml = urls.map(src => 
+                    `<a href="${src.url}" target="_blank" class="source-link" onclick="event.stopPropagation()">
                         <i data-lucide="external-link" class="w-3 h-3"></i>
                         ${src.name}
-                    </a>`,
-              )
-              .join("");
+                    </a>`
+                ).join("");
 
-            // 영향도 표시 스타일 결정
-            let impactHtml = "";
-            if (n.Impact) {
-              const isPositive = n.Impact.includes("+");
-              const isNegative = n.Impact.includes("-");
-              const colorClass = isPositive
-                ? "text-green-600 bg-green-50"
-                : isNegative
-                  ? "text-red-600 bg-red-50"
-                  : "text-slate-600 bg-slate-50";
-              impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
-            }
+                let impactHtml = "";
+                if (n.Impact) {
+                    const isPositive = n.Impact.includes("+");
+                    const isNegative = n.Impact.includes("-");
+                    const colorClass = isPositive ? "text-green-600 bg-green-50" : isNegative ? "text-red-600 bg-red-50" : "text-slate-600 bg-slate-50";
+                    impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
+                }
 
-            // 언어에 따른 제목/요약/날짜 처리
-            let displayTitle = n.Title;
-            let displaySummary = n.Summary;
-            let displayCategory = n.Category || "N/A";
-            
-            if (currentLang === 'en') {
-                if (n.Title_en) displayTitle = n.Title_en;
-                if (n.Summary_en) displaySummary = n.Summary_en;
-                if (n.Category_en) displayCategory = n.Category_en;
-            }
+                let displayTitle = n.Title;
+                let displaySummary = n.Summary;
+                let displayCategory = n.Category || "N/A";
+                if (currentLang === 'en') {
+                    if (n.Title_en) displayTitle = n.Title_en;
+                    if (n.Summary_en) displaySummary = n.Summary_en;
+                    if (n.Category_en) displayCategory = n.Category_en;
+                }
 
-            // 1. 봇 데이터 존재 여부 및 언어별 매핑
-            let botContent = n.BOT || n.Bot || n.bot;
-            if (currentLang === 'en') {
-                botContent = n.BOT_en || n["BOT(eng)"] || botContent; 
-            }
-            // Escape quotes for attribute safety
-            const safeBotContent = botContent ? botContent.toString().replace(/"/g, '&quot;') : '';
+                let botContent = n.BOT || n.Bot || n.bot;
+                if (currentLang === 'en') { botContent = n.BOT_en || n["BOT(eng)"] || botContent; }
 
-            return `
-                <article id="${n._uId}" 
-                    class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? 'has-bot' : ''}" 
-                    onclick="this.classList.toggle('expanded')">
-                    <div class="news-inner">
-                        <div class="flex gap-8 items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${displayCategory}</span>
-                                    ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
-                                    ${impactHtml}
-                                    <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
-                                </div>
-                                
-                                <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
-                                
-                                <div class="news-body-grid">
-                                    <div class="news-content-col">
-                                        <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
-                                        <div class="source-links">${sourceLinksHtml}</div>
+                return `
+                    <article id="${n._uId}" 
+                        class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? 'has-bot' : ''}" 
+                        onclick="this.classList.toggle('expanded')">
+                        <div class="news-inner">
+                            <div class="flex gap-8 items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${displayCategory}</span>
+                                        ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
+                                        ${impactHtml}
+                                        <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
                                     </div>
-                                    
-                                    ${botContent ? `
-                                    <div class="news-bot-col" onclick="event.stopPropagation()">
-                                        <div class="bot-inner-bubble">
-                                            <div class="font-black mb-1 text-xs opacity-70">💡 AI Insight</div>
-                                            ${botContent}
+                                    <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
+                                    <div class="news-body-grid">
+                                        <div class="news-content-col">
+                                            <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
+                                            <div class="source-links">${sourceLinksHtml}</div>
                                         </div>
+                                        ${botContent ? `
+                                        <div class="news-bot-col" onclick="event.stopPropagation()">
+                                            <div class="bot-inner-bubble">
+                                                <div class="font-black mb-1 text-xs opacity-70">💡 AI Insight</div>
+                                                ${botContent}
+                                            </div>
+                                        </div>
+                                        ` : ""}
                                     </div>
-                                    ` : ""}
                                 </div>
+                                ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
                             </div>
-                            
-                            ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
                         </div>
-                    </div>
-                </article>`;
-          })
-          .join("");
-        lucide.createIcons();
+                    </article>`;
+            }).join("");
+
+            if (renderedCount === 0) feed.innerHTML = html;
+            else feed.insertAdjacentHTML('beforeend', html);
+            
+            renderedCount += chunkSize;
+            if (renderedCount < data.length) {
+                // 다음 프레임이나 짧은 지연 후 나머지 렌더링
+                if (!isDashboardActive) {
+                    setTimeout(renderChunk, 300); // 랜딩 페이지 중에는 더 천천히
+                } else {
+                    requestAnimationFrame(renderChunk); // 접속 후에는 빠르게
+                }
+            } else {
+                lucide.createIcons();
+            }
+        }
+
+        renderChunk();
       }
 
       /* Global Bot Follower Logic */
@@ -1602,8 +1648,10 @@
           container.appendChild(elem);
         });
 
-        // 애니메이션 루프 시작
-        animateTagCloud();
+        // 애니메이션 루프 시작 (대시보드 입장 시에만 활성화되도록 renderTags 내 로직은 일단 유지하되 루프 제어)
+        if (isDashboardActive) {
+            animateTagCloud();
+        }
 
         // 드래그 및 마우스 조작 이벤트 (전역 등록)
         if (!window.isTagEventRegistered) {
@@ -1634,6 +1682,8 @@
       }
 
       function animateTagCloud() {
+        if (!isDashboardActive) return; // 최적화: 랜딩 페이지에서는 태그 클라우드 애니메이션 중지
+        
         if (!isDraggingTag) {
           // 자연스러운 자동 회전
           tag3DRotation.x += 0.002;
@@ -1680,20 +1730,14 @@
         tagAnimationId = requestAnimationFrame(animateTagCloud);
       }
 
-      // 글로벌 지도 렌더링
+      // 글로벌 지도 렌더링 (Iframe 버전)
+      let lastCalculatedCountryMap = null;
+      
       function renderWorldMap(data) {
-        console.log("renderWorldMap called with", data.length, "items");
-        const t = translations[currentLang];
-        
-        if (!data || data.length === 0) {
-             document.getElementById("worldMap").innerHTML =
-            `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">${t.region_data_error}</div>`;
-            return;
-        }
+        if (!data) return;
         
         const countryMap = {};
         data.forEach((n) => {
-          // 다양한 대소문자/필드명 지원
           let regionField = n.Region || n.region || n.Country || n.country || n.Place || n.place || n.Location || n.location;
           if (currentLang === 'en' && n.Region_en) regionField = n.Region_en;
 
@@ -1705,82 +1749,30 @@
           }
         });
         
-        const mapContainer = document.getElementById("worldMap");
-
-        if (Object.keys(countryMap).length === 0) {
-          mapContainer.innerHTML =
-            `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 40px;">${t.region_data_error}</div>`;
-          console.log("No countries found");
-          return;
-        }
-
-        mapContainer.innerHTML = "";
-
-        // 실제 세계 지도 이미지 배경
-        mapContainer.style.backgroundImage = "url(world_map_real.png)";
-        mapContainer.style.backgroundSize = "100% 100%";
-        mapContainer.style.backgroundPosition = "center";
-        mapContainer.style.backgroundRepeat = "no-repeat";
-
-        // 국가별 기사 수 표시
-        console.log("Adding country list");
-        const countryList = document.createElement("div");
-        countryList.style.cssText =
-          "position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.95); padding: 8px; border-radius: 6px; font-size: 9px; max-height: 180px; overflow-y: auto; z-index: 10;";
-        
-        // 국가별 리스트 제목 번역은 생략하거나 추가 필요 (여기서는 하드코딩된 부분이라 수정)
-        // '국가별 기사' -> t.region_data_error 같은걸 쓸순 없고... 'By Country' 정도?
-        // 일단 유지하되 'Country'로 변경 고려.
-        const listTitle = currentLang === 'en' ? "By Country" : "국가별 기사";
-        
-        countryList.innerHTML =
-          `<div style="font-weight: 700; margin-bottom: 4px; color: #1428a0;">${listTitle}</div>` +
-          Object.entries(countryMap)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10)
-            .map(
-              ([country, count]) =>
-                `<div style="cursor: pointer; padding: 2px 0; color: #64748b;" onclick="filterByCountry('${country}')" onmouseover="this.style.color='#1428a0'" onmouseout="this.style.color='#64748b'">
-                            ${country}: ${count}
-                        </div>`,
-            )
-            .join("");
-        mapContainer.appendChild(countryList);
-
-        // 국가 마커 추가
-        console.log("Adding country markers");
-        let markerCount = 0;
-        Object.entries(countryMap).forEach(([country, count]) => {
-          const coords = countryCoords[country];
-          console.log(`Checking country: ${country}, coords:`, coords);
-          if (coords) {
-            const marker = document.createElement("div");
-            marker.className = "country-marker";
-            marker.setAttribute("data-country", `${country} (${count})`);
-            marker.style.left = `${coords.x}%`;
-            marker.style.top = `${coords.y}%`;
-
-            // 빈도에 따른 크기 조정
-            const maxCount = Math.max(...Object.values(countryMap));
-            const size = 10 + (count / maxCount) * 10;
-            marker.style.width = `${size}px`;
-            marker.style.height = `${size}px`;
-
-            // 펄스 애니메이션 추가
-            if (count > 1) {
-              marker.style.animation = "pulse 2s infinite";
-            }
-
-            marker.addEventListener("click", () => filterByCountry(country));
-            mapContainer.appendChild(marker);
-            markerCount++;
-          } else {
-            console.log(`No coords for country: ${country}`);
-          }
-        });
-
-        console.log("Total markers added:", markerCount);
+        lastCalculatedCountryMap = countryMap;
+        sendDataToMap();
       }
+
+      function sendDataToMap() {
+        const frame = document.getElementById("mapFrame");
+        if (frame && frame.contentWindow && lastCalculatedCountryMap) {
+            frame.contentWindow.postMessage({ 
+                type: 'updateData', 
+                data: lastCalculatedCountryMap 
+            }, '*');
+        }
+      }
+
+      // Iframe 메시지 수신 (지도 클릭 처리)
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'filterByCountry') {
+            filterByCountry(event.data.country);
+        }
+        if (event.data && event.data.type === 'mapReady') {
+            console.log("Map reported ready, sending data...");
+            sendDataToMap();
+        }
+      });
 
       function filterByCountry(country) {
         if (filterState.country === country) {
@@ -1802,6 +1794,25 @@
 
       function closeModal() {
         document.getElementById("reportModal").classList.add("hidden");
+      }
+
+      function enterDashboard() {
+        isDashboardActive = true;
+        const lp = document.getElementById('landing-page');
+        lp.classList.add('hidden');
+        document.body.classList.remove('landing-active');
+        
+        // 태그 클라우드 애니메이션 시작
+        animateTagCloud();
+        
+        // Stop the heavy 3D globe rendering
+        setTimeout(() => { 
+            lp.style.display = 'none';
+            const globeContainer = document.getElementById('globeViz');
+            if(globeContainer) {
+                globeContainer.innerHTML = ''; // Kill the WebGL context
+            }
+        }, 1000);
       }
 
       function showIndexModal() {

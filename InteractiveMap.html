@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Global News Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html, #map {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+        }
+        .custom-marker {
+            background: #1428a0;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 8px;
+            font-weight: 800;
+            transition: transform 0.2s;
+        }
+        .custom-marker:hover { transform: scale(1.2); z-index: 1000 !important; }
+        @keyframes marker-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .marker-pulse { animation: marker-pulse 2.5s infinite ease-in-out; }
+        .leaflet-control-attribution { display: none !important; }
+        .leaflet-control-zoom { 
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const countryCoords = {
+            "미국": [37.0902, -95.7129], "USA": [37.0902, -95.7129],
+            "캐나다": [56.1304, -106.3468], "Canada": [56.1304, -106.3468],
+            "멕시코": [23.6345, -102.5528], "Mexico": [23.6345, -102.5528],
+            "브라질": [-14.235, -51.9253], "Brazil": [-14.235, -51.9253],
+            "영국": [55.3781, -3.436], "UK": [55.3781, -3.436], "United Kingdom": [55.3781, -3.436],
+            "프랑스": [46.2276, 2.2137], "France": [46.2276, 2.2137],
+            "독일": [51.1657, 10.4515], "Germany": [51.1657, 10.4515],
+            "이탈리아": [41.8719, 12.5674], "Italy": [41.8719, 12.5674],
+            "스페인": [40.4637, -3.7492], "Spain": [40.4637, -3.7492],
+            "러시아": [61.524, 105.3188], "Russia": [61.524, 105.3188],
+            "중국": [35.8617, 104.1954], "China": [35.8617, 104.1954],
+            "일본": [36.2048, 138.2529], "Japan": [36.2048, 138.2529],
+            "한국": [35.9078, 127.7669], "Korea": [35.9078, 127.7669], "South Korea": [35.9078, 127.7669],
+            "인도": [20.5937, 78.9629], "India": [20.5937, 78.9629],
+            "베트남": [14.0583, 108.2772], "Vietnam": [14.0583, 108.2772],
+            "태국": [15.87, 100.9925], "Thailand": [15.87, 100.9925],
+            "인도네시아": [-0.7893, 113.9213], "Indonesia": [-0.7893, 113.9213],
+            "호주": [-25.2744, 133.7751], "Australia": [-25.2744, 133.7751],
+            "Poland": [51.9194, 19.1451], "폴란드": [51.9194, 19.1451],
+            "EU": [50.0, 10.0], "Global": [20.0, 0.0]
+        };
+
+        const map = L.map('map', {
+            center: [15, 60],
+            zoom: 1.15,
+            minZoom: 1,
+            maxZoom: 6,
+            zoomSnap: 0.1,
+            dragging: true,
+            scrollWheelZoom: true,
+            worldCopyJump: true
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            noWrap: false
+        }).addTo(map);
+
+        let markerLayer = L.layerGroup().addTo(map);
+        let isUserInteracting = false;
+        let interactionTimeout = null;
+
+        function handleInteraction() {
+            isUserInteracting = true;
+            clearTimeout(interactionTimeout);
+            interactionTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 5000); // 5 seconds of idle before resuming
+        }
+
+        map.on('dragstart zoomstart movestart', handleInteraction);
+        map.on('mousedown touchstart', handleInteraction);
+
+        function updateMarkers(countryMap) {
+            markerLayer.clearLayers();
+            Object.entries(countryMap).forEach(([country, count]) => {
+                const coords = countryCoords[country];
+                if (coords) {
+                    const size = Math.min(30, 14 + (count / 30) * 12);
+                    const markerIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="custom-marker ${count > 5 ? 'marker-pulse' : ''}" style="width: ${size}px; height: ${size}px;">${count}</div>`,
+                        iconSize: [size, size],
+                        iconAnchor: [size/2, size/2]
+                    });
+                    const marker = L.marker(coords, { icon: markerIcon })
+                        .on('click', () => {
+                            window.parent.postMessage({ type: 'filterByCountry', country: country }, '*');
+                        });
+                    marker.bindTooltip(`<b>${country}</b><br>${count} items`, { sticky: true });
+                    markerLayer.addLayer(marker);
+                }
+            });
+        }
+
+        // Auto-panning using panBy for maximum reliability
+        function startAutoPan() {
+            function move() {
+                if (!isUserInteracting) {
+                    // Increased speed: 1.5 pixels per frame
+                    map.panBy([1.5, 0], { animate: false });
+                }
+                requestAnimationFrame(move);
+            }
+            move();
+        }
+
+        map.whenReady(() => {
+            console.log("Map is ready, starting auto-pan");
+            startAutoPan();
+        });
+
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'updateData') {
+                updateMarkers(event.data.data);
+            }
+        });
+
+        window.parent.postMessage({ type: 'mapReady' }, '*');
+    </script>
+</body>
+</html>
