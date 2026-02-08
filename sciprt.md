@@ -184,66 +184,82 @@ var startTime = new Date().getTime();
 var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 var data = sheet.getDataRange().getValues();
 var headers = data[0];
-var idxU = headers.indexOf("URL"), idxI = headers.indexOf("Image");
+var idxU = headers.indexOf("URL"), idxI = headers.indexOf("Image"), idxC = headers.indexOf("Category");
+
 if (idxU === -1 || idxI === -1) return;
 var count = 0;
 
 for (var i = 1; i < data.length; i++) {
 if (new Date().getTime() - startTime > MAX_RUNTIME) break;
 
-if (!data[i][idxI] && data[i][idxU]) {
-// URL 셀에 여러 개가 있을 경우 첫 번째 것만 사용 & 공백 제거
-var rawUrl = String(data[i][idxU]);
-var url = rawUrl.split(/[\n,]/)[0].trim();
+    if (!data[i][idxI] && data[i][idxU]) {
+      var rawUrl = String(data[i][idxU]);
+      var urls = rawUrl.split(/[\n,]/).map(function(u) { return u.trim(); }).filter(Boolean);
+      var category = idxC !== -1 ? String(data[i][idxC]) : "";
 
-var imageUrl = DEFAULT_IMAGE_URL; // 기본값
+      var imageFound = false;
+      var imageUrl = DEFAULT_IMAGE_URL; // 기본값 시작
 
-// 1. 스킵 조건 확인
-var shouldSkip = false;
-for (var k = 0; k < SKIP_EXTENSIONS.length; k++) {
-if (url.toLowerCase().indexOf(SKIP_EXTENSIONS[k]) !== -1) { shouldSkip = true; break; }
-}
-if (!shouldSkip) {
-for (var k = 0; k < SKIP_DOMAINS.length; k++) {
-if (url.toLowerCase().indexOf(SKIP_DOMAINS[k]) !== -1) { shouldSkip = true; break; }
-}
-}
+      // 각 URL 후보들에 대해 확인
+      for (var j = 0; j < urls.length; j++) {
+        var url = urls[j];
+        var shouldSkip = false;
 
-// 2. 이미지 가져오기 시도
-if (!shouldSkip) {
-try {
-// User-Agent 추가로 봇 차단 우회 시도
-var options = {
-"muteHttpExceptions": true,
-"followRedirects": true,
-"headers": {
-"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
-};
-var response = UrlFetchApp.fetch(url, options);
-if (response.getResponseCode() === 200) {
-var html = response.getContentText();
+        // 1. 스킵 조건 확인 (확장자 및 도메인)
+        for (var k = 0; k < SKIP_EXTENSIONS.length; k++) {
+          if (url.toLowerCase().indexOf(SKIP_EXTENSIONS[k]) !== -1) { shouldSkip = true; break; }
+        }
+        if (!shouldSkip) {
+          for (var k = 0; k < SKIP_DOMAINS.length; k++) {
+            if (url.toLowerCase().indexOf(SKIP_DOMAINS[k]) !== -1) { shouldSkip = true; break; }
+          }
+        }
 
-// og:image 또는 twitter:image 추출 (정규식 개선)
-var match = html.match(/<meta\s+(?:name|property)=["'](?:og:image|twitter:image)["']\s+content=["']([^"']+)["']/i) ||
-html.match(/<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:image|twitter:image)["']/i);
-if (match && match[1]) {
-imageUrl = match[1];
-// 상대 경로인 경우 절대 경로로 변환 (간단한 처리)
-if (imageUrl.indexOf("http") !== 0) {
-var baseUrl = url.match(/^https?:\/\/[^/]+/)[0];
-imageUrl = baseUrl + (imageUrl.indexOf("/") === 0 ? "" : "/") + imageUrl;
-}
-}
-}
-} catch (e) {
-// fetch 실패 시 기본값 유지 (Logger.log(e)로 확인 가능)
-}
-}
+        // 추가: 카테고리가 '원자재'인 경우 tradingeconomics.com은 명시적으로 건너뜀 (이미 SKIP_DOMAINS에 있긴 하지만 요청 맥락 강조)
+        if (category === "원자재" && url.toLowerCase().indexOf("tradingeconomics.com") !== -1) {
+          shouldSkip = true;
+        }
 
-sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
-count++;
-}
+        if (shouldSkip) continue;
+
+        // 2. 이미지 가져오기 시도
+        try {
+          var options = {
+            "muteHttpExceptions": true,
+            "followRedirects": true,
+            "headers": {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          };
+          var response = UrlFetchApp.fetch(url, options);
+          if (response.getResponseCode() === 200) {
+            var html = response.getContentText();
+            var match = html.match(/<meta\s+(?:name|property)=["'](?:og:image|twitter:image)["']\s+content=["']([^"']+)["']/i) ||
+                        html.match(/<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:image|twitter:image)["']/i);
+
+            if (match && match[1]) {
+              imageUrl = match[1];
+              if (imageUrl.indexOf("http") !== 0) {
+                var baseUrlMatch = url.match(/^https?:\/\/[^/]+/);
+                if (baseUrlMatch) {
+                  var baseUrl = baseUrlMatch[0];
+                  imageUrl = baseUrl + (imageUrl.indexOf("/") === 0 ? "" : "/") + imageUrl;
+                }
+              }
+              imageFound = true;
+              break; // 유효한 이미지를 찾았으면 나머지 URL은 시도하지 않음
+            }
+          }
+        } catch (e) {
+          // fetch 실패 시 다음 URL 시도
+        }
+      }
+
+      // 최종적으로 결정된 imageUrl 기록
+      sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
+      count++;
+    }
+
 }
 SpreadsheetApp.getUi().alert("이미지 작업 완료: " + count + "건");
 }
