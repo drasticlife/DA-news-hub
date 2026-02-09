@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DA Strategic Dashboard</title>
+    
+    <!-- 1. Tailwind CSS (디자인) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Import Map (리액트 및 라이브러리 모듈 설정) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom": "https://esm.sh/react-dom@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "recharts": "https://esm.sh/recharts@2.12.0?external=react,react-dom",
+            "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react"
+        }
+    }
+    </script>
+
+    <!-- 3. Babel (JSX 변환기) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* 커스텀 스크롤바 스타일 */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 0px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { margin: 0; padding: 0; background-color: #F8F9FB; }
+        * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- 4. 메인 애플리케이션 코드 -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useMemo, useRef } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
+            BarChart, Bar, Cell, Legend, AreaChart, Area
+        } from 'recharts';
+        import { 
+            Globe, Calendar, LayoutGrid, ArrowUpRight, 
+            Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
+            Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
+            ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target
+        } from 'lucide-react';
+
+        const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+
+        // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
+        const COLORS = {
+            headerBlue: '#0033A0', 
+            activeBlue: '#0747A6',
+            riskHigh: '#DE350B',
+            riskMed: '#FFAB00',
+            riskLow: '#00B8D9',
+        };
+
+        const RISK_COLORS = {
+            'High': COLORS.riskHigh,
+            'Med': COLORS.riskMed,
+            'Low': COLORS.riskLow
+        };
+
+        const CATEGORY_COLORS = {
+            '원자재': '#0747A6',
+            '거시/정책': '#2684FF',
+            '경쟁사': '#4C9AFF',
+            '생산지역': '#8993A4',
+            '신기술동향': '#0052CC', 
+            '기타': '#B3D4FF'
+        };
+
+        const REGION_COORDS = {
+            'Global': { x: '50%', y: '45%' },
+            'USA': { x: '22%', y: '40%' },
+            'South Korea': { x: '82%', y: '42%' },
+            'China': { x: '78%', y: '45%' },
+            'Europe': { x: '52%', y: '35%' },
+            'Japan': { x: '85%', y: '45%' },
+            'Vietnam': { x: '76%', y: '58%' },
+            'India': { x: '70%', y: '55%' },
+            'Mexico': { x: '25%', y: '50%' },
+        };
+
+        // --- 2. Helper Functions ---
+
+        const safeString = (val) => {
+            if (val === null || val === undefined) return "";
+            if (typeof val === 'object') {
+                if (Array.isArray(val)) return val.join(', ');
+                return "";
+            }
+            return String(val);
+        };
+
+        const normalizeDate = (dateStr) => {
+            const ds = safeString(dateStr);
+            if (!ds || ds.includes("NaN")) return "";
+            const cleaned = ds.replace(/[\.\/]/g, '-');
+            const parts = cleaned.split('-');
+            if (parts.length === 3) {
+                const y = parts[0];
+                const m = parts[1].padStart(2, '0');
+                const d = parts[2].padStart(2, '0');
+                const result = `${y}-${m}-${d}`;
+                return isNaN(new Date(result).getTime()) ? "" : result;
+            }
+            return isNaN(new Date(cleaned).getTime()) ? "" : cleaned;
+        };
+
+        const normalizeCategory = (catStr) => {
+            const cs = safeString(catStr);
+            if (!cs) return "기타";
+            const base = cs.split(':')[0].trim();
+            if (base.includes('신기술')) return '신기술동향';
+            if (base.includes('거시') || base.includes('정책')) return '거시/정책';
+            return base;
+        };
+
+        const getFormattedWeek = (dateStr) => {
+            const normalized = normalizeDate(dateStr);
+            const date = new Date(normalized);
+            if (isNaN(date.getTime())) return safeString(dateStr);
+            const tempDate = new Date(date.getTime());
+            tempDate.setHours(0, 0, 0, 0);
+            tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
+            const week1 = new Date(tempDate.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            const year = tempDate.getFullYear().toString().substring(2);
+            const paddedWeek = weekNum.toString().padStart(2, '0');
+            return `'${year}.W${paddedWeek}`;
+        };
+
+        // --- 3. Sub Components ---
+
+        const DateSlider = ({ selectedDate, onDateChange, availableDates, hasArticlesMap, darkMode }) => {
+            const scrollRef = useRef(null);
+            const itemRefs = useRef({});
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            useEffect(() => {
+                const el = scrollRef.current;
+                if (!el) return;
+                const handleWheel = (e) => {
+                    if (Math.abs(e.deltaY) > 0) {
+                        e.preventDefault(); 
+                        el.scrollLeft += (e.deltaY * 6); 
+                    }
+                };
+                el.addEventListener('wheel', handleWheel, { passive: false });
+                return () => el.removeEventListener('wheel', handleWheel);
+            }, []);
+
+            useEffect(() => {
+                const targetRefKey = (selectedDate === 'LastWeek' || selectedDate === 'LastMonth') ? todayStr : selectedDate;
+                if (targetRefKey && itemRefs.current[targetRefKey]) {
+                    setTimeout(() => {
+                        itemRefs.current[targetRefKey].scrollIntoView({
+                            behavior: 'smooth', block: 'nearest', inline: 'center'
+                        });
+                    }, 150);
+                }
+            }, [selectedDate, todayStr]);
+
+            const jumpDate = (days) => {
+                const current = (selectedDate === 'LastMonth' || selectedDate === 'LastWeek') ? new Date() : new Date(selectedDate);
+                current.setDate(current.getDate() + days);
+                const targetStr = current.toISOString().split('T')[0];
+                onDateChange(targetStr);
+            };
+
+            return (
+                <div className={`w-full border-b overflow-hidden relative shadow-sm h-36 flex items-center transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                    <div className={`flex items-center px-6 gap-3 z-30 shadow-[15px_0_15px_-5px_rgba(0,0,0,0.05)] border-r h-full transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
+                        <div className="flex flex-col gap-2 min-w-[130px]">
+                            <button onClick={() => onDateChange('LastMonth')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === 'LastMonth' ? 'bg-[#0033A0] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100')}`}><CalendarRange size={11} /> LAST MONTH</button>
+                            <button onClick={() => onDateChange('LastWeek')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === 'LastWeek' ? 'bg-[#0052CC] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100')}`}><CalendarRange size={11} /> LAST WEEK</button>
+                            <button onClick={() => onDateChange(todayStr)} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === todayStr ? 'bg-[#0747A6] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-[#0747A6] border-[#0747A6]/20 hover:bg-blue-50')}`}><RotateCcw size={11} /> TODAY</button>
+                        </div>
+                        <div className={`w-[1px] h-16 mx-2 ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}></div>
+                        <div className="flex items-center gap-1">
+                           <button onClick={() => jumpDate(-30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsLeft size={22} /></button>
+                           <button onClick={() => jumpDate(-7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronLeft size={22} /></button>
+                        </div>
+                    </div>
+                    <div ref={scrollRef} className="flex items-center gap-6 px-[5%] py-8 overflow-x-auto no-scrollbar scroll-smooth snap-x flex-1 h-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        {availableDates.map((date) => {
+                            const d = new Date(date);
+                            const isSelected = selectedDate === date;
+                            return (
+                                <button key={date} ref={el => itemRefs.current[date] = el} onClick={() => onDateChange(date)} className={`snap-center flex-shrink-0 transition-all duration-500 flex flex-col items-center min-w-[100px] py-3 rounded-2xl relative ${isSelected ? 'scale-125 opacity-100 bg-blue-500/10 ring-2 ring-blue-500/30 shadow-md' : 'scale-90 opacity-20 hover:opacity-50'} ${date === todayStr && !isSelected ? 'border border-blue-500/30 shadow-sm' : ''}`}>
+                                    <span className={`text-[9px] font-black uppercase mb-1 ${isSelected ? (darkMode ? 'text-blue-400' : 'text-[#0747A6]') : 'text-slate-400'}`}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                    <span className={`text-2xl font-black tracking-tighter ${isSelected ? (darkMode ? 'text-white' : 'text-[#172B4D]') : 'text-slate-500'}`}>{d.getDate()}</span>
+                                    <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${isSelected ? (darkMode ? 'text-blue-400' : 'text-[#0747A6]') : 'text-slate-300'}`}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                                    {hasArticlesMap[date] && <div className={`absolute top-2 right-4 w-1.5 h-1.5 rounded-full ${isSelected ? (darkMode ? 'bg-blue-400' : 'bg-[#0747A6]') : 'bg-blue-300 animate-pulse'}`} />}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className={`flex items-center px-8 gap-1 z-30 shadow-[-15px_0_15px_-5px_rgba(0,0,0,0.05)] border-l h-full min-w-[120px] justify-center transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
+                         <button onClick={() => jumpDate(7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronRight size={22} /></button>
+                         <button onClick={() => jumpDate(30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsRight size={22} /></button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 4. Main Application ---
+        const App = () => {
+            const [rawData, setRawData] = useState([]);
+            const [selectedFilter, setSelectedFilter] = useState('All');
+            const [selectedRisk, setSelectedRisk] = useState('All');
+            const [selectedTag, setSelectedTag] = useState(null); 
+            const [selectedDate, setSelectedDate] = useState('LastWeek'); 
+            const [timeRange, setTimeRange] = useState('Weekly');
+            const [loading, setLoading] = useState(true);
+            const [darkMode, setDarkMode] = useState(false);
+            const [language, setLanguage] = useState('KO');
+            const [searchTarget, setSearchTarget] = useState('Both'); 
+            const [selectedRegion, setSelectedRegion] = useState('All');
+            const [searchKeyword, setSearchKeyword] = useState('');
+            const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
+            const mapRef = useRef(null);
+
+            useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        const response = await fetch(RAW_DATA_URL);
+                        const json = await response.json();
+                        
+                        const formatted = json.map((item, index) => {
+                            const ko_title = safeString(item.B || item.Title || item.title || '제목 없음');
+                            const en_title = safeString(item.M || 'No Title');
+                            
+                            const ko_category = normalizeCategory(item.C || item.Category || item.category);
+                            const en_category = safeString(item.O || 'MISC');
+                            
+                            const ko_raw = item.D || item.Summary || item.summary || item.Content || item.content || item['기사내용'];
+                            const en_raw = item.N || item.n;
+
+                            const ko_content = safeString(ko_raw || '상세 내용이 없습니다.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+                            const en_content = safeString(en_raw || ko_raw || 'No Content Available.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+                            
+                            const ko_tags = safeString(item.J || item.Tag || "").split(',').map(t => t.trim()).filter(Boolean);
+                            const en_tags = safeString(item.P || "").split(',').map(t => t.trim()).filter(Boolean);
+                            
+                            const ko_region = safeString(item.I || item.Region || 'Global').trim();
+                            const en_region = safeString(item.Q || 'Global').trim();
+
+                            return {
+                                _uId: `news-${index}`,
+                                date: normalizeDate(item.A || item.Date || item.date || '2026-02-01'),
+                                risk: safeString(item.G || item.Risk || item.risk || 'Low'),
+                                ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region },
+                                en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region }
+                            };
+                        }).filter(item => item.date !== ""); 
+
+                        setRawData(formatted);
+                        const dates = formatted.map(d => d.date).sort((a,b) => b.localeCompare(a));
+                        if (dates.length > 0) setLatestDateStr(dates[0]);
+                        setSelectedDate('LastWeek'); 
+                    } catch (err) {
+                        console.error("Data Load Error:", err);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                fetchData();
+            }, []);
+
+            const availableDates = useMemo(() => {
+                const dates = []; 
+                const base = new Date(latestDateStr); 
+                const start = new Date(base);
+                start.setDate(base.getDate() - 90);
+                for (let i = 0; i <= 120; i++) {
+                    const d = new Date(start); d.setDate(start.getDate() + i);
+                    dates.push(d.toISOString().split('T')[0]);
+                }
+                return dates;
+            }, [latestDateStr]);
+
+            const hasArticlesMap = useMemo(() => {
+                const map = {}; rawData.forEach(d => { map[d.date] = true; });
+                return map;
+            }, [rawData]);
+
+            const currentLocaleData = useMemo(() => {
+                return rawData.map(d => ({
+                    ...d,
+                    ...d[language.toLowerCase()]
+                }));
+            }, [rawData, language]);
+
+            const filteredData = useMemo(() => {
+                let data = currentLocaleData;
+                if (selectedFilter !== 'All') data = data.filter(d => d.category === selectedFilter);
+                if (selectedRisk !== 'All') data = data.filter(d => d.risk === selectedRisk);
+                if (selectedRegion !== 'All') data = data.filter(d => d.region === selectedRegion);
+                if (selectedTag) data = data.filter(d => d.tags.includes(selectedTag));
+                
+                const baseDate = new Date(latestDateStr);
+                
+                if (selectedDate === 'LastWeek') {
+                    const lastWeek = new Date(baseDate); lastWeek.setDate(baseDate.getDate() - 7);
+                    data = data.filter(d => { const itemDate = new Date(d.date); return itemDate >= lastWeek && itemDate <= baseDate; });
+                } else if (selectedDate === 'LastMonth') {
+                    const lastMonth = new Date(baseDate); lastMonth.setDate(baseDate.getDate() - 30);
+                    data = data.filter(d => { const itemDate = new Date(d.date); return itemDate >= lastMonth && itemDate <= baseDate; });
+                } else if (selectedDate !== 'All') {
+                    data = data.filter(d => d.date === selectedDate);
+                }
+                
+                if (searchKeyword.trim()) {
+                    const kw = searchKeyword.toLowerCase();
+                    data = data.filter(d => {
+                        const titleMatch = safeString(d.title).toLowerCase().includes(kw);
+                        const contentMatch = safeString(d.content).toLowerCase().includes(kw);
+                        if (searchTarget === 'Both') return titleMatch || contentMatch;
+                        if (searchTarget === 'Title') return titleMatch;
+                        if (searchTarget === 'Content') return contentMatch;
+                        return true;
+                    });
+                }
+                return data;
+            }, [currentLocaleData, selectedFilter, selectedRisk, selectedTag, selectedDate, searchKeyword, searchTarget, latestDateStr]);
+
+            const cardStats = useMemo(() => {
+                if (!filteredData.length) return { count: 0, topRegion: '-', topCat: '-', critical: { level: 'None', title: '-', content: '-' } };
+                const regions = {}; filteredData.forEach(d => { regions[d.region] = (regions[d.region] || 0) + 1; });
+                const sortedRegions = Object.entries(regions).filter(([name]) => name !== 'Global').sort((a, b) => b[1] - a[1]);
+                const riskPriority = { 'High': 3, 'Med': 2, 'Low': 1 };
+                const topRiskItem = [...filteredData].sort((a, b) => (riskPriority[b.risk] || 0) - (riskPriority[a.risk] || 0))[0];
+                return { 
+                    count: filteredData.length, 
+                    topRegion: sortedRegions.length > 0 ? safeString(sortedRegions[0][0]) : 'Global', 
+                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : safeString(selectedFilter), 
+                    critical: { level: safeString(topRiskItem.risk), title: safeString(topRiskItem.title), content: safeString(topRiskItem.content) } 
+                };
+            }, [filteredData, selectedFilter, language]);
+
+            const strategicNarrative = useMemo(() => {
+                if (!filteredData.length) return language === 'KO' ? `현재 선택된 조건에 부합하는 리스크 데이터가 부재합니다.` : `No risk data found for the selected context.`;
+                let dateLabel = selectedDate === 'LastMonth' ? (language === 'KO' ? '최근 30일' : 'Last 30 Days') : (selectedDate === 'LastWeek' ? (language === 'KO' ? '최근 7일' : 'Last 7 Days') : (selectedDate === 'All' ? (language === 'KO' ? '전체 기간' : 'All Period') : selectedDate));
+                return language === 'KO' ? `${dateLabel} 기준, ${selectedFilter === 'All' ? '공급망 통합' : selectedFilter} 섹터 분석 결과 ${cardStats.topRegion} 지역 이슈가 가장 두드러집니다. ${filteredData.filter(d => d.risk === 'High').length > 0 ? '특히 High 리스크에 대한 선제적 대응이 권고됩니다.' : ''}` : `Based on ${dateLabel}, the ${selectedFilter === 'All' ? 'Supply Chain' : selectedFilter} analysis highlights key issues in ${cardStats.topRegion}. ${filteredData.filter(d => d.risk === 'High').length > 0 ? 'Urgent attention is advised for High Risk cases.' : 'Risk levels are currently stable.'}`;
+            }, [filteredData, selectedFilter, selectedDate, cardStats, language]);
+
+            const timelineStats = useMemo(() => {
+                if (!currentLocaleData.length) return [];
+                const groupedMap = {}; const chartCats = ['원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향'];
+                const trendBaseData = currentLocaleData.filter(d => {
+                    let match = true;
+                    if (selectedFilter !== 'All') match = match && d.category === selectedFilter;
+                    if (selectedRisk !== 'All') match = match && d.risk === selectedRisk;
+                    if (selectedTag) match = match && d.tags.includes(selectedTag);
+                    return match;
+                });
+                trendBaseData.forEach(item => {
+                    const d = new Date(item.date); if (isNaN(d.getTime())) return;
+                    let key = timeRange === 'Weekly' ? getFormattedWeek(item.date) : (timeRange === 'Monthly' ? `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, '0')}` : item.date);
+                    if (!groupedMap[key]) { groupedMap[key] = { date: key, count: 0 }; chartCats.forEach(c => groupedMap[key][c] = 0); }
+                    groupedMap[key].count++; if (chartCats.includes(item.category)) groupedMap[key][item.category]++;
+                });
+                return Object.values(groupedMap).sort((a, b) => a.date.localeCompare(b.date));
+            }, [currentLocaleData, timeRange, selectedFilter, selectedRisk, selectedTag]);
+
+            const dynamicTags = useMemo(() => {
+                if (!filteredData.length) return [];
+                const tagCounts = {}; filteredData.forEach(item => { item.tags.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
+                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({ text: safeString(text), count }));
+            }, [filteredData]);
+
+            const riskProfileData = useMemo(() => {
+                const cats = language === 'KO' ? ['원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향'] : ['Raw Mat', 'Macro', 'Production', 'Competitor', 'New Tech'];
+                const mapping = { 'Raw Mat': '원자재', 'Macro': '거시/정책', 'Production': '생산지역', 'Competitor': '경쟁사', 'New Tech': '신기술동향' };
+                return cats.map(cat => {
+                    const targetCat = language === 'KO' ? cat : mapping[cat];
+                    const catData = filteredData.filter(d => d.category === targetCat);
+                    return { name: cat, High: catData.filter(d => d.risk === 'High').length, Med: catData.filter(d => d.risk === 'Med').length, Low: catData.filter(d => d.risk === 'Low').length };
+                });
+            }, [filteredData, language]);
+
+            const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
+            const goToIndex = () => window.location.href = 'index.html?view=hub';
+            const resetFilters = () => { setSelectedFilter('All'); setSelectedRisk('All'); setSelectedRegion('All'); setSelectedTag(null); setSelectedDate('LastWeek'); setSearchKeyword(''); };
+
+            // 지도와의 통신 처리 로직 추가
+            useEffect(() => {
+                const handleMessage = (e) => {
+                    if (e.data.type === 'filterByCountry') {
+                        setSelectedRegion(e.data.country);
+                    }
+                };
+                window.addEventListener('message', handleMessage);
+                return () => window.removeEventListener('message', handleMessage);
+            }, []);
+
+            useEffect(() => {
+                if (mapRef.current && mapRef.current.contentWindow) {
+                    const countryMap = {};
+                    filteredData.forEach(d => {
+                        if (d.region && d.region !== 'Global') {
+                            countryMap[d.region] = (countryMap[d.region] || 0) + 1;
+                        }
+                    });
+                    mapRef.current.contentWindow.postMessage({ type: 'updateData', data: countryMap }, '*');
+                }
+            }, [filteredData]);
+
+            if (loading) return (
+                <div className="flex h-screen items-center justify-center bg-white font-sans"><div className="animate-pulse flex flex-col items-center gap-4"><Fingerprint className="text-[#0033A0] w-12 h-12" /><p className="text-[10px] font-black text-[#0033A0] uppercase tracking-[0.4em]">Calibrating Decision Core</p></div></div>
+            );
+
+            const menuLabels = {
+                KO: ['전략 시황', '원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향', 'INDEX'],
+                EN: ['Strategy', 'Raw Mat', 'Macro/Policy', 'Production', 'Competitor', 'Tech Trends', 'INDEX']
+            };
+
+            const searchLabels = {
+                KO: { placeholder: '뉴스 키워드 검색...', options: ['제목+본문', '제목', '본문'] },
+                EN: { placeholder: 'Search insights...', options: ['All fields', 'Title', 'Content'] }
+            };
+
+            return (
+                <div className={`min-h-screen transition-colors duration-500 font-sans antialiased pb-24 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-[#F8F9FB] text-[#172B4D]'}`}>
+                    <header className="bg-[#0033A0] text-white sticky top-0 z-50 px-8 h-14 flex items-center justify-between shadow-xl">
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+                                <h1 className="font-bold text-[13px] tracking-tight uppercase">PURCHASE INTELLIGENCE</h1>
+                            </div>
+                            <nav className="flex items-center gap-5 text-[11px] font-bold">
+                                {menuLabels[language].map((m, idx) => {
+                                    if (m === 'INDEX') return null; 
+                                    const catKey = menuLabels['KO'][idx];
+                                    const isSelected = (m === '전략 시황' || m === 'Strategy') ? selectedFilter === 'All' : selectedFilter === catKey;
+                                    return (
+                                        <button key={m} onClick={() => { setSelectedFilter(m === '전략 시황' || m === 'Strategy' ? 'All' : catKey); setSelectedTag(null); }} className={`transition-all py-1 border-b-2 uppercase ${isSelected ? 'text-white border-white' : 'text-white/60 border-transparent hover:text-white'}`}>{m}</button>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50">
+                                <div className="relative">
+                                    <select value={searchTarget} onChange={(e) => setSearchTarget(e.target.value)} className="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer">
+                                        <option value="Both">{searchLabels[language].options[0]}</option>
+                                        <option value="Title">{searchLabels[language].options[1]}</option>
+                                        <option value="Content">{searchLabels[language].options[2]}</option>
+                                    </select>
+                                    <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
+                                <div className="w-[1px] h-4 bg-slate-200"></div>
+                                <div className="flex items-center flex-1 px-3">
+                                    <Search size={14} className="text-slate-400 mr-2" />
+                                    <input type="text" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder={searchLabels[language].placeholder} className="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-36 placeholder:text-slate-300 uppercase tracking-tighter" />
+                                </div>
+                            </div>
+                            <button onClick={goToIndex} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"><List size={14} /> News Hub</button>
+                            <button onClick={() => setLanguage(l => l === 'KO' ? 'EN' : 'KO')} className="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest">{language}</button>
+                            <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
+                        </div>
+                    </header>
+
+                    <DateSlider selectedDate={selectedDate} onDateChange={setSelectedDate} availableDates={availableDates} hasArticlesMap={hasArticlesMap} darkMode={darkMode} lang={language} />
+
+                    <main className="max-w-[1600px] mx-auto p-8 space-y-8 animate-in fade-in duration-700">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] group shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#0033A0]">{language === 'KO' ? '기사 분석 수' : 'Article Intensity'}</p>
+                                <h3 className={`text-4xl font-black tracking-tighter ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>{filteredData.length} <span className="text-[10px] font-normal text-slate-400 uppercase ml-1">Cases</span></h3>
+                            </div>
+                            <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '집중 지역' : 'Impact Hotspot'}</p>
+                                <h3 className={`text-3xl font-black tracking-tighter flex items-center gap-3 uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}><MapPin size={24} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {cardStats.topRegion}</h3>
+                            </div>
+                            <div onClick={() => setSelectedRisk(prev => prev === 'High' ? 'All' : 'High')} className={`p-6 rounded-sm border shadow-sm cursor-pointer transition-all hover:shadow-md ${selectedRisk === 'High' ? 'border-red-500 ring-2 ring-red-500/20' : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200')}`}>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '최대 리스크' : 'Max Risk Depth'}</p>
+                                <div className="flex items-center gap-3"><div className={`w-3.5 h-3.5 rounded-full ${selectedRisk === 'High' ? 'bg-red-500 animate-pulse' : (darkMode ? 'bg-blue-400' : 'bg-[#0033A0]')}`}></div><h3 className={`text-3xl font-black tracking-tighter uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{selectedRisk}</h3></div>
+                            </div>
+                        </div>
+
+                        <div className={`border-l-4 p-6 rounded-sm shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:shadow-md transition-shadow ${darkMode ? 'bg-slate-900 border-blue-500' : 'bg-white border-[#0033A0]'}`}>
+                            <div className="flex items-center gap-6 flex-1">
+                                <div className={`p-3 rounded-full shadow-sm ${darkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#0033A0]'}`}><Sparkles size={24} /></div>
+                                <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{strategicNarrative}</h2></div>
+                            </div>
+                            {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
+                                <button onClick={resetFilters} className={`flex items-center gap-2 text-[10px] font-black border px-5 py-2.5 rounded-sm transition-all uppercase whitespace-nowrap shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700' : 'text-[#0033A0] border-[#0033A0] hover:bg-blue-50'}`}><Clock size={12} /> {language === 'KO' ? '필터 해제' : 'Reset Filter'}</button>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className={`lg:col-span-4 rounded-sm border shadow-sm p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '추세' : 'Trend'}</h2>
+                                    <div className="flex bg-slate-100 p-0.5 rounded-sm dark:bg-slate-800">
+                                        {['Weekly', 'Monthly'].map(v => (<button key={v} onClick={() => setTimeRange(v)} className={`px-3 py-1 text-[8px] font-black rounded-sm transition-all ${timeRange === v ? (darkMode ? 'bg-blue-600 text-white' : 'bg-white text-[#0033A0] shadow-sm') : 'text-slate-400'}`}>{v}</button>))}
+                                    </div>
+                                </div>
+                                <div className="h-[220px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={timelineStats}>
+                                            <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0.15}/><stop offset="95%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0}/></linearGradient></defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#334155" : "#EDF2F7"} />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#8993A4', fontWeight: 700}} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#8993A4', fontWeight: 700}} />
+                                            <RechartsTooltip contentStyle={darkMode ? {backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff'} : {}} />
+                                            <Area type="monotone" dataKey="count" stroke={darkMode ? "#60A5FA" : "#0033A0"} strokeWidth={2} fillOpacity={1} fill="url(#chartGrad)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                            <div className={`lg:col-span-4 rounded-sm border shadow-sm p-6 flex flex-col justify-between ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><Globe size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '지도' : 'Mapping'}</h2>
+                                    {selectedRegion !== 'All' && (
+                                        <button onClick={() => setSelectedRegion('All')} className="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-sm uppercase tracking-tighter">RESET MAP</button>
+                                    )}
+                                </div>
+                                <div className={`relative aspect-video rounded-sm overflow-hidden flex items-center justify-center shadow-inner ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                    <iframe 
+                                        ref={mapRef}
+                                        src="InteractiveMap.html" 
+                                        className="w-full h-full border-none" 
+                                        title="Interactive Map"
+                                    />
+                                </div>
+                            </div>
+                            <div className={`lg:col-span-4 p-6 rounded-sm shadow-xl relative overflow-hidden group border-b-4 ${darkMode ? 'bg-slate-900 border-blue-600' : 'bg-[#172B4D] border-[#0033A0]'}`}>
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-blue-200"><Tag size={14} /> {language === 'KO' ? '전략 태그' : 'Strategic Tags'}</h2>
+                                        {selectedTag && <button onClick={() => setSelectedTag(null)} className="flex items-center gap-1 text-[8px] font-black bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded-sm transition-all text-white"><XCircle size={10} /> RESET</button>}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[140px] custom-scrollbar pr-2">
+                                        {dynamicTags.map(tag => (
+                                            <button key={tag.text} onClick={() => setSelectedTag(prev => prev === tag.text ? null : tag.text)} className={`px-2 py-1 rounded-sm text-[9px] font-bold border transition-all flex items-center gap-1.5 ${selectedTag === tag.text ? 'bg-white text-[#172B4D] border-white shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/15 text-blue-100'}`}>#{tag.text} <span className={`text-[7.5px] font-black opacity-30`}>{tag.count}</span></button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Fingerprint className="absolute -bottom-8 -right-8 w-24 h-24 text-white/5" />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className={`lg:col-span-9 rounded-sm border shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <div className={`p-4 border-b flex items-center justify-between ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'}`}>
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><Filter size={12} /> {language === 'KO' ? '대상 인텔리전스 컨텍스트 피드' : 'Target Intelligence Context Feed'}</h2>
+                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm ${darkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{filteredData.length} Articles Loaded</span>
+                                </div>
+                                <div className="divide-y divide-slate-100 max-h-[700px] overflow-y-auto custom-scrollbar dark:divide-slate-800">
+                                    {filteredData.slice(-40).reverse().map((item, idx) => (
+                                        <div key={idx} className={`p-6 transition-all cursor-pointer group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-blue-50/20'}`} onClick={() => handleLink(item._uId)}>
+                                            <div className="flex items-center gap-3 mb-3 text-[8.5px] font-black uppercase tracking-widest">
+                                                <span className="px-2 py-0.5 rounded-sm text-white shadow-sm" style={{backgroundColor: item.risk === 'High' ? RISK_COLORS.High : (CATEGORY_COLORS[item.category] || COLORS.activeBlue)}}>{safeString(item.category)}</span>
+                                                <span className="text-slate-400 border-l border-slate-200 pl-3 dark:border-slate-700">{safeString(item.region)}</span>
+                                                <span className="text-slate-300 border-l border-slate-200 pl-3 dark:border-slate-700 font-medium">{safeString(item.date)}</span>
+                                                <span className={`ml-auto font-bold ${item.risk === 'High' ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>{safeString(item.risk)} RISK</span>
+                                            </div>
+                                            <h4 className={`text-[15px] font-bold leading-snug transition-colors mb-3 group-hover:text-blue-500 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{safeString(item.title)}</h4>
+                                            {/* 🚀 기사 본문 출력 보장 */}
+                                            <p className="text-[12.5px] text-slate-500 leading-relaxed line-clamp-3 mb-3 dark:text-slate-400">{safeString(item.content)}</p>
+                                            <div className="flex flex-wrap gap-1.5">{item.tags.map(t => (<span key={t} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm ${darkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-400 bg-blue-50/50'}`}>#{safeString(t)}</span>))}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-6 text-slate-400"><ShieldAlert size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '심각도 매트릭스' : 'Severity Matrix'}</h2>
+                                <div className="flex-1 h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={riskProfileData} layout="vertical" margin={{ left: 5, right: 30, top: 10, bottom: 10 }}>
+                                            <XAxis type="number" hide />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 900, fill: '#475569', textTransform: 'uppercase'}} width={80} />
+                                            <RechartsTooltip cursor={{fill: 'transparent'}} />
+                                            <Bar dataKey="Low" stackId="a" fill={RISK_COLORS.Low} barSize={24} /><Bar dataKey="Med" stackId="a" fill={RISK_COLORS.Med} /><Bar dataKey="High" stackId="a" fill={RISK_COLORS.High} radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                    <footer className={`max-w-[1600px] mx-auto px-8 py-14 border-t text-center text-slate-400 transition-colors ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                        <p className="text-[9px] font-black uppercase tracking-[0.4em]">DA Intelligence Mapping Core // Framework Stable Release v8.2</p>
+                    </footer>
+                </div>
+            );
+        };
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -77,20 +77,12 @@
         font-family: "Pretendard", sans-serif;
         transition: all 0.3s ease;
       }
-      .header {
-        height: 55px;
-        position: fixed;
-        top: 0;
-        width: 100%;
-        z-index: 100;
-        border-bottom: 2px solid #1428a0;
-      }
       .sidebar {
         width: 280px;
         position: fixed;
         left: 0;
-        top: 55px;
-        height: calc(100vh - 55px);
+        top: 56px;
+        height: calc(100vh - 56px);
         border-right: 1px solid #eee;
         padding: 20px;
         overflow-y: auto;
@@ -98,7 +90,7 @@
       }
       .main-content {
         margin-left: 280px;
-        margin-top: 55px;
+        margin-top: 56px;
         padding: 30px 40px;
         max-width: 1200px;
       }
@@ -573,6 +565,8 @@
     </div>
 
     <script>
+      let isDashboardActive = false;
+
       function initLandingGlobe() {
         const places = [
           { name: "Samsung Digital City", country: "Korea", product: "HQ / R&D", lat: 37.263, lng: 127.028, txtLat: 39.5, txtLng: 127.0 },
@@ -638,92 +632,74 @@
       }
 
       function enterDashboard() {
-        const lp = document.getElementById('landing-page');
-        lp.classList.add('hidden');
-        document.body.classList.remove('landing-active');
-        
-        // Stop the heavy 3D globe rendering
-        setTimeout(() => { 
-            lp.style.display = 'none';
-            const globeContainer = document.getElementById('globeViz');
-            if(globeContainer) {
-                globeContainer.innerHTML = ''; // Kill the WebGL context
-            }
-        }, 1000);
+        // Redirection to dashboard_mod.html
+        window.location.href = 'dashboard_mod.html';
       }
 
       // DOM 로드 시 지구본 초기화
       document.addEventListener('DOMContentLoaded', () => {
-        initLandingGlobe();
+        // dashboard_mod.html에서 돌아올 때 랜딩 페이지를 건너뛰기 위한 파라미터 체크
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasTarget = urlParams.get('targetId') || urlParams.get('view') === 'hub';
+        
+        if (hasTarget) {
+          isDashboardActive = true; // 대시보드 모드 활성화 (지구본 스킵)
+          document.body.classList.remove('landing-active');
+          const lp = document.getElementById('landing-page');
+          if (lp) {
+            lp.style.display = 'none';
+            lp.classList.add('hidden');
+          }
+        } else {
+          initLandingGlobe();
+        }
       });
     </script>
 
-    <header
-      class="header flex items-center px-6 justify-between bg-white dark:bg-[#25282c] shadow-sm"
-    >
+    <header class="bg-[#0033A0] text-white sticky top-0 z-50 px-8 h-14 flex items-center justify-between shadow-xl">
       <div class="flex items-center gap-6">
-        <div
-          class="flex items-center gap-2 cursor-pointer"
-          onclick="location.reload()"
-        >
-          <div
-            class="w-7 h-7 bg-[#1428a0] rounded flex items-center justify-center text-white font-bold text-xs shadow-sm"
-          >
-            DA
-          </div>
-          <h1
-            class="text-base font-black text-[#1428a0] dark:text-blue-400 tracking-tighter uppercase whitespace-nowrap"
-          >
-            Purchase Intelligence
-          </h1>
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+          <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+          <h1 class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap">Purchase Intelligence</h1>
         </div>
-        <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-bold text-slate-400 whitespace-nowrap">
-          <a href="#" onclick="resetFilters()" id="nav-all">전략 시황</a>
-          <a href="#" onclick="filterNews('원자재')">원자재</a>
-          <a href="#" onclick="filterNews('거시경제')">거시/정책</a>
-          <a href="#" onclick="filterNews('생산지역')">생산지역</a>
-          <a href="#" onclick="filterNews('경쟁사')">경쟁사</a>
-          <a href="#" onclick="filterNews('신기술동향')">신기술동향</a>
-          <a href="#" onclick="showIndexModal()">INDEX</a>
+        <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-[11px] font-bold whitespace-nowrap">
+          <a href="#" onclick="resetFilters()" id="nav-all" class="text-white border-b-2 border-white py-1 transition-all uppercase">전략 시황</a>
+          <a href="#" onclick="filterNews('원자재')" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">원자재</a>
+          <a href="#" onclick="filterNews('거시경제')" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">거시/정책</a>
+          <a href="#" onclick="filterNews('생산지역')" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">생산지역</a>
+          <a href="#" onclick="filterNews('경쟁사')" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
+          <a href="#" onclick="filterNews('신기술동향')" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
+          <a href="#" onclick="showIndexModal()" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">INDEX</a>
         </nav>
       </div>
-      <div class="flex items-center gap-2 flex-1 max-w-md mx-8">
-        <select
-          id="searchScope"
-          onchange="handleSearchScope(event)"
-          class="bg-gray-50 dark:bg-gray-800 border-none rounded-lg py-1.5 px-3 text-xs font-bold text-gray-500 focus:ring-2 focus:ring-[#1428a0] outline-none cursor-pointer h-[34px]"
-        >
-          <option value="all">제목+본문</option>
-          <option value="title">제목</option>
-          <option value="content">본문</option>
-        </select>
-        <div class="relative w-full">
-          <i
-            data-lucide="search"
-            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          ></i>
-          <input
-            type="text"
-            id="searchInput"
-            onkeyup="handleSearch(event)"
-            placeholder="뉴스 키워드 검색..."
-            class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-full py-1.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#1428a0] transition-all outline-none"
-          />
+      
+      <div class="flex-1 flex justify-center px-8">
+        <div class="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50 w-full max-w-md">
+          <div class="relative">
+            <select id="searchScope" onchange="handleSearchScope(event)" class="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer h-full">
+              <option value="all">제목+본문</option>
+              <option value="title">제목</option>
+              <option value="content">본문</option>
+            </select>
+            <i data-lucide="chevron-down" class="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+          </div>
+          <div class="w-[1px] h-4 bg-slate-200"></div>
+          <div class="flex items-center flex-1 px-3">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 mr-2"></i>
+            <input type="text" id="searchInput" onkeyup="handleSearch(event)" placeholder="뉴스 키워드 검색..." class="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-full placeholder:text-slate-300 uppercase tracking-tighter outline-none" />
+          </div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button
-          onclick="toggleLanguage()"
-          id="langBtn"
-          class="px-2 py-1 rounded text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-slate-500 hover:text-[#1428a0] transition-colors"
-        >
+
+      <div class="flex items-center gap-4">
+        <button onclick="enterDashboard()" class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> DASHBOARD
+        </button>
+        <button onclick="toggleLanguage()" id="langBtn" class="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest">
           KO
         </button>
-        <button
-          onclick="toggleDarkMode()"
-          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <i data-lucide="moon" id="themeIcon" class="w-4 h-4 text-gray-500"></i>
+        <button onclick="toggleDarkMode()" class="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">
+          <i data-lucide="moon" id="themeIcon" class="w-4.5 h-4.5"></i>
         </button>
       </div>
     </header>
@@ -1041,7 +1017,7 @@
         tag: "all"
       };
 
-      let isDashboardActive = false;
+      // isDashboardActive는 상단 스크립트에서 이미 선언됨
 
       // 언어 상태 및 번역 사전
       let currentLang = 'ko'; // 'ko' | 'en'
@@ -1277,9 +1253,9 @@
         }
 
         if (success) {
-          // 고유 ID 부여
+          // 고유 ID 부여 (Deterministic ID for dashboard linkage)
           allNews.forEach((n, i) => {
-            n._uId = `news-${i}-${Math.random().toString(36).substr(2, 9)}`;
+            n._uId = `news-${i}`;
           });
           
           currentFilteredNews = [...allNews];
@@ -1292,6 +1268,28 @@
           setTimeout(() => renderWorldMap(allNews), 700);
           setTimeout(() => {
               applyFilters(); // Initial filter apply
+              
+              // [추가] URL 파라미터 체크 (Deep Link / Direct View)
+              const urlParams = new URLSearchParams(window.location.search);
+              const targetId = urlParams.get('targetId');
+              const view = urlParams.get('view');
+              
+              if (targetId || view === 'news') {
+                  // 대시보드에서 왔거나 직접 뷰 요청인 경우 랜딩 페이지 스킵
+                  isDashboardActive = true;
+                  const lp = document.getElementById('landing-page');
+                  if (lp) {
+                      lp.style.display = 'none';
+                      lp.classList.add('hidden');
+                  }
+                  document.body.classList.remove('landing-active');
+                  
+                  if (targetId) {
+                      // 특정 기사로 포커스 (데이터 렌더링 후 실행되도록 넉넉한 타이밍)
+                      setTimeout(() => focusNews(targetId), 800);
+                  }
+              }
+              
               document.getElementById("loading").style.display = "none";
           }, 900);
           
@@ -1785,24 +1783,6 @@
         document.getElementById("reportModal").classList.add("hidden");
       }
 
-      function enterDashboard() {
-        isDashboardActive = true;
-        const lp = document.getElementById('landing-page');
-        lp.classList.add('hidden');
-        document.body.classList.remove('landing-active');
-        
-        // 태그 클라우드 애니메이션 시작
-        animateTagCloud();
-        
-        // Stop the heavy 3D globe rendering
-        setTimeout(() => { 
-            lp.style.display = 'none';
-            const globeContainer = document.getElementById('globeViz');
-            if(globeContainer) {
-                globeContainer.innerHTML = ''; // Kill the WebGL context
-            }
-        }, 1000);
-      }
 
       function showIndexModal() {
         document.getElementById("indexModal").classList.remove("hidden");
@@ -1888,16 +1868,17 @@
 
         // 0. 내비게이션 UI 하이라이트 업데이트
         document.querySelectorAll('nav a').forEach(a => {
-            a.classList.remove('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
-            a.classList.add('text-slate-400');
+            a.classList.remove('text-white', 'text-white/60', 'border-white', 'border-transparent');
             
-            if (filterState.category === 'all' && a.id === 'nav-all') {
-                a.classList.add('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
-                a.classList.remove('text-slate-400');
-            } else if (a.innerText === filterState.category || 
-                     (filterState.category === '신기술동향' && (a.innerText === '신기술동향' || a.innerText === t.nav_tech))) {
-                a.classList.add('text-[#1428a0]', 'border-b-2', 'border-[#1428a0]', 'pb-0.5');
-                a.classList.remove('text-slate-400');
+            const isAll = filterState.category === 'all' && (a.id === 'nav-all' || a.innerText === '전략 시황' || a.innerText === t.nav_strategy);
+            const isMatch = a.innerText === filterState.category || 
+                          (filterState.category === '신기술동향' && (a.innerText === '신기술동향' || a.innerText === t.nav_tech)) ||
+                          (filterState.category === '거시경제' && (a.innerText === '거시경제' || a.innerText === '거시/정책' || a.innerText === t.nav_macro));
+
+            if (isAll || isMatch) {
+                a.classList.add('text-white', 'border-white');
+            } else {
+                a.classList.add('text-white/60', 'border-transparent');
             }
         });
 
