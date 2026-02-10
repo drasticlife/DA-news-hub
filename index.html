@@ -998,8 +998,18 @@
     <div id="global-bot-follower" class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150"></div>
 
     <script>
-      const GAS_URL = "https://script.google.com/macros/s/AKfycbwQs-O4MuwSlRiwp0SQacHQrA76PfVkB_g1fmYmQaSOFWpUHpwxhKDcas-3_Pg0WTcx9g/exec";
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbxp0CGKMm4MECeNqhXDad1uTrnic8Y7wQIHgZB6WQwuyA_OcVwcXMMB1b4E84YXlrmFNA/exec";
       const GITHUB_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+
+      // [추가] 세션 ID 생성 및 관리
+      function getSessionId() {
+          let sid = sessionStorage.getItem('da_session_id');
+          if (!sid) {
+              sid = 'sess_' + Date.now() + Math.random().toString(36).substring(2, 9);
+              sessionStorage.setItem('da_session_id', sid);
+          }
+          return sid;
+      }
 
       // [추가] 통합 클릭 핸들러 (펼치기 + 조회수 추적)
       function handleArticleClick(el, id) {
@@ -1012,7 +1022,9 @@
                   trackArticleView({
                       title: n.Title,
                       date: n.Date,
-                      url: n.URL
+                      url: n.URL,
+                      category: n.Category,
+                      risk: n.Risk
                   });
               }
           }
@@ -1022,9 +1034,10 @@
       function trackArticleView(articleData) {
         if (!articleData || !articleData.title) return;
         
-        const { title, date, url } = articleData;
+        const { title, date, url, category, risk } = articleData;
+        const sessionId = getSessionId();
         
-        // 고유 식별을 위한 키 생성 (이스케이프 이슈 방지)
+        // 고유 식별을 위한 키 생성
         const uniqueString = title + (date || '') + (url || '');
         const storageKey = 'viewed_' + uniqueString.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
         
@@ -1039,7 +1052,10 @@
           body: JSON.stringify({ 
             title: title,
             date: date,
-            url: url
+            url: url,
+            category: category,
+            risk: risk,
+            sessionId: sessionId
           })
         }).then(() => {
           sessionStorage.setItem(storageKey, 'true');
@@ -2094,15 +2110,13 @@
                 // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
                 const article = allNews.find(n => n._uId === id);
                 if (article && article.Title) {
-                    // 강제로 펼치고 트래킹 (handleArticleClick과 로직 동일하나 토글 방지)
-                    if (!el.classList.contains('expanded')) {
-                        el.classList.add('expanded');
-                        trackArticleView({
-                            title: article.Title, 
-                            date: article.Date, 
-                            url: article.URL
-                        });
-                    }
+                    trackArticleView({
+                        title: article.Title, 
+                        date: article.Date, 
+                        url: article.URL,
+                        category: article.Category,
+                        risk: article.Risk
+                    });
                 }
             }
         }

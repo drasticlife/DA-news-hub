@@ -50,11 +50,12 @@
             Globe, Calendar, LayoutGrid, ArrowUpRight, 
             Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
             Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
-            ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target
+            ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target,
+            BarChart3, FileText, Eye
         } from 'lucide-react';
 
         const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwQs-O4MuwSlRiwp0SQacHQrA76PfVkB_g1fmYmQaSOFWpUHpwxhKDcas-3_Pg0WTcx9g/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxp0CGKMm4MECeNqhXDad1uTrnic8Y7wQIHgZB6WQwuyA_OcVwcXMMB1b4E84YXlrmFNA/exec";
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
@@ -230,33 +231,46 @@
             const [selectedRegion, setSelectedRegion] = useState('All');
             const [searchKeyword, setSearchKeyword] = useState('');
             const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
+            const [monthlyStats, setMonthlyStats] = useState([]);
+            const [showReport, setShowReport] = useState(false);
             const mapRef = useRef(null);
 
             useEffect(() => {
                 const fetchData = async () => {
                     setLoading(true);
+                    
+                    // 1. 메인 데이터 페칭
                     const sources = [
                         { name: 'Google Sheets (Real-time)', url: GAS_URL },
                         { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
                     ];
 
-                    let success = false;
+                    let mainSuccess = false;
                     for (const source of sources) {
                         try {
-                            console.log(`Fetching from ${source.name}...`);
                             const response = await fetch(source.url);
                             if (response.ok) {
                                 const json = await response.json();
                                 processData(json);
-                                console.log(`Loaded from ${source.name}`);
-                                success = true;
+                                mainSuccess = true;
                                 break;
                             }
                         } catch (e) {
-                            console.warn(`Failed to fetch from ${source.name}`, e);
+                            console.warn(`Failed to fetch main data from ${source.name}`, e);
                         }
                     }
-                    if (!success) console.error("All data sources failed");
+
+                    // 2. 월간 통계 페칭 (GAS 전용)
+                    try {
+                        const mResponse = await fetch(`${GAS_URL}?type=monthly`);
+                        if (mResponse.ok) {
+                            const mJson = await mResponse.json();
+                            setMonthlyStats(mJson);
+                        }
+                    } catch (e) {
+                        console.warn("Failed to fetch monthly stats", e);
+                    }
+
                     setLoading(false);
                 };
 
@@ -649,6 +663,58 @@
                                     ))}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* --- Monthly Performance Report Section --- */}
+                        <div className={`mt-10 p-8 rounded-sm border-2 border-dashed transition-all hover:bg-opacity-80 relative overflow-hidden ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-[#0033A0] text-white rounded-sm shadow-lg"><BarChart3 size={24} /></div>
+                                    <div>
+                                        <h2 className="text-xl font-black tracking-tight text-[#0033A0] dark:text-blue-400">Monthly Performance Intelligence</h2>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">성과 보고용 실시간 데이터 지표</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowReport(!showReport)} className="bg-[#0033A0] hover:bg-blue-700 text-white px-6 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all shadow-md flex items-center gap-2">
+                                    {showReport ? <XCircle size={14} /> : <FileText size={14} />} {showReport ? 'Close Report' : 'Generate Summary'}
+                                </button>
+                            </div>
+
+                            {showReport && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-top duration-500 relative z-10">
+                                    <div className={`p-6 rounded-sm shadow-sm ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Eye size={14} /> Engagement Summary</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-end border-b pb-2">
+                                                <span className="text-[11px] font-bold text-slate-400">Monthly Total Views (PV)</span>
+                                                <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-end border-b pb-2">
+                                                <span className="text-[11px] font-bold text-slate-400">Monthly Active Sessions</span>
+                                                <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Sessions) || 0), 0)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={`p-6 rounded-sm shadow-sm lg:col-span-2 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Target size={14} /> Strategic Category Focus</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {Object.entries(monthlyStats.reduce((acc, curr) => {
+                                                acc[curr.Category] = (acc[curr.Category] || 0) + (Number(curr.Views) || 0);
+                                                return acc;
+                                            }, {})).sort((a,b) => b[1] - a[1]).slice(0, 4).map(([cat, val], idx) => (
+                                                <div key={cat} className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase line-clamp-1">{cat}</span>
+                                                    <span className="text-lg font-black">{val} <span className="text-[8px] font-bold text-blue-500">PV</span></span>
+                                                    <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 mt-1 rounded-full overflow-hidden">
+                                                        <div className="bg-[#0033A0] dark:bg-blue-500 h-full" style={{ width: `${Math.min(100, (val / (monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0) || 1)) * 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <Fingerprint className="absolute -bottom-10 -left-10 w-48 h-48 text-blue-500/5 rotate-12" />
                         </div>
                     </main>
                     <footer className={`max-w-[1600px] mx-auto px-8 py-14 border-t text-center text-slate-400 transition-colors ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>

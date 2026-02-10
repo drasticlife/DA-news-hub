@@ -38,22 +38,29 @@ SpreadsheetApp.getUi()
 }
 
 function doGet(e) {
+var type = e.parameter.type;
+if (type === "monthly") {
+return ContentService.createTextOutput(JSON.stringify(getMonthlyStatsJson()))
+.setMimeType(ContentService.MimeType.JSON);
+}
 var data = getSheetDataAsJson();
 return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// [추가] 조회수 추적을 위한 POST 핸들러
-// 클라이언트에서 { "id": "기사ID" } 형태로 요청을 보냅니다.
 function doPost(e) {
 try {
 var params = JSON.parse(e.postData.contents);
 var targetTitle = params.title;
 var targetDate = params.date;
 var targetUrl = params.url;
+var sessionId = params.sessionId || "unknown";
+var category = params.category || "MISC";
+var risk = params.risk || "Low";
 
     if (!targetTitle) throw new Error("Title is required");
 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getActiveSheet();
     var data = sheet.getDataRange().getValues();
     var headers = data[0];
 
@@ -69,26 +76,21 @@ var targetUrl = params.url;
       sheet.getRange(1, idxView + 1).setValue("ViewCount");
     }
 
-    // 2. 일치하는 행 찾기 (Title + Date + URL 조합으로 고유 식별)
+    // 1. 누적 조회 업데이트
     var foundIndex = -1;
     for (var i = 1; i < data.length; i++) {
-      var row = data[i];
-      var matchTitle = String(row[idxTitle]) === String(targetTitle);
-
-      // 날짜 비교 (Date 객체 또는 문자열 대응)
-      var rowDate = row[idxDate] instanceof Date ? row[idxDate].toISOString() : String(row[idxDate]);
-      var matchDate = !targetDate || rowDate.indexOf(targetDate.split('T')[0]) !== -1;
-
-      // URL 비교 (있는 경우만)
-      var matchUrl = !targetUrl || String(row[idxUrl]).indexOf(targetUrl) !== -1;
-
-      if (matchTitle && matchDate && matchUrl) {
-        foundIndex = i + 1;
-        break;
-      }
+        var row = data[i];
+        if (String(row[idxTitle]) === String(targetTitle)) {
+            var rowDate = row[idxDate] instanceof Date ? row[idxDate].toISOString() : String(row[idxDate]);
+            var matchDate = !targetDate || rowDate.indexOf(targetDate.split('T')[0]) !== -1;
+            var matchUrl = !targetUrl || String(row[idxUrl]).indexOf(targetUrl) !== -1;
+            if (matchDate && matchUrl) {
+                foundIndex = i + 1;
+                break;
+            }
+        }
     }
 
-    // 완전 일치 실패 시 Title로만이라도 찾기 (차선책)
     if (foundIndex === -1) {
       for (var i = 1; i < data.length; i++) {
         if (String(data[i][idxTitle]) === String(targetTitle)) {
@@ -101,12 +103,13 @@ var targetUrl = params.url;
     if (foundIndex !== -1) {
       var currentView = Number(sheet.getRange(foundIndex, idxView + 1).getValue()) || 0;
       sheet.getRange(foundIndex, idxView + 1).setValue(currentView + 1);
-
-      return ContentService.createTextOutput(JSON.stringify({ success: true, count: currentView + 1 }))
-        .setMimeType(ContentService.MimeType.JSON);
-    } else {
-      throw new Error("Article not found: " + targetTitle);
     }
+
+    // 2. 월간 통계 업데이트
+    updateMonthlyStats(targetTitle, category, risk, sessionId);
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true }))
+      .setMimeType(ContentService.MimeType.JSON);
 
 } catch (err) {
 return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
@@ -330,4 +333,79 @@ while (files.hasNext()) {
 files.next().setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 }
 SpreadsheetApp.getUi().alert("권한 수정 완료");
+}
+
+function updateMonthlyStats(title, category, risk, sessionId) {
+var ss = SpreadsheetApp.getActiveSpreadsheet();
+var statsSheet = ss.getSheetByName("MonthlyStats") || createStatsSheet(ss);
+var logSheet = ss.getSheetByName("SessionLog") || createLogSheet(ss);
+
+var now = new Date();
+var monthKey = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
+
+var statsData = statsSheet.getDataRange().getValues();
+var foundRow = -1;
+for (var i = 1; i < statsData.length; i++) {
+if (statsData[i][0] === monthKey && statsData[i][1] === title) {
+foundRow = i + 1;
+break;
+}
+}
+
+if (foundRow === -1) {
+statsSheet.appendRow([monthKey, title, category, risk, 1, 1]);
+logSheet.appendRow([monthKey, title, sessionId]);
+} else {
+// Views 증가
+var currentViews = Number(statsData[foundRow-1][4]) || 0;
+statsSheet.getRange(foundRow, 5).setValue(currentViews + 1);
+
+    // Sessions 증가 여부 확인
+    var logData = logSheet.getDataRange().getValues();
+    var isNewSession = true;
+    for (var j = 1; j < logData.length; j++) {
+      if (logData[j][0] === monthKey && logData[j][1] === title && logData[j][2] === sessionId) {
+        isNewSession = false;
+        break;
+      }
+    }
+
+    if (isNewSession) {
+      var currentSessions = Number(statsData[foundRow-1][5]) || 0;
+      statsSheet.getRange(foundRow, 6).setValue(currentSessions + 1);
+      logSheet.appendRow([monthKey, title, sessionId]);
+    }
+
+}
+}
+
+function createStatsSheet(ss) {
+var sheet = ss.insertSheet("MonthlyStats");
+sheet.appendRow(["Month", "Title", "Category", "Risk", "Views", "Sessions"]);
+sheet.getRange(1, 1, 1, 6).setFontWeight("bold").setBackground("#f3f3f3");
+return sheet;
+}
+
+function createLogSheet(ss) {
+var sheet = ss.insertSheet("SessionLog");
+sheet.appendRow(["Month", "Title", "SessionID"]);
+sheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#f3f3f3");
+sheet.hideSheet();
+return sheet;
+}
+
+function getMonthlyStatsJson() {
+var ss = SpreadsheetApp.getActiveSpreadsheet();
+var sheet = ss.getSheetByName("MonthlyStats");
+if (!sheet) return [];
+var data = sheet.getDataRange().getValues();
+var headers = data[0];
+var rows = data.slice(1);
+return rows.map(function(row) {
+var obj = {};
+headers.forEach(function(header, index) {
+obj[header] = row[index];
+});
+return obj;
+});
 }
