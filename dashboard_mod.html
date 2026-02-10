@@ -671,12 +671,12 @@
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-[#0033A0] text-white rounded-sm shadow-lg"><BarChart3 size={24} /></div>
                                     <div>
-                                        <h2 className="text-xl font-black tracking-tight text-[#0033A0] dark:text-blue-400">Monthly Performance Intelligence</h2>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">성과 보고용 실시간 데이터 지표</p>
+                                        <h2 className="text-xl font-black tracking-tight text-[#0033A0] dark:text-blue-400">Strategic Engagement Analysis</h2>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">의사결정 지원 및 전략 정보 활용 지표</p>
                                     </div>
                                 </div>
                                 <button onClick={() => setShowReport(!showReport)} className="bg-[#0033A0] hover:bg-blue-700 text-white px-6 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all shadow-md flex items-center gap-2">
-                                    {showReport ? <XCircle size={14} /> : <FileText size={14} />} {showReport ? 'Close Report' : 'Generate Summary'}
+                                    {showReport ? <XCircle size={14} /> : <FileText size={14} />} {showReport ? 'Close Analysis' : 'Generate Summary'}
                                 </button>
                             </div>
 
@@ -686,11 +686,11 @@
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Eye size={14} /> Engagement Summary</h3>
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">Monthly Total Views (PV)</span>
+                                                <span className="text-[11px] font-bold text-slate-400">누적 정보 열람 (PV)</span>
                                                 <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0)}</span>
                                             </div>
                                             <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">Monthly Active Sessions</span>
+                                                <span className="text-[11px] font-bold text-slate-400">고유 방문 활용 (Sessions)</span>
                                                 <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Sessions) || 0), 0)}</span>
                                             </div>
                                         </div>
