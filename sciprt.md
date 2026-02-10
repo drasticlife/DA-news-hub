@@ -42,6 +42,78 @@ var data = getSheetDataAsJson();
 return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
+// [추가] 조회수 추적을 위한 POST 핸들러
+// 클라이언트에서 { "id": "기사ID" } 형태로 요청을 보냅니다.
+function doPost(e) {
+try {
+var params = JSON.parse(e.postData.contents);
+var targetTitle = params.title;
+var targetDate = params.date;
+var targetUrl = params.url;
+
+    if (!targetTitle) throw new Error("Title is required");
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+
+    var idxTitle = headers.indexOf("Title");
+    var idxDate = headers.indexOf("Date");
+    var idxUrl = headers.indexOf("URL");
+    var idxView = headers.indexOf("ViewCount");
+
+    if (idxTitle === -1) throw new Error("Title column not found");
+
+    if (idxView === -1) {
+      idxView = headers.length;
+      sheet.getRange(1, idxView + 1).setValue("ViewCount");
+    }
+
+    // 2. 일치하는 행 찾기 (Title + Date + URL 조합으로 고유 식별)
+    var foundIndex = -1;
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var matchTitle = String(row[idxTitle]) === String(targetTitle);
+
+      // 날짜 비교 (Date 객체 또는 문자열 대응)
+      var rowDate = row[idxDate] instanceof Date ? row[idxDate].toISOString() : String(row[idxDate]);
+      var matchDate = !targetDate || rowDate.indexOf(targetDate.split('T')[0]) !== -1;
+
+      // URL 비교 (있는 경우만)
+      var matchUrl = !targetUrl || String(row[idxUrl]).indexOf(targetUrl) !== -1;
+
+      if (matchTitle && matchDate && matchUrl) {
+        foundIndex = i + 1;
+        break;
+      }
+    }
+
+    // 완전 일치 실패 시 Title로만이라도 찾기 (차선책)
+    if (foundIndex === -1) {
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][idxTitle]) === String(targetTitle)) {
+          foundIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (foundIndex !== -1) {
+      var currentView = Number(sheet.getRange(foundIndex, idxView + 1).getValue()) || 0;
+      sheet.getRange(foundIndex, idxView + 1).setValue(currentView + 1);
+
+      return ContentService.createTextOutput(JSON.stringify({ success: true, count: currentView + 1 }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else {
+      throw new Error("Article not found: " + targetTitle);
+    }
+
+} catch (err) {
+return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+}
+
 function getSheetDataAsJson() {
 var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 var data = sheet.getDataRange().getValues();
@@ -63,7 +135,6 @@ return obj;
 });
 }
 
-// [핵심] GitHub 데이터 전송 메인 함수
 function pushToGitHub() {
 var token = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
 if (!token) {
@@ -75,11 +146,9 @@ var data = getSheetDataAsJson();
 var content = JSON.stringify(data, null, 2);
 var encodedContent = Utilities.base64Encode(Utilities.newBlob(content).getBytes());
 
-// 1. data.json 업로드
 var res1 = uploadSingleFile("data.json", encodedContent, token);
-Utilities.sleep(1000); // 1초 휴식
+Utilities.sleep(1000);
 
-// 2. data_new.json 업로드
 var res2 = uploadSingleFile("data_new.json", encodedContent, token);
 
 if (res1.success && res2.success) {
@@ -90,7 +159,6 @@ SpreadsheetApp.getUi().alert("일부 전송 실패:\n" + msg);
 }
 }
 
-// 단일 파일 업로드 유틸리티
 function uploadSingleFile(fileName, encodedContent, token) {
 var url = "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/" + fileName;
 var sha = null;
@@ -133,7 +201,6 @@ return { success: false, message: e.toString() };
 }
 }
 
-// 이미지 및 번역 유틸리티 (기존 로직 유지)
 function translateEmptyEnglishFields() {
 var startTime = new Date().getTime();
 var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -156,7 +223,7 @@ var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Ca
 var count = 0;
 
 for (var i = 1; i < data.length; i++) {
-if (new Date().getTime() - startTime > MAX_RUNTIME) break;
+if (new Date().getTime() - startTime > 330000) break;
 var rowNum = i + 1;
 if (idxT !== undefined && data[i][idxT] && !data[i][idxTe]) {
 sheet.getRange(rowNum, idxTe + 1).setValue(LanguageApp.translate(data[i][idxT], "ko", "en"));
@@ -190,7 +257,7 @@ if (idxU === -1 || idxI === -1) return;
 var count = 0;
 
 for (var i = 1; i < data.length; i++) {
-if (new Date().getTime() - startTime > MAX_RUNTIME) break;
+if (new Date().getTime() - startTime > 330000) break;
 
     if (!data[i][idxI] && data[i][idxU]) {
       var rawUrl = String(data[i][idxU]);
@@ -198,14 +265,12 @@ if (new Date().getTime() - startTime > MAX_RUNTIME) break;
       var category = idxC !== -1 ? String(data[i][idxC]) : "";
 
       var imageFound = false;
-      var imageUrl = DEFAULT_IMAGE_URL; // 기본값 시작
+      var imageUrl = DEFAULT_IMAGE_URL;
 
-      // 각 URL 후보들에 대해 확인
       for (var j = 0; j < urls.length; j++) {
         var url = urls[j];
         var shouldSkip = false;
 
-        // 1. 스킵 조건 확인 (확장자 및 도메인)
         for (var k = 0; k < SKIP_EXTENSIONS.length; k++) {
           if (url.toLowerCase().indexOf(SKIP_EXTENSIONS[k]) !== -1) { shouldSkip = true; break; }
         }
@@ -215,14 +280,12 @@ if (new Date().getTime() - startTime > MAX_RUNTIME) break;
           }
         }
 
-        // 추가: 카테고리가 '원자재'인 경우 tradingeconomics.com은 명시적으로 건너뜀 (이미 SKIP_DOMAINS에 있긴 하지만 요청 맥락 강조)
         if (category === "원자재" && url.toLowerCase().indexOf("tradingeconomics.com") !== -1) {
           shouldSkip = true;
         }
 
         if (shouldSkip) continue;
 
-        // 2. 이미지 가져오기 시도
         try {
           var options = {
             "muteHttpExceptions": true,
@@ -247,15 +310,11 @@ if (new Date().getTime() - startTime > MAX_RUNTIME) break;
                 }
               }
               imageFound = true;
-              break; // 유효한 이미지를 찾았으면 나머지 URL은 시도하지 않음
+              break;
             }
           }
-        } catch (e) {
-          // fetch 실패 시 다음 URL 시도
-        }
+        } catch (e) {}
       }
-
-      // 최종적으로 결정된 imageUrl 기록
       sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
       count++;
     }

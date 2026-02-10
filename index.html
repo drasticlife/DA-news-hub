@@ -998,8 +998,54 @@
     <div id="global-bot-follower" class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150"></div>
 
     <script>
-      const GAS_URL = "https://script.google.com/macros/s/AKfycbzNJA_s6YGI2Blt6b_gaDLbOFbyzqIl7c4MDlFUjoKjDn8uCQrpkXtSba4-FHVL7HVJ7g/exec";
+      const GAS_URL = "https://script.google.com/macros/s/AKfycbwQs-O4MuwSlRiwp0SQacHQrA76PfVkB_g1fmYmQaSOFWpUHpwxhKDcas-3_Pg0WTcx9g/exec";
       const GITHUB_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+
+      // [추가] 통합 클릭 핸들러 (펼치기 + 조회수 추적)
+      function handleArticleClick(el, id) {
+          if (!el) return;
+          el.classList.toggle('expanded');
+          
+          if (el.classList.contains('expanded')) {
+              const n = allNews.find(item => item._uId === id);
+              if (n && n.Title) {
+                  trackArticleView({
+                      title: n.Title,
+                      date: n.Date,
+                      url: n.URL
+                  });
+              }
+          }
+      }
+
+      // [추가] 조회수 추적 함수
+      function trackArticleView(articleData) {
+        if (!articleData || !articleData.title) return;
+        
+        const { title, date, url } = articleData;
+        
+        // 고유 식별을 위한 키 생성 (이스케이프 이슈 방지)
+        const uniqueString = title + (date || '') + (url || '');
+        const storageKey = 'viewed_' + uniqueString.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+        
+        // 중복 클릭 방지 (세션 단위)
+        const viewed = sessionStorage.getItem(storageKey);
+        if (viewed) return;
+
+        fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors", 
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            title: title,
+            date: date,
+            url: url
+          })
+        }).then(() => {
+          sessionStorage.setItem(storageKey, 'true');
+          console.log("View tracked:", title);
+        }).catch(err => console.error("Tracking error:", err));
+      }
       
       let allNews = [],
         currentFilteredNews = [];
@@ -1502,7 +1548,7 @@
                 return `
                     <article id="${n._uId}" 
                         class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? 'has-bot' : ''}" 
-                        onclick="this.classList.toggle('expanded')">
+                        onclick="handleArticleClick(this, '${n._uId}')">
                         <div class="news-inner">
                             <div class="flex gap-8 items-start">
                                 <div class="flex-1">
@@ -2044,6 +2090,20 @@
             // 내용 펼치기
             if (!el.classList.contains('expanded')) {
                 el.classList.add('expanded');
+                
+                // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
+                const article = allNews.find(n => n._uId === id);
+                if (article && article.Title) {
+                    // 강제로 펼치고 트래킹 (handleArticleClick과 로직 동일하나 토글 방지)
+                    if (!el.classList.contains('expanded')) {
+                        el.classList.add('expanded');
+                        trackArticleView({
+                            title: article.Title, 
+                            date: article.Date, 
+                            url: article.URL
+                        });
+                    }
+                }
             }
         }
       }

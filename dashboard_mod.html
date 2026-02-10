@@ -54,6 +54,7 @@
         } from 'lucide-react';
 
         const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwQs-O4MuwSlRiwp0SQacHQrA76PfVkB_g1fmYmQaSOFWpUHpwxhKDcas-3_Pg0WTcx9g/exec";
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
@@ -233,10 +234,34 @@
 
             useEffect(() => {
                 const fetchData = async () => {
+                    setLoading(true);
+                    const sources = [
+                        { name: 'Google Sheets (Real-time)', url: GAS_URL },
+                        { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
+                    ];
+
+                    let success = false;
+                    for (const source of sources) {
+                        try {
+                            console.log(`Fetching from ${source.name}...`);
+                            const response = await fetch(source.url);
+                            if (response.ok) {
+                                const json = await response.json();
+                                processData(json);
+                                console.log(`Loaded from ${source.name}`);
+                                success = true;
+                                break;
+                            }
+                        } catch (e) {
+                            console.warn(`Failed to fetch from ${source.name}`, e);
+                        }
+                    }
+                    if (!success) console.error("All data sources failed");
+                    setLoading(false);
+                };
+
+                const processData = (json) => {
                     try {
-                        const response = await fetch(RAW_DATA_URL);
-                        const json = await response.json();
-                        
                         const formatted = json.map((item, index) => {
                             const ko_title = safeString(item.B || item.Title || item.title || '제목 없음');
                             const en_title = safeString(item.M || 'No Title');
@@ -260,6 +285,7 @@
                                 _uId: `news-${index}`,
                                 date: normalizeDate(item.A || item.Date || item.date || '2026-02-01'),
                                 risk: safeString(item.G || item.Risk || item.risk || 'Low'),
+                                viewCount: Number(item.ViewCount || item.viewCount || 0),
                                 ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region },
                                 en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region }
                             };
@@ -270,11 +296,10 @@
                         if (dates.length > 0) setLatestDateStr(dates[0]);
                         setSelectedDate('LastWeek'); 
                     } catch (err) {
-                        console.error("Data Load Error:", err);
-                    } finally {
-                        setLoading(false);
+                        console.error("Data Process Error:", err);
                     }
                 };
+                
                 fetchData();
             }, []);
 
@@ -389,6 +414,25 @@
                     return { name: cat, High: catData.filter(d => d.risk === 'High').length, Med: catData.filter(d => d.risk === 'Med').length, Low: catData.filter(d => d.risk === 'Low').length };
                 });
             }, [filteredData, language]);
+
+            // [추가] 인기 카테고리 (조회수 기준)
+            const popularCategoryData = useMemo(() => {
+                const catViews = {};
+                filteredData.forEach(d => {
+                    const cat = d.category;
+                    catViews[cat] = (catViews[cat] || 0) + d.viewCount;
+                });
+                return Object.entries(catViews)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value);
+            }, [filteredData]);
+
+            // [추가] 최다 조회 기사
+            const topArticles = useMemo(() => {
+                return [...filteredData]
+                    .sort((a, b) => b.viewCount - a.viewCount)
+                    .slice(0, 5);
+            }, [filteredData]);
 
             const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
             const goToIndex = () => window.location.href = 'index.html?view=hub';
@@ -577,16 +621,32 @@
                                 </div>
                             </div>
                             <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-6 text-slate-400"><ShieldAlert size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '심각도 매트릭스' : 'Severity Matrix'}</h2>
-                                <div className="flex-1 h-[200px]">
+                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '인기 카테고리' : 'Popular Categories'}</h2>
+                                <div className="flex-1 h-[140px] mb-6">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={riskProfileData} layout="vertical" margin={{ left: 5, right: 30, top: 10, bottom: 10 }}>
+                                        <BarChart data={popularCategoryData} layout="vertical" margin={{ left: 5, right: 30, top: 0, bottom: 0 }}>
                                             <XAxis type="number" hide />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 900, fill: '#475569', textTransform: 'uppercase'}} width={80} />
-                                            <RechartsTooltip cursor={{fill: 'transparent'}} />
-                                            <Bar dataKey="Low" stackId="a" fill={RISK_COLORS.Low} barSize={24} /><Bar dataKey="Med" stackId="a" fill={RISK_COLORS.Med} /><Bar dataKey="High" stackId="a" fill={RISK_COLORS.High} radius={[0, 4, 4, 0]} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 900, fill: '#64748b'}} width={70} />
+                                            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                                {popularCategoryData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || COLORS.activeBlue} />
+                                                ))}
+                                            </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
+                                </div>
+                                
+                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><Target size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '본 주간 최다 조회 기사' : 'Weekly Most Viewed'}</h2>
+                                <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
+                                    {topArticles.map((article, i) => (
+                                        <div key={i} onClick={() => handleLink(article._uId)} className={`p-3 rounded-sm border transition-all cursor-pointer hover:border-blue-400 group ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                                            <div className="flex justify-between items-start gap-2 mb-1">
+                                                <span className="text-[8px] font-black uppercase text-blue-500">{article.category}</span>
+                                                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1"><Clock size={10} /> {article.viewCount} views</span>
+                                            </div>
+                                            <h5 className={`text-[11px] font-bold leading-tight line-clamp-2 group-hover:text-blue-500 transition-colors ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{article.title}</h5>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
