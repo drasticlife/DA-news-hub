@@ -51,11 +51,11 @@
             Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
             Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
             ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target,
-            BarChart3, FileText, Eye
+            BarChart3, FileText, Eye, LogOut, X, Cpu
         } from 'lucide-react';
 
         const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxp0CGKMm4MECeNqhXDad1uTrnic8Y7wQIHgZB6WQwuyA_OcVwcXMMB1b4E84YXlrmFNA/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby6E7X1vODajQSkXLyWVjstXR7IF0LY7W8sHiCHVNbrp1cjEEQBttS7fWZxTYw9i0ie6Q/exec";
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
@@ -107,14 +107,14 @@
         const normalizeDate = (dateStr) => {
             const ds = safeString(dateStr);
             if (!ds || ds.includes("NaN")) return "";
-            const cleaned = ds.replace(/[\.\/]/g, '-');
+            const tSplit = ds.split('T')[0];
+            const cleaned = tSplit.replace(/[\.\/]/g, '-');
             const parts = cleaned.split('-');
             if (parts.length === 3) {
                 const y = parts[0];
                 const m = parts[1].padStart(2, '0');
                 const d = parts[2].padStart(2, '0');
-                const result = `${y}-${m}-${d}`;
-                return isNaN(new Date(result).getTime()) ? "" : result;
+                return `${y}-${m}-${d}`;
             }
             return isNaN(new Date(cleaned).getTime()) ? "" : cleaned;
         };
@@ -123,9 +123,115 @@
             const cs = safeString(catStr);
             if (!cs) return "기타";
             const base = cs.split(':')[0].trim();
-            if (base.includes('신기술')) return '신기술동향';
-            if (base.includes('거시') || base.includes('정책')) return '거시/정책';
+            if (base === 'AI기술' || base === 'AI기능' || base === '신기술' || base === '신기술동향') return '신기술동향';
+            if (base.includes('거시') || base.includes('정책') || base.includes('거시경제')) return '거시/정책';
+            if (base.includes('지역') || base.includes('생산')) return '지역별 분석';
             return base;
+        };
+
+        const translateCategory = (catStr, lang) => {
+            if (lang === 'KO') return catStr;
+            const cs = safeString(catStr).replace(/^#/, '').trim(); // # 제거 및 트리밍
+            const mapping = {
+                // 상단 메뉴 및 대표 카테고리
+                '원자재': 'Material',
+                '거시/정책': 'Macro',
+                '지역별 분석': 'Region',
+                '경쟁사': 'Competitors',
+                '신기술동향': 'New Tech',
+                '기타': 'Misc',
+                '통합 분석': 'Unified',
+                '공급망 통합': 'Supply Chain',
+                '전략 시황': 'Strategy',
+                
+                // 원본 데이터 시트 명칭 대응
+                '거시경제': 'Macro',
+                '생산지역': 'Region',
+                
+                // 상세 카테고리 및 상위 태그
+                '수급': 'Supply',
+                '원자재수급': 'Supply',
+                '가격': 'Price',
+                '원가성과': 'Cost',
+                '환율': 'Exchange',
+                '관율': 'Exchange', // 사용자 오타 대응
+                '금리': 'Rate',
+                '노동정치': 'Labor/Politics',
+                '정치': 'Politics',
+                '노동': 'Labor',
+                '정책': 'Policy',
+                '기능': 'Features',
+                '기술': 'Tech',
+                '공급망': 'Supply Chain',
+                '원가': 'Cost',
+                '수출': 'Export',
+                '수입': 'Import',
+
+                // 주요 뉴스 태그 (Strategic Tags 대응)
+                '관세': 'Tariff',
+                '철강': 'Steel',
+                '미국': 'USA',
+                '중국': 'China',
+                '인도': 'India',
+                '유럽': 'Europe',
+                '일본': 'Japan',
+                '전기료': 'Power',
+                '구리': 'Copper',
+                '알루미늄': 'Aluminum',
+                '동결': 'Freeze',
+                '네고': 'Nego',
+                '배터리': 'Battery',
+                '반도체': 'Chips',
+                '전기차': 'EV',
+                '보조금': 'Subsidy',
+                '인플레이션': 'Inflation',
+                '러시아': 'Russia',
+                '우크라이나': 'Ukraine',
+                '유가': 'Oil Price',
+                '탄소': 'Carbon',
+                '공급': 'Supply',
+                '수요': 'Demand',
+                '재고': 'Inventory',
+                '설비': 'Equipment',
+                '투자': 'Investment',
+                'M&A': 'M&A',
+                '특허': 'Patent',
+                '표준': 'Standard',
+                '규제': 'Regulation',
+                '제재': 'Sanction',
+                '협상': 'Negotiation',
+                '파업': 'Strike',
+                '전망': 'Outlook',
+                '현황': 'Status',
+                '분석': 'Analysis',
+                '보고': 'Report',
+                '동향': 'Trend',
+                '이슈': 'Issue',
+                '리스크': 'Risk',
+                '글로벌': 'Global',
+                '공급망리스크': 'SCM Risk',
+                '원자재가격': 'Material Price',
+                '친환경': 'Eco-friendly',
+                'ESG': 'ESG',
+                'RE100': 'RE100',
+                '탄소중립': 'Net Zero',
+                '핵심광물': 'Critical Minerals',
+                '희토류': 'Rare Earth',
+                '리튬': 'Lithium',
+                '니켈': 'Nickel',
+                '코발트': 'Cobalt',
+                '흑연': 'Graphite'
+            };
+            
+            // 콜론 기반 세부 카테고리 처리
+            if (cs.includes(':')) {
+                const parts = cs.split(':').map(p => p.trim());
+                const main = mapping[parts[0]] || parts[0];
+                const sub = mapping[parts[1]] || parts[1];
+                return `${main}: ${sub}`;
+            }
+            
+            return mapping[cs] || cs;
         };
 
         const getFormattedWeek = (dateStr) => {
@@ -216,6 +322,22 @@
             );
         };
 
+        const IndexModal = ({ isOpen, onClose, darkMode }) => {
+            if (!isOpen) return null;
+            return (
+                <div onClick={onClose} className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-in fade-in duration-300">
+                    <div onClick={e => e.stopPropagation()} className={`p-6 rounded-2xl shadow-2xl relative border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
+                        <button onClick={onClose} className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+                            <X size={24} />
+                        </button>
+                        <div className="w-full flex justify-center items-center mt-4">
+                            <iframe src="TradingView Widget.html" style={{ width: '580px', height: '430px', border: 'none', overflow: 'hidden' }} scrolling="no"></iframe>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // --- 4. Main Application ---
         const App = () => {
             const [rawData, setRawData] = useState([]);
@@ -233,7 +355,14 @@
             const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
             const [monthlyStats, setMonthlyStats] = useState([]);
             const [showReport, setShowReport] = useState(false);
+            const [showIndex, setShowIndex] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
             const mapRef = useRef(null);
+
+            useEffect(() => {
+                const user = JSON.parse(localStorage.getItem('da_user'));
+                if (user) setCurrentUser(user);
+            }, []);
 
             useEffect(() => {
                 const fetchData = async () => {
@@ -278,30 +407,36 @@
                     try {
                         const formatted = json.map((item, index) => {
                             const ko_title = safeString(item.B || item.Title || item.title || '제목 없음');
-                            const en_title = safeString(item.M || 'No Title');
+                            const en_title = safeString(item.M || item.Title_en || item.title_en || ko_title || 'No Title');
                             
                             const ko_category = normalizeCategory(item.C || item.Category || item.category);
-                            const en_category = safeString(item.O || 'MISC');
+                            const en_category = safeString(item.O || item.Category_en || item.category_en || 'MISC');
                             
                             const ko_raw = item.D || item.Summary || item.summary || item.Content || item.content || item['기사내용'];
-                            const en_raw = item.N || item.n;
+                            const en_raw = item.N || item.Summary_en || item.summary_en || item.n;
 
                             const ko_content = safeString(ko_raw || '상세 내용이 없습니다.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
                             const en_content = safeString(en_raw || ko_raw || 'No Content Available.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
                             
-                            const ko_tags = safeString(item.J || item.Tag || "").split(',').map(t => t.trim()).filter(Boolean);
-                            const en_tags = safeString(item.P || "").split(',').map(t => t.trim()).filter(Boolean);
+                            const ko_tags = safeString(item.J || item.Tag || item.tag || "").split(',').map(t => t.trim()).filter(Boolean);
+                            // P열(Tag_en) 필드 인식을 더 강화 (대소문자 무관하게 탐색 시도 가능하나 일단 키워드 추가)
+                            const en_tags_found = item.P || item.Tag_en || item.tag_en || item.TAG_EN || item.TagEn || "";
+                            const en_tags_raw = safeString(en_tags_found).split(',').map(t => t.trim()).filter(Boolean);
+                            const en_tags = en_tags_raw.length > 0 ? en_tags_raw : ko_tags;
                             
                             const ko_region = safeString(item.I || item.Region || 'Global').trim();
-                            const en_region = safeString(item.Q || 'Global').trim();
+                            const en_region = safeString(item.Q || item.Region_en || item.region_en || 'Global').trim();
+
+                            const ko_bot = safeString(item.BOT || item.Bot || item.bot).trim();
+                            const en_bot = safeString(item["BOT(eng)"] || item.BOT_en || item.bot_en || item.M || ko_bot).trim();
 
                             return {
                                 _uId: `news-${index}`,
                                 date: normalizeDate(item.A || item.Date || item.date || '2026-02-01'),
                                 risk: safeString(item.G || item.Risk || item.risk || 'Low'),
                                 viewCount: Number(item.ViewCount || item.viewCount || 0),
-                                ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region },
-                                en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region }
+                                ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region, bot: ko_bot },
+                                en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region, bot: en_bot }
                             };
                         }).filter(item => item.date !== ""); 
 
@@ -343,7 +478,7 @@
 
             const filteredData = useMemo(() => {
                 let data = currentLocaleData;
-                if (selectedFilter !== 'All') data = data.filter(d => d.category === selectedFilter);
+                if (selectedFilter !== 'All') data = data.filter(d => d.ko.category === selectedFilter);
                 if (selectedRisk !== 'All') data = data.filter(d => d.risk === selectedRisk);
                 if (selectedRegion !== 'All') data = data.filter(d => d.region === selectedRegion);
                 if (selectedTag) data = data.filter(d => d.tags.includes(selectedTag));
@@ -383,7 +518,7 @@
                 return { 
                     count: filteredData.length, 
                     topRegion: sortedRegions.length > 0 ? safeString(sortedRegions[0][0]) : 'Global', 
-                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : safeString(selectedFilter), 
+                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : translateCategory(selectedFilter, language), 
                     critical: { level: safeString(topRiskItem.risk), title: safeString(topRiskItem.title), content: safeString(topRiskItem.content) } 
                 };
             }, [filteredData, selectedFilter, language]);
@@ -391,15 +526,16 @@
             const strategicNarrative = useMemo(() => {
                 if (!filteredData.length) return language === 'KO' ? `현재 선택된 조건에 부합하는 리스크 데이터가 부재합니다.` : `No risk data found for the selected context.`;
                 let dateLabel = selectedDate === 'LastMonth' ? (language === 'KO' ? '최근 30일' : 'Last 30 Days') : (selectedDate === 'LastWeek' ? (language === 'KO' ? '최근 7일' : 'Last 7 Days') : (selectedDate === 'All' ? (language === 'KO' ? '전체 기간' : 'All Period') : selectedDate));
-                return language === 'KO' ? `${dateLabel} 기준, ${selectedFilter === 'All' ? '공급망 통합' : selectedFilter} 섹터 분석 결과 ${cardStats.topRegion} 지역 이슈가 가장 두드러집니다. ${filteredData.filter(d => d.risk === 'High').length > 0 ? '특히 High 리스크에 대한 선제적 대응이 권고됩니다.' : ''}` : `Based on ${dateLabel}, the ${selectedFilter === 'All' ? 'Supply Chain' : selectedFilter} analysis highlights key issues in ${cardStats.topRegion}. ${filteredData.filter(d => d.risk === 'High').length > 0 ? 'Urgent attention is advised for High Risk cases.' : 'Risk levels are currently stable.'}`;
+                const catLabel = selectedFilter === 'All' ? (language === 'KO' ? '공급망 통합' : 'Supply Chain') : translateCategory(selectedFilter, language);
+                return language === 'KO' ? `${dateLabel} 기준, ${catLabel} 섹터 분석 결과 ${cardStats.topRegion} 지역 이슈가 가장 두드러집니다. ${filteredData.filter(d => d.risk === 'High').length > 0 ? '특히 High 리스크에 대한 선제적 대응이 권고됩니다.' : ''}` : `Based on ${dateLabel}, the ${catLabel} analysis highlights key issues in ${cardStats.topRegion}. ${filteredData.filter(d => d.risk === 'High').length > 0 ? 'Urgent attention is advised for High Risk cases.' : 'Risk levels are currently stable.'}`;
             }, [filteredData, selectedFilter, selectedDate, cardStats, language]);
 
             const timelineStats = useMemo(() => {
                 if (!currentLocaleData.length) return [];
-                const groupedMap = {}; const chartCats = ['원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향'];
+                const groupedMap = {}; const chartCats = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
                 const trendBaseData = currentLocaleData.filter(d => {
                     let match = true;
-                    if (selectedFilter !== 'All') match = match && d.category === selectedFilter;
+                    if (selectedFilter !== 'All') match = match && d.ko.category === selectedFilter;
                     if (selectedRisk !== 'All') match = match && d.risk === selectedRisk;
                     if (selectedTag) match = match && d.tags.includes(selectedTag);
                     return match;
@@ -408,7 +544,7 @@
                     const d = new Date(item.date); if (isNaN(d.getTime())) return;
                     let key = timeRange === 'Weekly' ? getFormattedWeek(item.date) : (timeRange === 'Monthly' ? `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, '0')}` : item.date);
                     if (!groupedMap[key]) { groupedMap[key] = { date: key, count: 0 }; chartCats.forEach(c => groupedMap[key][c] = 0); }
-                    groupedMap[key].count++; if (chartCats.includes(item.category)) groupedMap[key][item.category]++;
+                    groupedMap[key].count++; if (chartCats.includes(item.ko.category)) groupedMap[key][item.ko.category]++;
                 });
                 return Object.values(groupedMap).sort((a, b) => a.date.localeCompare(b.date));
             }, [currentLocaleData, timeRange, selectedFilter, selectedRisk, selectedTag]);
@@ -416,15 +552,19 @@
             const dynamicTags = useMemo(() => {
                 if (!filteredData.length) return [];
                 const tagCounts = {}; filteredData.forEach(item => { item.tags.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
-                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({ text: safeString(text), count }));
-            }, [filteredData]);
+                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({ 
+                    text: safeString(text), 
+                    count,
+                    translated: translateCategory(text, language)
+                }));
+            }, [filteredData, language]);
 
             const riskProfileData = useMemo(() => {
-                const cats = language === 'KO' ? ['원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향'] : ['Raw Mat', 'Macro', 'Production', 'Competitor', 'New Tech'];
-                const mapping = { 'Raw Mat': '원자재', 'Macro': '거시/정책', 'Production': '생산지역', 'Competitor': '경쟁사', 'New Tech': '신기술동향' };
+                const cats = language === 'KO' ? ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'] : ['Material', 'Macro', 'Region', 'Competitors', 'New Tech'];
+                const mapping = { 'Material': '원자재', 'Macro': '거시/정책', 'Region': '지역별 분석', 'Competitors': '경쟁사', 'New Tech': '신기술동향' };
                 return cats.map(cat => {
                     const targetCat = language === 'KO' ? cat : mapping[cat];
-                    const catData = filteredData.filter(d => d.category === targetCat);
+                    const catData = filteredData.filter(d => d.ko.category === targetCat);
                     return { name: cat, High: catData.filter(d => d.risk === 'High').length, Med: catData.filter(d => d.risk === 'Med').length, Low: catData.filter(d => d.risk === 'Low').length };
                 });
             }, [filteredData, language]);
@@ -433,13 +573,13 @@
             const popularCategoryData = useMemo(() => {
                 const catViews = {};
                 filteredData.forEach(d => {
-                    const cat = d.category;
+                    const cat = translateCategory(d.ko.category, language);
                     catViews[cat] = (catViews[cat] || 0) + d.viewCount;
                 });
                 return Object.entries(catViews)
                     .map(([name, value]) => ({ name, value }))
                     .sort((a, b) => b.value - a.value);
-            }, [filteredData]);
+            }, [filteredData, language]);
 
             // [추가] 최다 조회 기사
             const topArticles = useMemo(() => {
@@ -450,6 +590,10 @@
 
             const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
             const goToIndex = () => window.location.href = 'index.html?view=hub';
+            const logOut = () => {
+                localStorage.removeItem("da_user");
+                window.location.href = "index.html";
+            };
             const resetFilters = () => { setSelectedFilter('All'); setSelectedRisk('All'); setSelectedRegion('All'); setSelectedTag(null); setSelectedDate('LastWeek'); setSearchKeyword(''); };
 
             // 지도와의 통신 처리 로직 추가
@@ -480,27 +624,31 @@
             );
 
             const menuLabels = {
-                KO: ['전략 시황', '원자재', '거시/정책', '생산지역', '경쟁사', '신기술동향', 'INDEX'],
-                EN: ['Strategy', 'Raw Mat', 'Macro/Policy', 'Production', 'Competitor', 'Tech Trends', 'INDEX']
+                KO: ['전략 시황', '원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향', 'INDEX'],
+                EN: ['Strategy', 'Material', 'Macro', 'Region', 'Competitors', 'New Tech', 'Index']
             };
 
             const searchLabels = {
                 KO: { placeholder: '뉴스 키워드 검색...', options: ['제목+본문', '제목', '본문'] },
-                EN: { placeholder: 'Search insights...', options: ['All fields', 'Title', 'Content'] }
+                EN: { placeholder: 'Search keywords...', options: ['Title+Content', 'Title', 'Content'] }
             };
 
             return (
                 <div className={`min-h-screen transition-colors duration-500 font-sans antialiased pb-24 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-[#F8F9FB] text-[#172B4D]'}`}>
-                    <header className="bg-[#0033A0] text-white sticky top-0 z-50 px-8 h-14 flex items-center justify-between shadow-xl">
-                        <div className="flex items-center gap-6">
+                    <header className="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl">
+                        <div className="flex items-center gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
                                 <h1 className="font-bold text-[13px] tracking-tight uppercase">PURCHASE INTELLIGENCE</h1>
                             </div>
-                            <nav className="flex items-center gap-5 text-[11px] font-bold">
+                            <nav className="flex items-center gap-3 lg:gap-4 text-[11px] font-bold">
                                 {menuLabels[language].map((m, idx) => {
-                                    if (m === 'INDEX') return null; 
                                     const catKey = menuLabels['KO'][idx];
+                                    if (m.toUpperCase() === 'INDEX') {
+                                        return (
+                                            <button key={m} onClick={() => setShowIndex(true)} className="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">{m}</button>
+                                        );
+                                    }
                                     const isSelected = (m === '전략 시황' || m === 'Strategy') ? selectedFilter === 'All' : selectedFilter === catKey;
                                     return (
                                         <button key={m} onClick={() => { setSelectedFilter(m === '전략 시황' || m === 'Strategy' ? 'All' : catKey); setSelectedTag(null); }} className={`transition-all py-1 border-b-2 uppercase ${isSelected ? 'text-white border-white' : 'text-white/60 border-transparent hover:text-white'}`}>{m}</button>
@@ -508,7 +656,7 @@
                                 })}
                             </nav>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                             <div className="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50">
                                 <div className="relative">
                                     <select value={searchTarget} onChange={(e) => setSearchTarget(e.target.value)} className="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer">
@@ -524,7 +672,22 @@
                                     <input type="text" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder={searchLabels[language].placeholder} className="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-36 placeholder:text-slate-300 uppercase tracking-tighter" />
                                 </div>
                             </div>
-                            <button onClick={goToIndex} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"><List size={14} /> News Hub</button>
+                            <button onClick={goToIndex} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"><List size={14} /> NEWS HUB</button>
+                            
+                            {/* User info & Logout aligned with index.html */}
+                            <div className="flex items-center gap-3 ml-2 border-l border-white/20 pl-4 h-8">
+                                <div className="flex flex-col leading-tight">
+                                    <span className="text-[10px] font-black opacity-80">{currentUser ? currentUser.userName : 'Guest'}</span>
+                                    <span className="text-[9px] font-bold opacity-60">님</span>
+                                </div>
+                                <button 
+                                    onClick={logOut} 
+                                    className="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest transition-all"
+                                >
+                                    LOGOUT
+                                </button>
+                            </div>
+
                             <button onClick={() => setLanguage(l => l === 'KO' ? 'EN' : 'KO')} className="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest">{language}</button>
                             <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
                         </div>
@@ -603,7 +766,7 @@
                                     </div>
                                     <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[140px] custom-scrollbar pr-2">
                                         {dynamicTags.map(tag => (
-                                            <button key={tag.text} onClick={() => setSelectedTag(prev => prev === tag.text ? null : tag.text)} className={`px-2 py-1 rounded-sm text-[9px] font-bold border transition-all flex items-center gap-1.5 ${selectedTag === tag.text ? 'bg-white text-[#172B4D] border-white shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/15 text-blue-100'}`}>#{tag.text} <span className={`text-[7.5px] font-black opacity-30`}>{tag.count}</span></button>
+                                            <button key={tag.text} onClick={() => setSelectedTag(prev => prev === tag.text ? null : tag.text)} className={`px-2 py-1 rounded-sm text-[9px] font-bold border transition-all flex items-center gap-1.5 ${selectedTag === tag.text ? 'bg-white text-[#172B4D] border-white shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/15 text-blue-100'}`}>#{tag.translated} <span className={`text-[7.5px] font-black opacity-30`}>{tag.count}</span></button>
                                         ))}
                                     </div>
                                 </div>
@@ -629,7 +792,21 @@
                                             <h4 className={`text-[15px] font-bold leading-snug transition-colors mb-3 group-hover:text-blue-500 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{safeString(item.title)}</h4>
                                             {/* 🚀 기사 본문 출력 보장 */}
                                             <p className="text-[12.5px] text-slate-500 leading-relaxed line-clamp-3 mb-3 dark:text-slate-400">{safeString(item.content)}</p>
-                                            <div className="flex flex-wrap gap-1.5">{item.tags.map(t => (<span key={t} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm ${darkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-400 bg-blue-50/50'}`}>#{safeString(t)}</span>))}</div>
+                                            
+                                            {/* 🤖 BOT 인사이트 (Strategic Action) 추가 */}
+                                            {item.bot && (
+                                                <div className={`mb-4 p-4 rounded-sm border-l-4 ${darkMode ? 'bg-blue-900/10 border-blue-500/50 text-blue-100' : 'bg-blue-50 border-blue-600/50 text-blue-900'}`}>
+                                                    <div className="flex items-center gap-2 mb-1.5 overflow-hidden">
+                                                        <Cpu size={12} className="animate-pulse shrink-0" />
+                                                        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 italic whitespace-nowrap">Strategic Intelligence Insight</span>
+                                                    </div>
+                                                    <p className="text-[11.5px] font-medium leading-relaxed opacity-90 line-clamp-3 italic">
+                                                        {safeString(item.bot)}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="flex flex-wrap gap-1.5">{item.tags.map(t => (<span key={t} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm ${darkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-400 bg-blue-50/50'}`}>#{translateCategory(t, language)}</span>))}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -686,11 +863,11 @@
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Eye size={14} /> Engagement Summary</h3>
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">누적 정보 열람 (PV)</span>
+                                                <span className="text-[11px] font-bold text-slate-400">{language === 'KO' ? '누적 정보 열람 (PV)' : 'Total Page Views'}</span>
                                                 <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0)}</span>
                                             </div>
                                             <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">고유 방문 활용 (Sessions)</span>
+                                                <span className="text-[11px] font-bold text-slate-400">{language === 'KO' ? '고유 방문 활용 (Sessions)' : 'Unique Sessions'}</span>
                                                 <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Sessions) || 0), 0)}</span>
                                             </div>
                                         </div>
@@ -703,7 +880,7 @@
                                                 return acc;
                                             }, {})).sort((a,b) => b[1] - a[1]).slice(0, 4).map(([cat, val], idx) => (
                                                 <div key={cat} className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase line-clamp-1">{cat}</span>
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase line-clamp-1">{translateCategory(cat, language)}</span>
                                                     <span className="text-lg font-black">{val} <span className="text-[8px] font-bold text-blue-500">PV</span></span>
                                                     <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 mt-1 rounded-full overflow-hidden">
                                                         <div className="bg-[#0033A0] dark:bg-blue-500 h-full" style={{ width: `${Math.min(100, (val / (monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0) || 1)) * 100)}%` }}></div>
@@ -720,6 +897,7 @@
                     <footer className={`max-w-[1600px] mx-auto px-8 py-14 border-t text-center text-slate-400 transition-colors ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                         <p className="text-[9px] font-black uppercase tracking-[0.4em]">DA Intelligence Mapping Core // Framework Stable Release v8.2</p>
                     </footer>
+                    <IndexModal isOpen={showIndex} onClose={() => setShowIndex(false)} darkMode={darkMode} />
                 </div>
             );
         };

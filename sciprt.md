@@ -28,12 +28,16 @@ var CATEGORY_MAP_EN = {
 function onOpen() {
 SpreadsheetApp.getUi()
 .createMenu("News Hub Tools")
+.addItem("⚡ 한 번에 처리 (Clean → Translate → Image → GitHub)", "runAllProcesses")
+.addSeparator()
 .addItem("🚀 GitHub로 데이터 전송 (JSON)", "pushToGitHub")
 .addSeparator()
 .addItem("1. 이미지 가져오기 (기본)", "updateNewsImages")
 .addItem("2. 영문 번역 실행", "translateEmptyEnglishFields")
 .addSeparator()
 .addItem("파일 권한 수정", "fixExistingImagePermissions")
+.addSeparator()
+.addItem("🛠️ 사용자 승인 드롭다운 설정", "setupUserValidation")
 .addToUi();
 }
 
@@ -50,66 +54,27 @@ return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(Content
 function doPost(e) {
 try {
 var params = JSON.parse(e.postData.contents);
-var targetTitle = params.title;
-var targetDate = params.date;
-var targetUrl = params.url;
-var sessionId = params.sessionId || "unknown";
-var category = params.category || "MISC";
-var risk = params.risk || "Low";
+var action = params.action; // view, register, login, like, comment, board_post, board
+var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    if (!targetTitle) throw new Error("Title is required");
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getActiveSheet();
-    var data = sheet.getDataRange().getValues();
-    var headers = data[0];
-
-    var idxTitle = headers.indexOf("Title");
-    var idxDate = headers.indexOf("Date");
-    var idxUrl = headers.indexOf("URL");
-    var idxView = headers.indexOf("ViewCount");
-
-    if (idxTitle === -1) throw new Error("Title column not found");
-
-    if (idxView === -1) {
-      idxView = headers.length;
-      sheet.getRange(1, idxView + 1).setValue("ViewCount");
-    }
-
-    // 1. 누적 조회 업데이트
-    var foundIndex = -1;
-    for (var i = 1; i < data.length; i++) {
-        var row = data[i];
-        if (String(row[idxTitle]) === String(targetTitle)) {
-            var rowDate = row[idxDate] instanceof Date ? row[idxDate].toISOString() : String(row[idxDate]);
-            var matchDate = !targetDate || rowDate.indexOf(targetDate.split('T')[0]) !== -1;
-            var matchUrl = !targetUrl || String(row[idxUrl]).indexOf(targetUrl) !== -1;
-            if (matchDate && matchUrl) {
-                foundIndex = i + 1;
-                break;
-            }
-        }
-    }
-
-    if (foundIndex === -1) {
-      for (var i = 1; i < data.length; i++) {
-        if (String(data[i][idxTitle]) === String(targetTitle)) {
-          foundIndex = i + 1;
-          break;
-        }
+    if (action === "register") {
+      return handleRegister(ss, params);
+    } else if (action === "login") {
+      return handleLogin(ss, params);
+    } else if (action === "like") {
+      return handleLike(ss, params);
+    } else if (action === "board" || action === "board_post") {
+      return handleBoard(ss, params);
+    } else if (action === "get_board_posts") {
+      return handleGetBoardPosts(ss);
+    } else {
+      // Default behavior: view tracking (title check inside)
+      if (params.title) {
+        return handleView(ss, params);
       }
+      return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Invalid action or missing title" }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
-
-    if (foundIndex !== -1) {
-      var currentView = Number(sheet.getRange(foundIndex, idxView + 1).getValue()) || 0;
-      sheet.getRange(foundIndex, idxView + 1).setValue(currentView + 1);
-    }
-
-    // 2. 월간 통계 업데이트
-    updateMonthlyStats(targetTitle, category, risk, sessionId);
-
-    return ContentService.createTextOutput(JSON.stringify({ success: true }))
-      .setMimeType(ContentService.MimeType.JSON);
 
 } catch (err) {
 return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
@@ -117,8 +82,154 @@ return ContentService.createTextOutput(JSON.stringify({ success: false, message:
 }
 }
 
+function handleRegister(ss, params) {
+var userSheet = ss.getSheetByName("Users") || createUsersSheet(ss);
+var userId = params.userId;
+var userName = params.userName;
+var password = params.password;
+
+if (!userId || !userName || !password) throw new Error("Missing registration fields");
+
+var data = userSheet.getDataRange().getValues();
+for (var i = 1; i < data.length; i++) {
+if (data[i][0] === userId) throw new Error("UserID already exists");
+}
+
+userSheet.appendRow([userId, userName, password, "Pending", new Date()]);
+return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Registration successful. Please wait for admin approval." }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleLogin(ss, params) {
+var userSheet = ss.getSheetByName("Users");
+if (!userSheet) throw new Error("No users registered yet");
+
+var data = userSheet.getDataRange().getValues();
+var userId = params.userId;
+var password = params.password;
+
+for (var i = 1; i < data.length; i++) {
+if (data[i][0] === userId && String(data[i][2]) === String(password)) {
+if (data[i][3] !== "Approved") {
+return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Account is pending approval." }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+return ContentService.createTextOutput(JSON.stringify({
+success: true,
+userId: userId,
+userName: data[i][1]
+})).setMimeType(ContentService.MimeType.JSON);
+}
+}
+return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Invalid credentials" }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleView(ss, params) {
+var targetTitle = params.title;
+var targetDate = params.date;
+var targetUrl = params.url;
+var sessionId = params.sessionId || "unknown";
+var category = params.category || "MISC";
+var risk = params.risk || "Low";
+
+if (!targetTitle) throw new Error("Title is required");
+
+var sheet = ss.getSheets()[0];
+var data = sheet.getDataRange().getValues();
+var headers = data[0];
+
+var idxTitle = headers.indexOf("Title");
+var idxDate = headers.indexOf("Date");
+var idxUrl = headers.indexOf("URL");
+var idxView = headers.indexOf("ViewCount");
+
+if (idxTitle === -1) throw new Error("Title column not found");
+
+if (idxView === -1) {
+idxView = headers.length;
+sheet.getRange(1, idxView + 1).setValue("ViewCount");
+}
+
+// 1. 누적 조회 업데이트
+var foundIndex = -1;
+for (var i = 1; i < data.length; i++) {
+var row = data[i];
+if (String(row[idxTitle]) === String(targetTitle)) {
+var rowDate = row[idxDate] instanceof Date ? row[idxDate].toISOString() : String(row[idxDate]);
+var matchDate = !targetDate || rowDate.indexOf(targetDate.split('T')[0]) !== -1;
+var matchUrl = !targetUrl || String(row[idxUrl]).indexOf(targetUrl) !== -1;
+if (matchDate && matchUrl) {
+foundIndex = i + 1;
+break;
+}
+}
+}
+
+if (foundIndex === -1) {
+for (var i = 1; i < data.length; i++) {
+if (String(data[i][idxTitle]) === String(targetTitle)) {
+foundIndex = i + 1;
+break;
+}
+}
+}
+
+if (foundIndex !== -1) {
+var currentView = Number(sheet.getRange(foundIndex, idxView + 1).getValue()) || 0;
+sheet.getRange(foundIndex, idxView + 1).setValue(currentView + 1);
+// 2. 월간 통계 업데이트
+updateMonthlyStats(targetTitle, category, risk, sessionId);
+return ContentService.createTextOutput(JSON.stringify({ success: true, count: currentView + 1 }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+
+return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Article not found" }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleLike(ss, params) {
+var targetTitle = params.title;
+if (!targetTitle) throw new Error("Title is required");
+
+var sheet = ss.getSheets()[0];
+var data = sheet.getDataRange().getValues();
+var headers = data[0];
+var idxTitle = headers.indexOf("Title");
+var idxLike = headers.indexOf("LikeCount");
+
+if (idxLike === -1) {
+idxLike = headers.length;
+sheet.getRange(1, idxLike + 1).setValue("LikeCount");
+}
+
+for (var i = 1; i < data.length; i++) {
+if (String(data[i][idxTitle]) === String(targetTitle)) {
+var currentLike = Number(sheet.getRange(i + 1, idxLike + 1).getValue()) || 0;
+sheet.getRange(i + 1, idxLike + 1).setValue(currentLike + 1);
+return ContentService.createTextOutput(JSON.stringify({ success: true, count: currentLike + 1 }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+}
+throw new Error("Article not found");
+}
+
+function handleBoard(ss, params) {
+var boardSheet = ss.getSheetByName("Board") || createBoardSheet(ss);
+var userId = params.userId;
+var userName = params.userName;
+var content = params.content;
+var type = params.type || "General";
+
+if (!userId || !content) throw new Error("Missing board fields");
+
+boardSheet.appendRow([userId, userName, content, type, new Date()]);
+return ContentService.createTextOutput(JSON.stringify({ success: true }))
+.setMimeType(ContentService.MimeType.JSON);
+}
+
 function getSheetDataAsJson() {
-var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 var data = sheet.getDataRange().getValues();
 if (data.length === 0) return [];
 var headers = data[0];
@@ -221,8 +332,8 @@ colMap[c] = sheet.getLastColumn() - 1;
 }
 });
 
-var idxT = colMap["Title"], idxS = colMap["Summary"], idxC = colMap["Category"], idxR = colMap["Region"];
-var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Category_en"], idxRe = colMap["Region_en"];
+var idxT = colMap["Title"], idxS = colMap["Summary"], idxC = colMap["Category"], idxR = colMap["Region"], idxTa = colMap["Tag"];
+var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Category_en"], idxRe = colMap["Region_en"], idxTae = colMap["Tag_en"];
 var count = 0;
 
 for (var i = 1; i < data.length; i++) {
@@ -245,6 +356,10 @@ if (idxR !== undefined && data[i][idxR] && !data[i][idxRe]) {
 sheet.getRange(rowNum, idxRe + 1).setValue(LanguageApp.translate(data[i][idxR], "ko", "en"));
 count++;
 }
+if (idxTa !== undefined && data[i][idxTa] && !data[i][idxTae]) {
+sheet.getRange(rowNum, idxTae + 1).setValue(LanguageApp.translate(data[i][idxTa], "ko", "en"));
+count++;
+}
 }
 SpreadsheetApp.getUi().alert("번역 완료: " + count + "건");
 }
@@ -265,7 +380,7 @@ if (new Date().getTime() - startTime > 330000) break;
     if (!data[i][idxI] && data[i][idxU]) {
       var rawUrl = String(data[i][idxU]);
       var urls = rawUrl.split(/[\n,]/).map(function(u) { return u.trim(); }).filter(Boolean);
-      var category = idxC !== -1 ? String(data[i][idxC]) : "";
+      var category = idxC !== -1 ? String(data[i][idxC]).trim() : "";
 
       var imageFound = false;
       var imageUrl = DEFAULT_IMAGE_URL;
@@ -394,6 +509,41 @@ sheet.hideSheet();
 return sheet;
 }
 
+function createUsersSheet(ss) {
+var sheet = ss.insertSheet("Users");
+sheet.appendRow(["UserID", "UserName", "Password", "Status", "CreatedAt"]);
+sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
+setupUserValidation(sheet);
+return sheet;
+}
+
+function setupUserValidation(sheet) {
+var ss = SpreadsheetApp.getActiveSpreadsheet();
+var targetSheet = sheet || ss.getSheetByName("Users");
+if (!targetSheet) {
+if (!sheet) SpreadsheetApp.getUi().alert("'Users' 시트를 찾을 수 없습니다.");
+return;
+}
+
+// D열 (Status) 2행부터 끝까지 드롭다운 설정
+var range = targetSheet.getRange("D2:D");
+var rule = SpreadsheetApp.newDataValidation()
+.requireValueInList(["Pending", "Approved", "Rejected"], true)
+.setAllowInvalid(false)
+.setHelpText("Pending, Approved, Rejected 중 하나를 선택해주세요.")
+.build();
+range.setDataValidation(rule);
+
+if (!sheet) SpreadsheetApp.getActiveSpreadsheet().toast("사용자 상태 드롭다운 설정이 완료되었습니다.", "성공");
+}
+
+function createBoardSheet(ss) {
+var sheet = ss.insertSheet("Board");
+sheet.appendRow(["UserID", "UserName", "Content", "Type", "Timestamp"]);
+sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
+return sheet;
+}
+
 function getMonthlyStatsJson() {
 var ss = SpreadsheetApp.getActiveSpreadsheet();
 var sheet = ss.getSheetByName("MonthlyStats");
@@ -408,4 +558,80 @@ obj[header] = row[index];
 });
 return obj;
 });
+}
+
+function runAllProcesses() {
+var ui = SpreadsheetApp.getUi();
+var response = ui.alert("자동화를 시작하시겠습니까?", "데이터 정리 → 번역 → 이미지 → GitHub 전송이 순차적으로 실행됩니다.", ui.ButtonSet.YES_NO);
+
+if (response !== ui.Button.YES) return;
+
+try {
+cleanPastedData();
+SpreadsheetApp.flush();
+SpreadsheetApp.getActiveSpreadsheet().toast("데이터 정리가 완료되었습니다.", "진행 중", 3);
+
+    translateEmptyEnglishFields();
+    SpreadsheetApp.flush();
+    SpreadsheetApp.getActiveSpreadsheet().toast("영문 번역이 완료되었습니다.", "진행 중", 3);
+
+    updateNewsImages();
+    SpreadsheetApp.flush();
+    SpreadsheetApp.getActiveSpreadsheet().toast("이미지 업데이트가 완료되었습니다.", "진행 중", 3);
+
+    pushToGitHub();
+    SpreadsheetApp.getActiveSpreadsheet().toast("모든 프로세스가 성공적으로 완료되었습니다.", "완료");
+
+} catch (err) {
+ui.alert("프로세스 중 오류 발생: " + err.toString());
+}
+}
+
+function cleanPastedData() {
+var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+var data = sheet.getDataRange().getValues();
+var headers = data[0];
+var idxI = headers.indexOf("Image");
+var idxD = headers.indexOf("Date");
+
+if (idxD === -1) {
+// 만약 Date 컬럼이 없으면 (잘못된 시트 등) 중단
+return;
+}
+
+// 역순으로 돌면서 중복 헤더 제거 (1행 제외)
+for (var i = data.length - 1; i >= 1; i--) {
+var rowValue = String(data[i][idxD]);
+// Date 컬럼 값이 "Date"인 경우 (헤더 붙여넣기 됨)
+if (rowValue === "Date") {
+sheet.deleteRow(i + 1);
+} else {
+// 헤더가 아닌 일반 행인 경우, Image 열이 "-"이면 삭제
+if (idxI !== -1 && String(data[i][idxI]).trim() === "-") {
+sheet.getRange(i + 1, idxI + 1).clearContent();
+}
+}
+}
+}
+function handleGetBoardPosts(ss) {
+var boardSheet = ss.getSheetByName("Board");
+if (!boardSheet) return ContentService.createTextOutput(JSON.stringify({ success: true, posts: [] }))
+.setMimeType(ContentService.MimeType.JSON);
+
+var data = boardSheet.getDataRange().getValues();
+var headers = data[0];
+var rows = data.slice(1);
+
+var posts = rows.map(function(row) {
+return {
+userId: row[0],
+userName: row[1],
+content: row[2],
+type: row[3],
+timestamp: row[4]
+};
+}).reverse(); // Latest first
+
+return ContentService.createTextOutput(JSON.stringify({ success: true, posts: posts }))
+.setMimeType(ContentService.MimeType.JSON);
 }
