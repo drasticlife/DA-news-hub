@@ -1,0 +1,701 @@
+/* ================================================================
+   DA News Hub - index.css
+   Extracted from index.html inline <style> (lines 18-780)
+   All styles 1:1 identical — zero logic changes.
+   ================================================================ */
+
+/* ===== 랜딩 페이지 스타일 ===== */
+#landing-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 9999;
+  transition:
+    opacity 1s ease-out,
+    visibility 1s;
+  cursor: pointer;
+  overflow: hidden;
+}
+#landing-page.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+#globeViz {
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  transition: opacity 2.5s ease-in-out;
+}
+
+#center-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  text-align: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  pointer-events: none;
+  z-index: 10;
+  text-shadow: 0 0 10px rgba(0, 169, 224, 0.8);
+}
+#center-title h1 {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+#center-title p {
+  margin: 10px 0 0;
+  font-size: 1.2rem;
+  font-weight: 100;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+body.landing-active {
+  overflow: hidden;
+}
+body {
+  font-family: "Pretendard", sans-serif;
+  transition: all 0.3s ease;
+}
+
+/* ===== 사이드바 & 메인 레이아웃 ===== */
+.sidebar {
+  width: 280px;
+  position: fixed;
+  left: 0;
+  top: 56px;
+  height: calc(100vh - 56px);
+  border-right: 1px solid #eee;
+  padding: 20px;
+  overflow-y: auto;
+  background: white;
+}
+.main-content {
+  margin-left: 280px;
+  margin-top: 56px;
+  padding: 30px 40px;
+  max-width: 1200px;
+}
+
+/* ===== 8열 그리드 달력 (주차 포함) ===== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 24px repeat(7, minmax(24px, 1fr));
+  gap: 2px;
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  max-width: 280px;
+}
+.calendar-grid span {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  font-size: 10px;
+  cursor: default;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* 주차 표시 스타일 */
+.week-label {
+  font-size: 9px !important;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer !important;
+  transition: all 0.2s;
+}
+.week-label:hover {
+  color: #1428a0;
+  transform: scale(1.1);
+}
+.week-selected {
+  background: #1428a0 !important;
+  color: white !important;
+  border-radius: 4px !important;
+}
+
+/* 리스크 필터 버튼 스타일 */
+.risk-filter-btn.active {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.dark .risk-filter-btn.active {
+  background: #3f444a;
+}
+
+/* 얄쌍한 링 디자인 (LV1~LV3) */
+.calendar-ring {
+  border: 1.2px solid #1428a0;
+  color: #1428a0;
+  font-weight: 800;
+  cursor: pointer !important;
+}
+.ring-lv1 {
+  width: 20px !important;
+  height: 20px !important;
+  border-width: 1px;
+}
+.ring-lv2 {
+  width: 24px !important;
+  height: 24px !important;
+  border-width: 2px;
+}
+.ring-lv3 {
+  width: 28px !important;
+  height: 28px !important;
+  border-width: 3px;
+  box-shadow: 0 0 8px rgba(20, 40, 160, 0.15);
+}
+.calendar-selected {
+  background-color: #1428a0 !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* 네비게이션 화살표 스타일 */
+.nav-btn {
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  color: #cbd5e1;
+}
+.nav-btn:hover {
+  background: #f1f5f9;
+  color: #1428a0;
+}
+
+/* ===== 뉴스 카드 & 확장 ===== */
+.news-item {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 24px 0;
+  cursor: pointer;
+  position: relative;
+}
+.news-inner {
+  transition: all 0.4s ease;
+  overflow: hidden;
+  max-height: 240px;
+}
+.news-item.expanded .news-inner {
+  max-height: 1500px;
+}
+.news-item.expanded {
+  background: #fcfdfe;
+  border-bottom: 2px solid #1428a0;
+}
+.summary-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-item.expanded .summary-text {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+.news-item img {
+  filter: grayscale(100%);
+  transition: all 0.5s ease;
+}
+.news-item:hover img {
+  filter: grayscale(0%);
+  transform: scale(1.05);
+}
+
+/* ===== Premium Highlighter ===== */
+article mark {
+  background-color: #eef2ff !important;
+  color: #1a237e !important;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(224, 231, 255, 0.5);
+}
+.dark article mark {
+  background-color: #312e81 !important;
+  color: #e0e7ff !important;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+article b,
+article strong {
+  color: #1428a0 !important;
+  font-weight: 800;
+}
+.dark article b,
+.dark article strong {
+  color: #93c5fd !important;
+}
+
+/* ===== 3D 인터랙티브 태그 클라우드 ===== */
+#tagCloudContainer {
+  position: relative;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  perspective: 600px;
+}
+#tagCloud3D {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  transform-style: preserve-3d;
+}
+.tag3d {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: color 0.3s;
+  white-space: nowrap;
+  user-select: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+.tag3d:hover {
+  color: #60a5fa;
+  transform: scale(1.2) !important;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+}
+
+/* ===== 인증 & 참여 기능 ===== */
+#auth-container {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  z-index: 100;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0;
+  transform: translateY(20px);
+}
+#auth-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.auth-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: white;
+  font-size: 13px;
+  margin-bottom: 12px;
+  outline: none;
+  transition: all 0.3s;
+}
+.auth-input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #00a9e0;
+}
+.auth-btn {
+  width: 100%;
+  background: #00a9e0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 169, 224, 0.3);
+}
+.auth-btn:hover {
+  background: #0088b6;
+  transform: translateY(-2px);
+}
+.auth-switch {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  text-align: center;
+  margin-top: 16px;
+  cursor: pointer;
+}
+.auth-switch span {
+  color: #00a9e0;
+  text-decoration: underline;
+}
+
+/* ===== Engagement Counters ===== */
+.engagement-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid #e2e8f0;
+}
+.dark .engagement-tag {
+  background: #1e293b;
+  border-color: #334155;
+}
+.like-btn-active {
+  color: #ef4444 !important;
+}
+.like-btn-active i {
+  fill: #ef4444;
+  color: #ef4444 !important;
+}
+.like-btn-active span {
+  color: #ef4444;
+}
+
+/* ===== Comment Section ===== */
+.comments-section {
+  margin-top: 24px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 20px;
+  display: none;
+}
+.news-item.expanded .comments-section {
+  display: block;
+}
+.comment-item {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #f1f5f9;
+}
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.comment-author {
+  font-weight: 700;
+  font-size: 12px;
+  color: #1e293b;
+}
+.comment-date {
+  font-size: 10px;
+  color: #94a3b8;
+}
+.comment-body {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+.comment-form {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+.comment-input {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  outline: none;
+}
+.comment-submit {
+  background: #1428a0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== Scrollbar ===== */
+.subtle-scroll::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+.subtle-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.subtle-scroll::-webkit-scrollbar-thumb {
+  background: rgba(20, 40, 160, 0.2);
+  border-radius: 10px;
+}
+.subtle-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 40, 160, 0.4);
+}
+.subtle-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 40, 160, 0.2) transparent;
+}
+.dark .subtle-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+.dark .subtle-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.dark .subtle-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* ===== 글로벌 지도 ===== */
+#worldMap {
+  width: 100%;
+  height: 130px;
+  background: #f8fafc;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.country-marker {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #1428a0;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.country-marker:hover {
+  transform: scale(1.5);
+  z-index: 10;
+}
+.country-marker::after {
+  content: attr(data-country);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1428a0;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  margin-bottom: 4px;
+}
+.country-marker:hover::after {
+  opacity: 1;
+}
+
+/* 펄스 애니메이션 */
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* ===== 환율/원자재 슬라이드 ===== */
+.market-section {
+  margin-bottom: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+  height: 80px;
+}
+.market-carousel {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+.market-slide {
+  min-width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+.market-label {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 10px;
+}
+.market-value {
+  font-weight: 700;
+  color: #1428a0;
+  font-size: 12px;
+}
+.market-change {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.market-up {
+  color: #dc2626;
+  background: #fee2e2;
+}
+.market-down {
+  color: #2563eb;
+  background: #dbeafe;
+}
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.carousel-dot.active {
+  background: #1428a0;
+  width: 12px;
+  border-radius: 3px;
+}
+
+/* ===== URL 출처 링크 ===== */
+.source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #1428a0;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.source-link:hover {
+  background: #1428a0;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ===== Dark Mode ===== */
+.dark body {
+  background-color: #1a1c1e;
+  color: #e2e8f0;
+}
+.dark .header,
+.dark .sidebar,
+.dark .news-item {
+  background-color: #25282c;
+  border-color: #3f444a;
+}
+
+/* Index Modal */
+#indexModal .tradingview-widget-copyright {
+  display: none !important;
+}
+
+/* ===== Bot Bubble UI ===== */
+.bot-container {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+}
+.bot-icon {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+.bot-icon:hover {
+  transform: scale(1.2) rotate(-10deg);
+}
+.news-body-grid {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.news-content-col {
+  flex: 1;
+  min-width: 0;
+}
+.news-bot-col {
+  width: 260px;
+  flex-shrink: 0;
+  display: none;
+  padding-top: 8px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.4s ease 0.1s;
+}
+.news-item.expanded .news-bot-col {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+.bot-inner-bubble {
+  background: #fff0f5;
+  border: 2px solid #ffb6c1;
+  border-radius: 12px;
+  border-top-left-radius: 2px;
+  padding: 16px;
+  font-size: 13px;
+  color: #d63384;
+  line-height: 1.6;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+.bot-inner-bubble::before {
+  content: "🤖";
+  position: absolute;
+  top: -14px;
+  left: -8px;
+  font-size: 24px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* ===== Board Button & Modal ===== */
+.board-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.board-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
