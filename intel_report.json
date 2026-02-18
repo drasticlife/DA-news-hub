@@ -1,8 +1,8 @@
 {
-  "last_updated": "2026-02-18 21:43:38",
+  "last_updated": "2026-02-18 21:52:08",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
-    "script": "대본 생성 실패 - API 에러: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash\nPlease retry in 20.947109978s."
+    "script": "안녕하세요, 경제뉴스 브리핑입니다.\n\n금주 냉매 시장의 가장 주목할 이슈는 R454B 가격의 급등입니다.\n\nR454B 냉매가 지난주 대비 42% 상승하며 시장의 큰 관심을 받고 있습니다.\n\n이는 글로벌 냉매 규제 강화와 맞물린 현상으로 보입니다.\n\n미국 EPA와 EU의 저GWP 냉매 전환 정책이 R454B 수급을 조이고 있는 상황입니다.\n\n레녹스 등 주요 HVAC 제조사들도 R454B 냉매 안정화를 2026년의 핵심 과제로 꼽았습니다.\n\n알루미늄 시장도 변동성이 확대되고 있어 냉난방 기기 원가 압박이 심화될 것으로 예상됩니다.\n\n지난주 R32와 R454B 냉매 수급이 타이트했던 것에 이어 규제 강화까지 겹치면서 업계 긴장이 고조되고 있습니다.\n\n중국은 올해부터 가정용냉장고에 150 이하 GWP 냉매 적용을 의무화하며 글로벌 규제 추세를 주도하고 있습니다.\n\n냉매 전환 과정에서 기업들의 기술 경쟁력이 시장 우위를 결정하는 핵심 요소가 될 것으로 전망됩니다.\n\n앞으로도 냉매 관련 시장 동향을 면밀히 살피시기 바랍니다."
   },
   "categorized_issues": {
     "thisWeek": [
