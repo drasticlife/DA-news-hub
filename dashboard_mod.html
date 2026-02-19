@@ -23,6 +23,9 @@
 
     <!-- 3. Babel (JSX 변환기) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 4. Lottie Web Component (새 로딩 애니메이션) -->
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js" type="module"></script>
 
     <style>
         /* 커스텀 스크롤바 스타일 */
@@ -382,48 +385,91 @@
                 const fetchData = async () => {
                     setLoading(true);
                     
-                    // 1. 메인 데이터 페칭
-                    const sources = [
-                        { name: 'Google Sheets (Real-time)', url: GAS_URL },
-                        { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
-                    ];
+                    // [최적화] 1. 캐시 데이터(sessionStorage) 확인
+                    let cachedData = null;
+                    let cachedIntel = null;
+                    let cachedMonthly = null;
+                    try {
+                        cachedData = sessionStorage.getItem('cachedNewsData');
+                        cachedIntel = sessionStorage.getItem('cachedIntel');
+                        cachedMonthly = sessionStorage.getItem('cachedMonthlyStats');
+                    } catch (e) {
+                        console.warn("Cache access failed", e);
+                    }
 
-                    let mainSuccess = false;
-                    for (const source of sources) {
+                    // [최적화] 2. 캐시가 있으면 즉시 로드 (Plan A)
+                    let mainDataReady = false;
+                    if (cachedData) {
                         try {
-                            const response = await fetch(source.url);
-                            if (response.ok) {
-                                const json = await response.json();
-                                processData(json);
-                                mainSuccess = true;
-                                break;
-                            }
+                            const json = JSON.parse(cachedData);
+                            processData(json);
+                            mainDataReady = true;
+                            console.log("Loaded main data from cache");
                         } catch (e) {
-                            console.warn(`Failed to fetch main data from ${source.name}`, e);
+                            console.error("Cache parse error", e);
                         }
                     }
 
-                    // 2. 월간 통계 페칭 (GAS 전용)
+                    if (cachedIntel) {
+                        try {
+                            setIntelData(JSON.parse(cachedIntel));
+                            console.log("Loaded intel data from cache");
+                        } catch (e) { console.error("Intel cache parse error", e); }
+                    }
+
+                    if (cachedMonthly) {
+                        try {
+                            setMonthlyStats(JSON.parse(cachedMonthly));
+                            console.log("Loaded monthly stats from cache");
+                        } catch (e) { console.error("Monthly cache parse error", e); }
+                    }
+
+                    // 3. 메인 데이터 페칭 (Plan B: 캐시가 없거나 실패한 경우)
+                    if (!mainDataReady) {
+                        const sources = [
+                            { name: 'Google Sheets (Real-time)', url: GAS_URL },
+                            { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
+                        ];
+
+                        for (const source of sources) {
+                            try {
+                                const response = await fetch(source.url);
+                                if (response.ok) {
+                                    const json = await response.json();
+                                    processData(json);
+                                    // 네트워크로 새로 받았으면 캐시 업데이트
+                                    sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
+                                    mainDataReady = true;
+                                    break;
+                                }
+                            } catch (e) {
+                                console.warn(`Failed to fetch main data from ${source.name}`, e);
+                            }
+                        }
+                    }
+
+                    // 4. 추가 데이터 페칭 (Intel, Monthly 등 캐시가 없으면 진행)
+                    if (!cachedIntel && mainDataReady) {
+                        try {
+                            const intelRes = await fetch(INTEL_URL);
+                            if (intelRes.ok) {
+                                const intelJson = await intelRes.json();
+                                setIntelData(intelJson);
+                                sessionStorage.setItem('cachedIntel', JSON.stringify(intelJson));
+                            }
+                        } catch (e) { console.warn("Failed to fetch intel_report", e); }
+                    }
+
+                    // 월간 통계 (항상 최신화를 원할 수 있으므로, 캐시가 있어도 백그라운드에서 한 번 더 업데이트 가능)
+                    // 여기서는 속도를 위해 캐시가 없을 때만 fetch 하거나, 비공격적으로 fetch
                     try {
                         const mResponse = await fetch(`${GAS_URL}?type=monthly`);
                         if (mResponse.ok) {
                             const mJson = await mResponse.json();
                             setMonthlyStats(mJson);
+                            sessionStorage.setItem('cachedMonthlyStats', JSON.stringify(mJson));
                         }
-                    } catch (e) {
-                        console.warn("Failed to fetch monthly stats", e);
-                    }
-
-                    // intel_report.json 병렬 fetch
-                    try {
-                        const intelRes = await fetch(INTEL_URL);
-                        if (intelRes.ok) {
-                            const intelJson = await intelRes.json();
-                            setIntelData(intelJson);
-                        }
-                    } catch (e) {
-                        console.warn("Failed to fetch intel_report", e);
-                    }
+                    } catch (e) { console.warn("Failed to fetch monthly stats", e); }
 
                     setLoading(false);
                 };
@@ -680,8 +726,44 @@
                 }
             }, [filteredData]);
 
+            // [추가] 로딩 애니메이션 랜덤 순차 재생 로직
+            const LOTTIE_URLS = [
+                "https://lottie.host/43ada85a-c45a-4cc5-8b01-e0c76650dba8/79RRpsjJH0.lottie",
+                "https://lottie.host/063867c2-3f3d-4ede-8e0f-51c5e352d85b/t8c7HUbPGE.lottie",
+                "https://lottie.host/c10868aa-6ca2-468e-bd01-1cc1c6c0e21d/MI35VKUbQa.lottie"
+            ];
+            // 1. 진입 시 순서를 무작위로 한 번 섞음
+            const [shuffledUrls] = useState(() => [...LOTTIE_URLS].sort(() => Math.random() - 0.5));
+            // 2. 현재 재생 중인 인덱스 관리
+            const [aniIndex, setAniIndex] = useState(0);
+            const lottieRef = useRef(null);
+
+            useEffect(() => {
+                const el = lottieRef.current;
+                if (el) {
+                    const handleComplete = () => {
+                        // 다음 애니메이션으로 이동 (순환)
+                        setAniIndex((prev) => (prev + 1) % shuffledUrls.length);
+                    };
+                    el.addEventListener('complete', handleComplete);
+                    return () => el.removeEventListener('complete', handleComplete);
+                }
+            }, [aniIndex, shuffledUrls]);
+
             if (loading) return (
-                <div className="flex h-screen items-center justify-center bg-white font-sans"><div className="animate-pulse flex flex-col items-center gap-4"><Fingerprint className="text-[#0033A0] w-12 h-12" /><p className="text-[10px] font-black text-[#0033A0] uppercase tracking-[0.4em]">Calibrating Decision Core</p></div></div>
+                <div className="flex h-screen items-center justify-center bg-white font-sans overflow-hidden">
+                    <div className="flex flex-col items-center justify-center">
+                        <dotlottie-wc
+                            ref={lottieRef}
+                            src={shuffledUrls[aniIndex]}
+                            style={{ width: '600px', height: '600px' }}
+                            autoplay
+                        ></dotlottie-wc>
+                        <p className="text-[12px] font-black text-[#0033A0] uppercase tracking-[0.5em] -mt-10 z-10">
+                            Calibrating Decision Core
+                        </p>
+                    </div>
+                </div>
             );
 
             const menuLabels = {

@@ -427,6 +427,11 @@
         fetch(INTEL_URL)
             .then(r => r.json())
             .then(json => {
+                // [최적화] 대시보드 공유를 위해 캐시 저장
+                try {
+                    sessionStorage.setItem('cachedIntel', JSON.stringify(json));
+                } catch (e) { console.warn("Intel caching failed", e); }
+
                 if (json && json.scripts) {
                     activateBot(json.scripts);
                 } else if (json && json.dailyBriefing && json.dailyBriefing.script) {
@@ -478,6 +483,13 @@
                 fetch(DATA_URL)
                     .then(r => r.json())
                     .then(json => {
+                        // [최적화] 대시보드 이동 시 재사용을 위해 캐시 저장 (2.2MB 수준이므로 sessionStorage 적합)
+                        try {
+                            sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
+                        } catch (e) {
+                            console.warn("Data caching failed", e);
+                        }
+
                         const formatted = json.map((item, idx) => ({
                             id: `news-${idx}`,
                             date: (item.A || item.Date || item.date || '').split('T')[0],
