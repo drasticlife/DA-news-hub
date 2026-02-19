@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-20 07:50:43",
+  "last_updated": "2026-02-20 07:51:33",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
     "script": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
