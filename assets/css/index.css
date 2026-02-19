@@ -226,10 +226,10 @@ body {
 .news-inner {
   transition: all 0.4s ease;
   overflow: hidden;
-  max-height: 240px;
+  max-height: 280px; /* 조금 더 여유있게 조정 */
 }
 .news-item.expanded .news-inner {
-  max-height: 1500px;
+  max-height: 2000px;
 }
 .news-item.expanded {
   background: #fcfdfe;
@@ -237,14 +237,15 @@ body {
 }
 .summary-text {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 .news-item.expanded .summary-text {
-  -webkit-line-clamp: unset;
-  line-clamp: unset;
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
 }
 .news-item img {
   filter: grayscale(100%);
@@ -713,6 +714,15 @@ article strong {
   line-height: 1.6;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   position: relative;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.news-item.expanded .bot-inner-bubble {
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
 }
 .bot-inner-bubble::before {
   content: "🤖";

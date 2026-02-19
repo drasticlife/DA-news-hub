@@ -1499,10 +1499,10 @@
                 if (n.Category_en) displayCategory = n.Category_en;
               }
 
-              let botContent = n.BOT || n.Bot || n.bot;
-              if (currentLang === "en") {
-                botContent = n.BOT_en || n["BOT(eng)"] || botContent;
-              }
+              const rawBot = n.BOT || n.Bot || n.bot || "";
+              const botContent = (currentLang === "en" ? (n.BOT_en || n["BOT(eng)"] || rawBot) : rawBot).trim();
+              
+              const displaySummaryFull = displaySummary || "";
 
               return `
                     <article id="${n._uId}" 
@@ -1530,17 +1530,20 @@
                                     <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
                                     <div class="news-body-grid">
                                         <div class="news-content-col">
-                                            <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">${displaySummary || ""}</p>
+                                            <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                                                ${displaySummaryFull}
+                                            </p>
                                             <div class="source-links">${sourceLinksHtml}</div>
-                                            <!-- Expanded Comments Section -->
                                         </div>
                                         ${
                                           botContent
                                             ? `
                                         <div class="news-bot-col" onclick="event.stopPropagation()">
                                             <div class="bot-inner-bubble">
-                                                <div class="font-black mb-1 text-xs opacity-70">💡 AI Insight</div>
-                                                ${botContent}
+                                                <div class="font-black text-xs opacity-70 mb-2">💡 AI Insight</div>
+                                                <div class="bot-text text-xs leading-relaxed">
+                                                    ${botContent}
+                                                </div>
                                             </div>
                                         </div>
                                         `
@@ -1566,11 +1569,8 @@
             } else {
               requestAnimationFrame(renderChunk); // 접속 후에는 빠르게
             }
-          } else {
-            lucide.createIcons();
           }
         }
-
         renderChunk();
       }
 
@@ -2123,36 +2123,42 @@
       }
 
       function focusNews(id) {
-        const el = document.getElementById(id);
-        if (el) {
-          // 부드럽게 스크롤 이동
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-
-          // 카드 강조 효과 (반짝임)
-          el.classList.add("ring-2", "ring-[#1428a0]", "ring-offset-2");
-          setTimeout(
-            () =>
-              el.classList.remove("ring-2", "ring-[#1428a0]", "ring-offset-2"),
-            2000,
-          );
-
-          // 내용 펼치기
-          if (!el.classList.contains("expanded")) {
-            el.classList.add("expanded");
-
-            // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
-            const article = allNews.find((n) => n._uId === id);
-            if (article && article.Title) {
-              trackArticleView({
-                title: article.Title,
-                date: article.Date,
-                url: article.URL,
-                category: article.Category,
-                risk: article.Risk,
-              });
+        // [수정] 기사가 필터링되어 안 보일 수 있으므로 필터 초기화 후 진행
+        resetFilters(); 
+        
+        // 필터 초기화 후 렌더링 시간이 필요할 수 있으므로 약간의 지연
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            // 부드럽게 스크롤 이동
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+  
+            // 카드 강조 효과 (반짝임)
+            el.classList.add("ring-4", "ring-[#1428a0]", "ring-offset-4");
+            setTimeout(
+              () =>
+                el.classList.remove("ring-4", "ring-[#1428a0]", "ring-offset-4"),
+              3000,
+            );
+  
+            // 내용 펼치기
+            if (!el.classList.contains("expanded")) {
+              el.classList.add("expanded");
+  
+              // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
+              const article = allNews.find((n) => n._uId === id);
+              if (article && article.Title) {
+                trackArticleView({
+                  title: article.Title,
+                  date: article.Date,
+                  url: article.URL,
+                  category: article.Category,
+                  risk: article.Risk,
+                });
+              }
             }
           }
-        }
+        }, 100);
       }
 
       function toggleDarkMode() {
