@@ -30,31 +30,70 @@
   transition: opacity 2.5s ease-in-out;
 }
 
+/* 인트로: 중앙 대형 타이틀 (OceanX 스타일) */
+#intro-title {
+  position: absolute;
+  left: 50px;
+  bottom: 120px;
+  color: white;
+  font-family: "Segoe UI", "Inter", sans-serif;
+  pointer-events: none;
+  z-index: 20;
+  opacity: 1;
+  transition: opacity 1.2s ease-out;
+}
+#intro-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+#intro-h1 {
+  margin: 0;
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+/* 좌상단 소형 타이틀 (인트로 후 페이드인) */
 #center-title {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 40px;
+  left: 50px;
   color: white;
-  text-align: center;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", "Inter", sans-serif;
   pointer-events: none;
-  z-index: 10;
-  text-shadow: 0 0 10px rgba(0, 169, 224, 0.8);
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 1.2s ease-in;
 }
 #center-title h1 {
   margin: 0;
-  font-size: 3rem;
-  font-weight: 300;
-  letter-spacing: 2px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 #center-title p {
-  margin: 10px 0 0;
-  font-size: 1.2rem;
-  font-weight: 100;
-  opacity: 0.8;
-  font-style: italic;
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 300;
+  opacity: 0.6;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+}
+.ct-divider {
+  display: inline-block;
+  width: 36px;
+  height: 2px;
+  background: #00a9e0;
+  margin-right: 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 body.landing-active {

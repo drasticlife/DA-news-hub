@@ -33,6 +33,18 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body { margin: 0; padding: 0; background-color: #F8F9FB; }
         * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+        /* Strategic Narrative 내 강조 스타일 (index.html 일관성) */
+        h2 mark {
+            background-color: #DBEAFE;
+            color: #1D4ED8;
+            border-radius: 3px;
+            padding: 0 3px;
+            font-weight: 700;
+        }
+        h2 b {
+            color: #1E40AF;
+            font-weight: 900;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +68,7 @@
 
         const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
         const GAS_URL = "https://script.google.com/macros/s/AKfycby6E7X1vODajQSkXLyWVjstXR7IF0LY7W8sHiCHVNbrp1cjEEQBttS7fWZxTYw9i0ie6Q/exec";
+        const INTEL_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json";
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
@@ -341,6 +354,7 @@
         // --- 4. Main Application ---
         const App = () => {
             const [rawData, setRawData] = useState([]);
+            const [intelData, setIntelData] = useState(null);
             const [selectedFilter, setSelectedFilter] = useState('All');
             const [selectedRisk, setSelectedRisk] = useState('All');
             const [selectedTag, setSelectedTag] = useState(null); 
@@ -398,6 +412,17 @@
                         }
                     } catch (e) {
                         console.warn("Failed to fetch monthly stats", e);
+                    }
+
+                    // intel_report.json 병렬 fetch
+                    try {
+                        const intelRes = await fetch(INTEL_URL);
+                        if (intelRes.ok) {
+                            const intelJson = await intelRes.json();
+                            setIntelData(intelJson);
+                        }
+                    } catch (e) {
+                        console.warn("Failed to fetch intel_report", e);
                     }
 
                     setLoading(false);
@@ -524,11 +549,47 @@
             }, [filteredData, selectedFilter, language]);
 
             const strategicNarrative = useMemo(() => {
+                if (intelData) {
+                    // 1. 기간 키 변환 (Dashboard 키 → intel_report.json 키)
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    let periodKey = 'thisWeek'; // default
+                    if (selectedDate === 'LastWeek') periodKey = 'lastWeek';
+                    else if (selectedDate === 'LastMonth') periodKey = 'lastMonth';
+                    else if (selectedDate === todayStr) periodKey = 'thisWeek';
+                    // 그 외 특정 날짜의 경우 최신(thisWeek) 브리핑 출력
+
+                    // 2. 카테고리 키 변환
+                    const catKeyMap = {
+                        '원자재': '원자재',
+                        '거시/정책': '거시경제',
+                        '지역별 분석': '생산지역',
+                        '경쟁사': '경쟁사',
+                        '신기술동향': '신기술동향',
+                        'AI기술': '신기술동향',
+                    };
+                    const catKey = catKeyMap[selectedFilter] || 'all';
+
+                    // 3. 신규 구조(scripts[period][cat]) 우선 탐색
+                    if (intelData.scripts && intelData.scripts[periodKey]) {
+                        const targetScript = intelData.scripts[periodKey][catKey] || intelData.scripts[periodKey]['all'];
+                        if (targetScript) return targetScript;
+                    }
+
+                    // 4. 구버전/하위 호환 fallback
+                    if (intelData.categoryScripts) {
+                        const legacyCat = catKey === 'all' ? 'all' : catKey;
+                        if (intelData.categoryScripts[legacyCat]) return intelData.categoryScripts[legacyCat];
+                    }
+                    if (intelData.dailyBriefing && intelData.dailyBriefing.script) return intelData.dailyBriefing.script;
+                }
+                
+                // 데이터 없을 때 자동 생성 fallback
                 if (!filteredData.length) return language === 'KO' ? `현재 선택된 조건에 부합하는 리스크 데이터가 부재합니다.` : `No risk data found for the selected context.`;
                 let dateLabel = selectedDate === 'LastMonth' ? (language === 'KO' ? '최근 30일' : 'Last 30 Days') : (selectedDate === 'LastWeek' ? (language === 'KO' ? '최근 7일' : 'Last 7 Days') : (selectedDate === 'All' ? (language === 'KO' ? '전체 기간' : 'All Period') : selectedDate));
                 const catLabel = selectedFilter === 'All' ? (language === 'KO' ? '공급망 통합' : 'Supply Chain') : translateCategory(selectedFilter, language);
                 return language === 'KO' ? `${dateLabel} 기준, ${catLabel} 섹터 분석 결과 ${cardStats.topRegion} 지역 이슈가 가장 두드러집니다. ${filteredData.filter(d => d.risk === 'High').length > 0 ? '특히 High 리스크에 대한 선제적 대응이 권고됩니다.' : ''}` : `Based on ${dateLabel}, the ${catLabel} analysis highlights key issues in ${cardStats.topRegion}. ${filteredData.filter(d => d.risk === 'High').length > 0 ? 'Urgent attention is advised for High Risk cases.' : 'Risk levels are currently stable.'}`;
-            }, [filteredData, selectedFilter, selectedDate, cardStats, language]);
+            }, [intelData, selectedFilter, selectedDate, filteredData.length, language, cardStats.topRegion]);
+
 
             const timelineStats = useMemo(() => {
                 if (!currentLocaleData.length) return [];
@@ -714,7 +775,7 @@
                         <div className={`border-l-4 p-6 rounded-sm shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:shadow-md transition-shadow ${darkMode ? 'bg-slate-900 border-blue-500' : 'bg-white border-[#0033A0]'}`}>
                             <div className="flex items-center gap-6 flex-1">
                                 <div className={`p-3 rounded-full shadow-sm ${darkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#0033A0]'}`}><Sparkles size={24} /></div>
-                                <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{strategicNarrative}</h2></div>
+                                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`} dangerouslySetInnerHTML={{__html: strategicNarrative.replace(/\n/g, '<br/>')}} /></div>
                             </div>
                             {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
                                 <button onClick={resetFilters} className={`flex items-center gap-2 text-[10px] font-black border px-5 py-2.5 rounded-sm transition-all uppercase whitespace-nowrap shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700' : 'text-[#0033A0] border-[#0033A0] hover:bg-blue-50'}`}><Clock size={12} /> {language === 'KO' ? '필터 해제' : 'Reset Filter'}</button>

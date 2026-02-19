@@ -21,9 +21,18 @@
   <body class="bg-[#fcfcfc] text-[#333] landing-active">
     <!-- 3D 지구 랜딩 페이지 -->
     <div id="landing-page" onclick="enterDashboard()">
+      <!-- 인트로: 중앙 대형 타이틀 -->
+      <div id="intro-title">
+        <div id="intro-label">■ DA PROCUREMENT DAILY INSIGHT</div>
+        <h1 id="intro-h1">Global<br>Intelligence</h1>
+      </div>
+      <!-- 좌상단 소형 타이틀 (페이드인 후 유지) -->
       <div id="center-title">
         <h1>DA Procurement</h1>
-        <p>Daily Insight Journal</p>
+        <div style="display:flex;align-items:center;margin-top:4px;">
+          <span class="ct-divider"></span>
+          <p>Daily Insight Journal</p>
+        </div>
       </div>
 
       <!-- Auth Container (Right Bottom) -->
@@ -56,162 +65,78 @@
 
       function initLandingGlobe() {
         const places = [
-          {
-            name: "Samsung Digital City",
-            country: "Korea",
-            product: "HQ / R&D",
-            lat: 37.263,
-            lng: 127.028,
-            txtLat: 39.5,
-            txtLng: 127.0,
-          },
-          {
-            name: "Gwangju Plant",
-            country: "Korea",
-            product: "Premium DA",
-            lat: 35.159,
-            lng: 126.852,
-            txtLat: 33.5,
-            txtLng: 127.5,
-          },
-          {
-            name: "SSEC",
-            country: "China",
-            product: "DA Complex",
-            lat: 31.298,
-            lng: 120.585,
-            txtLat: 31.3,
-            txtLng: 116.0,
-          },
-          {
-            name: "TSE",
-            country: "Thailand",
-            product: "A/C, Ref",
-            lat: 13.111,
-            lng: 100.927,
-            txtLat: 16.5,
-            txtLng: 98.0,
-          },
-          {
-            name: "SEHC",
-            country: "Vietnam",
-            product: "TV/DA Complex",
-            lat: 10.762,
-            lng: 106.66,
-            txtLat: 8.5,
-            txtLng: 109.0,
-          },
-          {
-            name: "SEDA",
-            country: "Brazil",
-            product: "DA/TV",
-            lat: -3.119,
-            lng: -60.021,
-            txtLat: -3.119,
-            txtLng: -60.021,
-          },
-          {
-            name: "SEPM",
-            country: "Poland",
-            product: "Ref/W/M",
-            lat: 52.711,
-            lng: 16.381,
-            txtLat: 52.711,
-            txtLng: 16.381,
-          },
-          {
-            name: "SAMEX",
-            country: "Mexico",
-            product: "Ref",
-            lat: 20.588,
-            lng: -100.389,
-            txtLat: 20.588,
-            txtLng: -100.389,
-          },
-          {
-            name: "SEM",
-            country: "Mexico",
-            product: "TV/Monitor",
-            lat: 32.514,
-            lng: -117.038,
-            txtLat: 32.514,
-            txtLng: -117.038,
-          },
-          {
-            name: "SEHA",
-            country: "USA",
-            product: "W/M",
-            lat: 34.274,
-            lng: -81.618,
-            txtLat: 34.274,
-            txtLng: -81.618,
-          },
-          {
-            name: "SIEL",
-            country: "India",
-            product: "DA/TV",
-            lat: 12.971,
-            lng: 80.015,
-            txtLat: 12.971,
-            txtLng: 80.015,
-          },
+          { name: "Samsung Digital City", country: "Korea",    product: "HQ / R&D",     lat: 37.263, lng: 127.028, txtLat: 39.5,  txtLng: 127.0  },
+          { name: "Gwangju Plant",        country: "Korea",    product: "Premium DA",    lat: 35.159, lng: 126.852, txtLat: 33.5,  txtLng: 127.5  },
+          { name: "SSEC",                 country: "China",    product: "DA Complex",    lat: 31.298, lng: 120.585, txtLat: 31.3,  txtLng: 116.0  },
+          { name: "TSE",                  country: "Thailand", product: "A/C, Ref",      lat: 13.111, lng: 100.927, txtLat: 16.5,  txtLng: 98.0   },
+          { name: "SEHC",                 country: "Vietnam",  product: "TV/DA Complex", lat: 10.762, lng: 106.66,  txtLat: 8.5,   txtLng: 109.0  },
+          { name: "SEDA",                 country: "Brazil",   product: "DA/TV",         lat: -3.119, lng: -60.021, txtLat: -3.119,txtLng: -60.021},
+          { name: "SEPM",                 country: "Poland",   product: "Ref/W/M",       lat: 52.711, lng: 16.381,  txtLat: 52.711,txtLng: 16.381 },
+          { name: "SAMEX",                country: "Mexico",   product: "Ref",           lat: 20.588, lng: -100.389,txtLat: 20.588,txtLng: -100.389},
+          { name: "SEM",                  country: "Mexico",   product: "TV/Monitor",    lat: 32.514, lng: -117.038,txtLat: 32.514,txtLng: -117.038},
+          { name: "SEHA",                 country: "USA",      product: "W/M",           lat: 34.274, lng: -81.618, txtLat: 34.274,txtLng: -81.618 },
+          { name: "SIEL",                 country: "India",    product: "DA/TV",         lat: 12.971, lng: 80.015,  txtLat: 12.971,txtLng: 80.015  }
         ];
 
         const world = Globe()(document.getElementById("globeViz"))
-          .globeImageUrl(
-            "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg",
-          )
-          .bumpImageUrl(
-            "https://unpkg.com/three-globe/example/img/earth-topology.png",
-          )
-          .backgroundImageUrl(
-            "https://unpkg.com/three-globe/example/img/night-sky.png",
-          )
+          .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+          .bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
+          .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
           .atmosphereColor("#3a228a")
-          .atmosphereAltitude(0.2);
+          .atmosphereAltitude(0.2)
+          .pointsData(places).pointLat("lat").pointLng("lng")
+          .pointColor(() => "#00a9e0").pointAltitude(0.01).pointRadius(0.6)
+          .labelsData(places).labelLat("txtLat").labelLng("txtLng")
+          .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
+          .labelSize(1.0).labelDotRadius(0.3)
+          .labelColor(() => "rgba(255,255,255,0.9)")
+          .labelResolution(3).labelAltitude(0.02)
+          .onPointClick(point => {
+            world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 800);
+          });
 
-        // [초기 시점 설정]
-        world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 });
+        // 컨트롤 잠금
+        const lockTimer = setInterval(() => {
+          const ctrl = world.controls();
+          if (!ctrl) return;
+          ctrl.enableZoom = false;
+          ctrl.enablePan  = false;
+          ctrl.autoRotate = false;
+          const pa = Math.PI / 2 - (25 * Math.PI / 180);
+          ctrl.minPolarAngle = pa;
+          ctrl.maxPolarAngle = pa;
+          clearInterval(lockTimer);
+        }, 100);
 
-        // 바로 보이게 설정 (CSS transition에 의해 서서히 나타남)
+        // 초기 시점 & 페이드인
+        world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 }, 0);
         document.getElementById("globeViz").style.opacity = "1";
+        setTimeout(() => world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 2500), 100);
 
-        // [애니메이션 및 데이터 로드]
-        setTimeout(() => {
-          world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 3500);
-        }, 500);
+        // 인트로 타이틀: 로그인 전까지 유지 (로그인 시 JS로 페이드아웃)
+        // setTimeout 제거 — 로그인 성공 시 fadeOutIntro() 호출
 
-        setTimeout(() => {
-          world
-            .pointsData(places)
-            .pointLat("lat")
-            .pointLng("lng")
-            .pointColor(() => "#00a9e0")
-            .pointAltitude(0.01)
-            .pointRadius(0.6)
+        // RAF 기반 부드러운 회전
+        let rotLng = 110;
+        let isInteracting = false;
+        let interactionTimer = null;
 
-            .labelsData(places)
-            .labelLat("txtLat")
-            .labelLng("txtLng")
-            .labelText((d) => `${d.name}\n${d.country} | ${d.product}`)
-            .labelSize(1.0)
-            .labelDotRadius(0.3)
-            .labelColor(() => "rgba(255, 255, 255, 0.9)")
-            .labelResolution(2)
-            .labelAltitude(0.02)
+        const loop = () => {
+          if (!isInteracting) rotLng -= 0.18;
+          world.pointOfView({ lng: rotLng, lat: 25, altitude: 0.8 }, 0);
+          requestAnimationFrame(loop);
+        };
+        setTimeout(() => requestAnimationFrame(loop), 2600);
 
-            .onPointClick((point) => {
-              world.pointOfView(
-                { lat: point.lat, lng: point.lng, altitude: 1.5 },
-                1000,
-              );
-            });
-
-          setTimeout(() => {
-            world.controls().autoRotate = true;
-            world.controls().autoRotateSpeed = 0.6;
-          }, 1000);
-        }, 2000);
+        window.addEventListener('wheel', e => {
+          if (isDashboardActive) return;
+          e.preventDefault();
+          if (e.ctrlKey) return;
+          isInteracting = true;
+          clearTimeout(interactionTimer);
+          interactionTimer = setTimeout(() => { isInteracting = false; }, 500);
+          rotLng += e.deltaY * 0.08;
+        }, { passive: false });
       }
 
 
@@ -345,7 +270,7 @@
           <i data-lucide="message-square" class="w-3.5 h-3.5"></i> BOARD
         </button>
         <button
-          onclick="enterDashboard()"
+          onclick="window.location.href='dashboard_mod.html'"
           class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"
         >
           <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> DASHBOARD
@@ -866,30 +791,35 @@
       }
 
       async function handleLoginSubmit() {
-        const userId = document.getElementById("login-id").value;
-        const password = document.getElementById("login-pw").value;
-        if (!userId || !password) return alert("Please enter ID and Password");
+  const userId = document.getElementById("login-id").value;
+  const password = document.getElementById("login-pw").value;
+  if (!userId || !password) return alert("Please enter ID and Password");
 
-        try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", userId, password }),
-          });
-          const result = await res.json();
-          if (result.success) {
-            currentUser = { userId: result.userId, userName: result.userName };
-            localStorage.setItem("da_user", JSON.stringify(currentUser));
-            // 즉시 대시보드로 이동
-            window.location.replace("dashboard_mod.html");
-          } else {
-            alert(result.message || "Invalid credentials");
-          }
-        } catch (e) {
-          console.error("Login error:", e);
-          alert("Login failed. Please check connection.");
-        }
-      }
-
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "login", userId, password }),
+    });
+    const result = await res.json();
+    if (result.success) {
+      currentUser = { userId: result.userId, userName: result.userName };
+      localStorage.setItem("da_user", JSON.stringify(currentUser));
+      // 인트로 타이틀 페이드아웃 후 dashboard_3d.html로 이동
+      const intro = document.getElementById('intro-title');
+      const ct    = document.getElementById('center-title');
+      const lp    = document.getElementById('landing-page');
+      if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
+      if (ct)    { ct.style.transition    = 'opacity 0.8s ease-in';  ct.style.opacity    = '1'; }
+      if (lp)    { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
+      setTimeout(() => { window.location.replace("dashboard_3d.html"); }, 1200);
+    } else {
+      alert(result.message || "Invalid credentials");
+    }
+  } catch (e) {
+    console.error("Login error:", e);
+    alert("Login failed. Please check connection.");
+  }
+}
       async function handleRegisterSubmit() {
         const userId = document.getElementById("reg-id").value;
         const userName = document.getElementById("reg-name").value;
@@ -940,8 +870,8 @@
       }
 
       function enterDashboardAction() {
-        // 애니메이션 없이 즉시 대시보드로 이동
-        window.location.replace("dashboard_mod.html");
+        // 로그인 후 항상 dashboard_3d.html로 (Globe 애니메이션 감상 + 프리로드)
+        window.location.replace("dashboard_3d.html");
       }
 
       // [추가] 세션 ID 생성 및 관리

@@ -5,40 +5,48 @@
   <title>DA Global Production Sites</title>
   <style>
     body { margin: 0; overflow: hidden; background-color: #000; }
-    #globeViz { 
-      width: 100vw; 
-      height: 100vh; 
-      opacity: 0; /* JS에서 페이드인 처리 */
-      transition: opacity 2.5s ease-in-out;
+
+    #globeViz {
+      width: 100vw;
+      height: 100vh;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
     }
-    
+
     #center-title {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 40px;
+      left: 50px;
       color: white;
-      text-align: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       pointer-events: none;
       z-index: 10;
-      text-shadow: 0 0 10px rgba(0, 169, 224, 0.8);
     }
-    
+
     #center-title h1 {
       margin: 0;
-      font-size: 3rem;
-      font-weight: 300;
+      font-size: 2.4rem;
+      font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
 
     #center-title p {
-      margin: 10px 0 0;
-      font-size: 1.2rem;
-      font-weight: 100;
-      opacity: 0.8;
-      font-style: italic;
+      margin: 6px 0 0;
+      font-size: 0.85rem;
+      font-weight: 300;
+      opacity: 0.6;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+    }
+
+    #center-title .divider {
+      display: inline-block;
+      width: 48px;
+      height: 2px;
+      background: #00a9e0;
+      margin-right: 12px;
+      vertical-align: middle;
     }
   </style>
   <script src="https://unpkg.com/globe.gl"></script>
@@ -46,91 +54,107 @@
 <body>
   <div id="center-title">
     <h1>DA Procurement</h1>
-    <p>Daily Insight Journal</p>
+    <div style="display:flex;align-items:center;margin-top:6px;">
+      <span class="divider"></span>
+      <p style="margin:0;">Daily Insight Journal</p>
+    </div>
   </div>
 
   <div id="globeViz"></div>
 
   <script>
-    // [데이터 설정]
-    // lat/lng: 실제 공장 위치
-    // txtLat/txtLng: 글자가 표시될 위치 (겹침 방지용)
     const places = [
-      // 1. 한국 (수원 vs 광주 상하 분리)
-      { name: "Samsung Digital City", country: "Korea", product: "HQ / R&D", lat: 37.263, lng: 127.028, txtLat: 39.5, txtLng: 127.0 },
-      { name: "Gwangju Plant", country: "Korea", product: "Premium DA", lat: 35.159, lng: 126.852, txtLat: 33.5, txtLng: 127.5 },
-
-      // 2. 중국 (신규 추가) - 한국과 겹치지 않게 왼쪽(서쪽)으로 글자 이동
-      { name: "SSEC", country: "China", product: "DA Complex", lat: 31.298, lng: 120.585, txtLat: 31.3, txtLng: 116.0 },
-      
-      // 3. 동남아 (태국 vs 베트남 대각선 분리)
-      { name: "TSE", country: "Thailand", product: "A/C, Ref", lat: 13.111, lng: 100.927, txtLat: 16.5, txtLng: 98.0 },
-      { name: "SEHC", country: "Vietnam", product: "TV/DA Complex", lat: 10.762, lng: 106.660, txtLat: 8.5, txtLng: 109.0 },
-
-      // 4. 남미 (신규 추가) - 브라질
-      { name: "SEDA", country: "Brazil", product: "DA/TV", lat: -3.119, lng: -60.021, txtLat: -3.119, txtLng: -60.021 },
-
-      // 5. 그 외 지역
-      { name: "SEPM", country: "Poland", product: "Ref/W/M", lat: 52.711, lng: 16.381, txtLat: 52.711, txtLng: 16.381 },
-      { name: "SAMEX", country: "Mexico", product: "Ref", lat: 20.588, lng: -100.389, txtLat: 20.588, txtLng: -100.389 },
-      { name: "SEM", country: "Mexico", product: "TV/Monitor", lat: 32.514, lng: -117.038, txtLat: 32.514, txtLng: -117.038 },
-      { name: "SEHA", country: "USA", product: "W/M", lat: 34.274, lng: -81.618, txtLat: 34.274, txtLng: -81.618 },
-      { name: "SIEL", country: "India", product: "DA/TV", lat: 12.971, lng: 80.015, txtLat: 12.971, txtLng: 80.015 }
+      // 한국
+      { name: "Samsung Digital City", country: "Korea",   product: "HQ / R&D",      lat: 37.263,  lng: 127.028, txtLat: 39.5,  txtLng: 127.0  },
+      { name: "Gwangju Plant",        country: "Korea",   product: "Premium DA",     lat: 35.159,  lng: 126.852, txtLat: 33.5,  txtLng: 127.5  },
+      // 중국
+      { name: "SSEC",                 country: "China",   product: "DA Complex",     lat: 31.298,  lng: 120.585, txtLat: 31.3,  txtLng: 116.0  },
+      // 동남아
+      { name: "TSE",                  country: "Thailand",product: "A/C, Ref",       lat: 13.111,  lng: 100.927, txtLat: 16.5,  txtLng: 98.0   },
+      { name: "SEHC",                 country: "Vietnam", product: "TV/DA Complex",  lat: 10.762,  lng: 106.660, txtLat: 8.5,   txtLng: 109.0  },
+      // 남미
+      { name: "SEDA",                 country: "Brazil",  product: "DA/TV",          lat: -3.119,  lng: -60.021, txtLat: -3.119,txtLng: -60.021},
+      // 기타
+      { name: "SEPM",                 country: "Poland",  product: "Ref/W/M",        lat: 52.711,  lng: 16.381,  txtLat: 52.711,txtLng: 16.381 },
+      { name: "SAMEX",                country: "Mexico",  product: "Ref",            lat: 20.588,  lng: -100.389,txtLat: 20.588,txtLng: -100.389},
+      { name: "SEM",                  country: "Mexico",  product: "TV/Monitor",     lat: 32.514,  lng: -117.038,txtLat: 32.514,txtLng: -117.038},
+      { name: "SEHA",                 country: "USA",     product: "W/M",            lat: 34.274,  lng: -81.618, txtLat: 34.274,txtLng: -81.618 },
+      { name: "SIEL",                 country: "India",   product: "DA/TV",          lat: 12.971,  lng: 80.015,  txtLat: 12.971,txtLng: 80.015  }
     ];
 
+    // Globe 초기화
     const world = Globe()
       (document.getElementById('globeViz'))
       .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
       .atmosphereColor('#3a228a')
-      .atmosphereAltitude(0.2);
+      .atmosphereAltitude(0.2)
+      // 데이터 즉시 로드 (setTimeout 체인 제거)
+      .pointsData(places)
+      .pointLat('lat')
+      .pointLng('lng')
+      .pointColor(() => '#00a9e0')
+      .pointAltitude(0.01)
+      .pointRadius(0.6)
+      .labelsData(places)
+      .labelLat('txtLat')
+      .labelLng('txtLng')
+      .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
+      .labelSize(1.0)
+      .labelDotRadius(0.3)
+      .labelColor(() => 'rgba(255, 255, 255, 0.9)')
+      .labelResolution(3)
+      .labelAltitude(0.02)
+      .onPointClick(point => {
+        world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 800);
+      });
 
-    // [초기 시점 설정] 
-    // 처음엔 약간 멀리서 시작 (altitude: 2.5)
-    world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 });
+    // 컨트롤 잠금 (줌/패닝 차단, 위도 고정)
+    const lockControls = () => {
+      const ctrl = world.controls();
+      if (!ctrl) return false;
+      ctrl.enableZoom = false;
+      ctrl.enablePan  = false;
+      ctrl.autoRotate = false; // RAF로 직접 제어
+      const pa = Math.PI / 2 - (25 * Math.PI / 180);
+      ctrl.minPolarAngle = pa;
+      ctrl.maxPolarAngle = pa;
+      return true;
+    };
+    const lockTimer = setInterval(() => { if (lockControls()) clearInterval(lockTimer); }, 100);
 
-    // 바로 보이게 설정 (CSS transition에 의해 서서히 나타남)
+    // 초기 시점: 멀리서 줌인
+    world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 }, 0);
     document.getElementById('globeViz').style.opacity = '1';
-
-    // [애니메이션 및 데이터 로드]
-    // 1. 서서히 줌인 (2.5 -> 0.8)
     setTimeout(() => {
-      world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 3500); // 3.5초간 부드럽게 줌인
-    }, 500);
+      world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 2500);
+    }, 100);
 
-    // 2. 데이터(점, 글자) 로드
-    // 초기 로딩 성능을 위해 줌인 도중에 나타나도록 함
-    setTimeout(() => {
-      world
-        .pointsData(places)
-        .pointLat('lat')
-        .pointLng('lng')
-        .pointColor(() => '#00a9e0')
-        .pointAltitude(0.01)
-        .pointRadius(0.6)
-        
-        .labelsData(places)
-        .labelLat('txtLat')
-        .labelLng('txtLng')
-        .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
-        .labelSize(1.0)
-        .labelDotRadius(0.3)
-        .labelColor(() => 'rgba(255, 255, 255, 0.9)')
-        .labelResolution(2) // 성능과 화질 타협점
-        .labelAltitude(0.02)
+    // ── RAF 기반 부드러운 회전 (dashboard_3d.html과 동일 방식) ──
+    let rotLng = 110;
+    let isInteracting = false;
+    let interactionTimer = null;
 
-        .onPointClick(point => {
-          world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 1000);
-        });
+    const loop = () => {
+      if (!isInteracting) {
+        rotLng -= 0.18; // 반시계 회전
+      }
+      world.pointOfView({ lng: rotLng, lat: 25, altitude: 0.8 }, 0);
+      requestAnimationFrame(loop);
+    };
+    // 줌인 완료 후 회전 시작
+    setTimeout(() => requestAnimationFrame(loop), 2600);
 
-      // 데이터 로드 후 회전 시작
-      setTimeout(() => {
-        world.controls().autoRotate = true;
-        world.controls().autoRotateSpeed = 0.6;
-      }, 1000);
-    }, 2000); // 2초 뒤 데이터 로드
-
+    // 스크롤로 수동 회전
+    window.addEventListener('wheel', e => {
+      e.preventDefault();
+      if (e.ctrlKey) return;
+      isInteracting = true;
+      clearTimeout(interactionTimer);
+      interactionTimer = setTimeout(() => { isInteracting = false; }, 500);
+      rotLng += e.deltaY * 0.08;
+    }, { passive: false });
   </script>
 </body>
 </html>
