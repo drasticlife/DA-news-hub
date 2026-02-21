@@ -1,50 +1,50 @@
 {
-  "last_updated": "2026-02-20 07:51:33",
+  "last_updated": "2026-02-21 21:18:47",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
-    "script": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    "script": "기존 대본을 찾을 수 없습니다."
   },
   "scripts": {
     "thisWeek": {
-      "all": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "원자재": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "거시경제": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "생산지역": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "경쟁사": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "신기술동향": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+      "all": "기존 대본을 찾을 수 없습니다.",
+      "원자재": "기존 대본을 찾을 수 없습니다.",
+      "거시경제": "기존 대본을 찾을 수 없습니다.",
+      "생산지역": "기존 대본을 찾을 수 없습니다.",
+      "경쟁사": "기존 대본을 찾을 수 없습니다.",
+      "신기술동향": "기존 대본을 찾을 수 없습니다."
     },
     "lastWeek": {
-      "all": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "원자재": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "거시경제": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "생산지역": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "경쟁사": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "신기술동향": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+      "all": "기존 대본을 찾을 수 없습니다.",
+      "원자재": "기존 대본을 찾을 수 없습니다.",
+      "거시경제": "기존 대본을 찾을 수 없습니다.",
+      "생산지역": "기존 대본을 찾을 수 없습니다.",
+      "경쟁사": "기존 대본을 찾을 수 없습니다.",
+      "신기술동향": "기존 대본을 찾을 수 없습니다."
     },
     "thisMonth": {
-      "all": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "원자재": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "거시경제": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "생산지역": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "경쟁사": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "신기술동향": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+      "all": "기존 대본을 찾을 수 없습니다.",
+      "원자재": "기존 대본을 찾을 수 없습니다.",
+      "거시경제": "기존 대본을 찾을 수 없습니다.",
+      "생산지역": "기존 대본을 찾을 수 없습니다.",
+      "경쟁사": "기존 대본을 찾을 수 없습니다.",
+      "신기술동향": "기존 대본을 찾을 수 없습니다."
     },
     "lastMonth": {
-      "all": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "원자재": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "거시경제": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "생산지역": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "경쟁사": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-      "신기술동향": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+      "all": "기존 대본을 찾을 수 없습니다.",
+      "원자재": "기존 대본을 찾을 수 없습니다.",
+      "거시경제": "기존 대본을 찾을 수 없습니다.",
+      "생산지역": "기존 대본을 찾을 수 없습니다.",
+      "경쟁사": "기존 대본을 찾을 수 없습니다.",
+      "신기술동향": "기존 대본을 찾을 수 없습니다."
     }
   },
   "categoryScripts": {
-    "all": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-    "원자재": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-    "거시경제": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-    "생산지역": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-    "경쟁사": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON",
-    "신기술동향": "API 호출 오류: SyntaxError: Unexpected token '<', \"<html>\r\n<h\"... is not valid JSON"
+    "all": "기존 대본을 찾을 수 없습니다.",
+    "원자재": "기존 대본을 찾을 수 없습니다.",
+    "거시경제": "기존 대본을 찾을 수 없습니다.",
+    "생산지역": "기존 대본을 찾을 수 없습니다.",
+    "경쟁사": "기존 대본을 찾을 수 없습니다.",
+    "신기술동향": "기존 대본을 찾을 수 없습니다."
   },
   "categorized_issues": {
     "byCategory": {
@@ -502,6 +502,27 @@
             "LikeCount": ""
           },
           {
+            "Date": "2026.02.20",
+            "Title": "미국 10% 글로벌 관세",
+            "Category": "거시경제:통상정책",
+            "Summary": "미 연방대법원이 트럼프 행정부의 비상 관세를 위법이라고 판결하면서 기존 관세는 상당 부분 무효가 됐는데, 트럼프 대통령이 곧바로 전 세계 수입품에 일괄 <b>10%</b> 관세를 매기는 새 조치를 예고했어요cnn+2. <mark>새 10% 글로벌 관세가 실제로 철강·구리·모터·컴프레서 등 가전 관련 부품까지 적용되면, 미국향 DA 완제품 기준으로 관세 부담이 평균 <b>2~3%</b> 정도 늘 수 있어 삼성의 미국 생산·수출 원가 경쟁력이 눈에 띄게 약해질 수 있어요.</mark> 삼성 입장에서는 대미 수출·멕시코/중국 생산 후 미국 반입 물량 모두 영향을 받을 수 있어서, 미국 시장 ASP 인상 여력이 크지 않은 제품군은 마진 압박이 바로 커지고, 관세 우회가 가능한 FTA·제3국 생산거점 검토를 서둘러야 해요. 액션: ① USTR·백악관 발표 모니터링해서 실제 관세 대상 품목 코드(HS 코드)·시행 시점 확인 ② 미국 수출 비중이 큰 세탁기·냉장고 등 주요 모델별로 10% 관세 적용 시 P&L 임팩트 시뮬레이션 ③ 멕시코·베트남 등 대체 생산기지별 원가·관세 비교 테이블 업데이트 (우선순위: 상, 기한: 2026-03-05). 참고: CNN+1, Politico+1, Euronews+1",
+            "URL": "https://www.cnn.com/us/live-news/trump-administration-us-iran-02-20-26\nhttps://www.politico.com/news/2026/02/20/trump-tariffs-supreme-court-ruling-00790687\nhttps://www.euronews.com/business/2026/02/20/trump-announces-new-10-global-tariffs-after-supreme-court-decision",
+            "Risk": "Very High",
+            "Impact": "C(+2.5%)",
+            "Image": "https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2259114405.jpg?c=16x9&q=w_800,c_fill",
+            "Region": "USA, Global",
+            "Tag": "미국,관세,10%,글로벌,수입비용,보호무역,통상",
+            "BOT": "",
+            "Title_en": "US 10% global tariffs",
+            "Summary_en": "The US Supreme Court ruled that the Trump administration's emergency tariffs were illegal, invalidating most of the existing tariffs. President Trump immediately announced a new measure to impose a <b>10%</b> tariff on all global imports.cnn+2. <mark>If the new 10% global tariff is actually applied to home appliance-related parts such as steel, copper, motors, and compressors, the tariff burden on US-bound DA finished products could increase by an average of <b>2-3%</b>, which could significantly weaken Samsung's US production and export cost competitiveness.</mark> From Samsung's perspective, both exports to the US and the volume of products produced in Mexico/China and then brought into the US could be affected, so product groups that do not have much room to increase ASPs in the US market will immediately face increased margin pressure, and they must quickly review FTAs ​​and third-country production bases that can circumvent tariffs. Actions: ① Monitor USTR and White House announcements to confirm actual tariff target product codes (HS codes) and implementation dates. ② Simulate the P&L impact of a 10% tariff on major models, such as washing machines and refrigerators, that account for a significant portion of US exports. ③ Update a cost and tariff comparison table for alternative production bases, such as Mexico and Vietnam. (Priority: High, Deadline: March 5, 2026). References: CNN+1, Politico+1, Euronews+1",
+            "Category_en": "Macroeconomics: Trade Policy",
+            "Tag_en": "US, tariff, 10%, global, import costs, protectionism, trade",
+            "Region_en": "USA, Global",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026.02.15",
             "Title": "미국 금속·칩 관세 리스크 지속",
             "Category": "거시경제:통상정책",
@@ -560,27 +581,6 @@
             "Category_en": "Macroeconomics: Trade Policy",
             "Tag_en": "US steel tariffs remain at 50%, rising costs, C (+3%)",
             "Region_en": "USA, EU, South Korea",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026.02.15",
-            "Title": "USD/KRW 1,440원대 보합",
-            "Category": "거시경제:환율",
-            "Summary": "USD/KRW가 최근 한 달 동안 원화 강세 영향으로 <b>1,440원대</b>에서 비교적 안정적으로 움직이고 있어요tradingeconomics+2. <mark>원화가 한 달 기준 약 1.5% 강해지면서, 달러 결제 수입 원자재비를 이론상 약 1.5% 절감할 수 있는 구간이에요.</mark> DA 기준으로 철강·구리·레진·전자부품 등 달러 결제 비중을 50%로 가정하면 완제품 원가에는 약 0.7%p 수준의 비용 절감 여지가 생겨요. 환율 변동성이 크지 않아서, 지금은 협력사와 달러 코스트 기준의 단가 재협상이나 중장기 LTA 환율 조건을 조정하기 좋은 타이밍이에요. 액션: ① 1,440원대를 기준선으로 HRC·구리·레진·컴프레서 등 주요 품목 원화 단가 재계산 ② 최근 1개월 환율 효과(약 -1.5%)를 반영한 재료비 예산 업데이트 ③ 환율 1,450원·1,500원 시나리오별 DA 제품 원가 민감도 테이블 유지 (우선순위: 중, 기한: 2026-02-28). 참고: 한국은행+1(지표누리), TradingEconomics+1, Wise+1, XE+1, Yahoo Finance+1tradingeconomics+5",
-            "URL": "https://ko.tradingeconomics.com/south-korea/currency\nhttps://wise.com/us/currency-converter/usd-to-krw-rate/history\nhttps://www.index.go.kr/unity/potal/main/EachDtlPageDetail.do?idx_cd=1068",
-            "Risk": "Med",
-            "Impact": "B(-1.5%)",
-            "Image": "https://wise.com/public-resources/assets/icons/wise-personal/share_landscape.png",
-            "Region": "USA,South Korea,Global",
-            "Tag": "USD/KRW,환율,1440원대,원화강세,-1.5%,수입가",
-            "BOT": "",
-            "Title_en": "USD/KRW held steady at 1,440 won",
-            "Summary_en": "USD/KRW has been moving relatively steadily in the <b>1,440 won range</b> over the past month due to the strengthening of the won (tradingeconomics+2). <mark>With the won strengthening by about 1.5% on a monthly basis, this is a range where the cost of imported raw materials settled in dollars can theoretically be reduced by about 1.5%.</mark> Assuming that the proportion of dollar settlement for steel, copper, resin, and electronic components is 50% based on DA, there is room for cost savings of about 0.7%p in the cost of finished products. Since the exchange rate volatility is not high, now is a good time to renegotiate unit prices based on dollar cost with partners or adjust the mid- to long-term LTA exchange rate conditions. Actions: ① Recalculate the Korean Won unit prices of major items such as HRC, copper, resin, and compressors based on the KRW 1,440 range. ② Update the material cost budget reflecting the exchange rate effect (approximately -1.5%) over the past month. ③ Maintain a table of DA product cost sensitivity by exchange rate scenarios of KRW 1,450 and KRW 1,500 (Priority: Medium, Deadline: 2026-02-28). References: Bank of Korea +1 (Jibyonuri), TradingEconomics +1, Wise +1, XE +1, Yahoo Finance +1, tradingeconomics +5",
-            "Category_en": "Macroeconomics: Exchange Rates",
-            "Tag_en": "USD/KRW, exchange rate, 1,440 won range, won strengthening, -1.5%, import price",
-            "Region_en": "USA, South Korea, Global",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
@@ -758,6 +758,27 @@
             "LikeCount": ""
           },
           {
+            "Date": "2026.02.20",
+            "Title": "미국 10% 글로벌 관세",
+            "Category": "거시경제:통상정책",
+            "Summary": "미 연방대법원이 트럼프 행정부의 비상 관세를 위법이라고 판결하면서 기존 관세는 상당 부분 무효가 됐는데, 트럼프 대통령이 곧바로 전 세계 수입품에 일괄 <b>10%</b> 관세를 매기는 새 조치를 예고했어요cnn+2. <mark>새 10% 글로벌 관세가 실제로 철강·구리·모터·컴프레서 등 가전 관련 부품까지 적용되면, 미국향 DA 완제품 기준으로 관세 부담이 평균 <b>2~3%</b> 정도 늘 수 있어 삼성의 미국 생산·수출 원가 경쟁력이 눈에 띄게 약해질 수 있어요.</mark> 삼성 입장에서는 대미 수출·멕시코/중국 생산 후 미국 반입 물량 모두 영향을 받을 수 있어서, 미국 시장 ASP 인상 여력이 크지 않은 제품군은 마진 압박이 바로 커지고, 관세 우회가 가능한 FTA·제3국 생산거점 검토를 서둘러야 해요. 액션: ① USTR·백악관 발표 모니터링해서 실제 관세 대상 품목 코드(HS 코드)·시행 시점 확인 ② 미국 수출 비중이 큰 세탁기·냉장고 등 주요 모델별로 10% 관세 적용 시 P&L 임팩트 시뮬레이션 ③ 멕시코·베트남 등 대체 생산기지별 원가·관세 비교 테이블 업데이트 (우선순위: 상, 기한: 2026-03-05). 참고: CNN+1, Politico+1, Euronews+1",
+            "URL": "https://www.cnn.com/us/live-news/trump-administration-us-iran-02-20-26\nhttps://www.politico.com/news/2026/02/20/trump-tariffs-supreme-court-ruling-00790687\nhttps://www.euronews.com/business/2026/02/20/trump-announces-new-10-global-tariffs-after-supreme-court-decision",
+            "Risk": "Very High",
+            "Impact": "C(+2.5%)",
+            "Image": "https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2259114405.jpg?c=16x9&q=w_800,c_fill",
+            "Region": "USA, Global",
+            "Tag": "미국,관세,10%,글로벌,수입비용,보호무역,통상",
+            "BOT": "",
+            "Title_en": "US 10% global tariffs",
+            "Summary_en": "The US Supreme Court ruled that the Trump administration's emergency tariffs were illegal, invalidating most of the existing tariffs. President Trump immediately announced a new measure to impose a <b>10%</b> tariff on all global imports.cnn+2. <mark>If the new 10% global tariff is actually applied to home appliance-related parts such as steel, copper, motors, and compressors, the tariff burden on US-bound DA finished products could increase by an average of <b>2-3%</b>, which could significantly weaken Samsung's US production and export cost competitiveness.</mark> From Samsung's perspective, both exports to the US and the volume of products produced in Mexico/China and then brought into the US could be affected, so product groups that do not have much room to increase ASPs in the US market will immediately face increased margin pressure, and they must quickly review FTAs ​​and third-country production bases that can circumvent tariffs. Actions: ① Monitor USTR and White House announcements to confirm actual tariff target product codes (HS codes) and implementation dates. ② Simulate the P&L impact of a 10% tariff on major models, such as washing machines and refrigerators, that account for a significant portion of US exports. ③ Update a cost and tariff comparison table for alternative production bases, such as Mexico and Vietnam. (Priority: High, Deadline: March 5, 2026). References: CNN+1, Politico+1, Euronews+1",
+            "Category_en": "Macroeconomics: Trade Policy",
+            "Tag_en": "US, tariff, 10%, global, import costs, protectionism, trade",
+            "Region_en": "USA, Global",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026.02.01",
             "Title": "Fed 금리 3.75% 동결",
             "Category": "거시경제:금리",
@@ -773,27 +794,6 @@
             "Summary_en": "The Federal Reserve held its benchmark interest rate steady at 3.50-3.75% at the FOMC meeting on January 28-29. This is the first pause since three consecutive cuts in September, October, and December of last year. They say they decided to wait longer because inflation remains high. Samsung's perspective: With the Fed's signal for a rate hike weakening, the likelihood of a weaker dollar has diminished. This will likely lead to continued weakness in the Korean won. Pressure to increase the cost of imported raw materials (steel, copper, refrigerants) is likely to continue. Since the Bank of Korea may be unable to cut interest rates, the interest rate differential between Korea and the US (1.25 percentage points) will likely remain. Actions: ① Monitor the Fed's interest rate path (monthly, next meeting March 18-19). ② Reanalyze exchange rate sensitivity by partner (HRC, focusing on copper, due February 7). ③ Update cost impacts by exchange rate scenarios of 1,400/1,450/1,500 won (due February 14). (Priority: Medium, due February 7). References: Fed official announcement +1, Chosun Ilbo +1, YTN +1",
             "Category_en": "Macroeconomics: Interest Rates",
             "Tag_en": "Fed, interest rates, 3.75%, freezing, inflation, monetary policy",
-            "Region_en": "USA, Global",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026.02.02",
-            "Title": "Fed 금리 3.75% 동결 지속",
-            "Category": "거시경제:금리",
-            "Summary": "Fed가 1월 29일 FOMC에서 기준금리를 3.5~3.75%로 동결했어요. 작년 9월부터 3회 연속 인하했던 사이클이 멈췄어요. 파월 의장은 \"중립금리 수준에 부합하고 지켜보기 좋은 위치\"라고 했어요. 삼성 관점: 달러가 계속 강한 수준을 유지할 거 같아요. 원화 약세 → 수입 원자재비(구리, HRC, 냉매, 레진 등) 인상 압력 커질 수 있어요. 특히 협력사 가격 협상이 원화 약세 국면에서는 더 어려워질 거 예상돼요. 액션: ① FOMC 금리 향후 전망 모니터링 (파월 의장 5월 교체 후 신임 의장 정책 기조 파악) ② 환율 연동 원가 영향도 재계산 (2월 26일 한국은행 정책회의 전 완료) ③ 달러 강세 대비 환율 1,450/1,500/1,550원 시나리오별 BOM 재분석 (기한 2월 20일) (우선순위: 중, 기한: 2월 26일). 참고: Fed공식발표+1, Bloomberg+1",
-            "URL": "https://www.federalreserve.gov/\nhttps://www.youtube.com/watch?v=A1gc9ojGHHo\nhttps://biz.chosun.com/international/international_general/2026/01/29/",
-            "Risk": "High",
-            "Impact": "A(+0%)",
-            "Image": "https://www.federalreserve.gov/images/social-media/social-default-image-opengraph.jpg",
-            "Region": "USA, Global",
-            "Tag": "Fed,기준금리,3.75%,동결,금리인하중단,통화정책",
-            "BOT": "",
-            "Title_en": "The Fed's interest rate remains frozen at 3.75%.",
-            "Summary_en": "The Fed held its benchmark interest rate steady at 3.5-3.75% at the FOMC meeting on January 29th. This marks the end of the cycle of three consecutive cuts since September of last year. Chairman Powell stated, \"It's in line with the neutral rate level and a good position to watch.\" Samsung's perspective: The dollar is likely to remain strong. A weaker won could increase pressure to raise the cost of imported raw materials (copper, HRC, refrigerants, resins, etc.). Price negotiations with suppliers are expected to become more difficult, particularly with a weak won. Actions: ① Monitor the FOMC interest rate outlook (understand the new chairman's policy direction after Chairman Powell's replacement in May). ② Recalculate the impact of exchange rate-linked costs (to be completed before the Bank of Korea policy meeting on February 26th). ③ Reanalyze the BOM by scenarios of 1,450/1,500/1,550 won against a strong dollar (deadline: February 20th) (Priority: Medium, Deadline: February 26th). Note: Fed official announcement +1, Bloomberg +1",
-            "Category_en": "Macroeconomics: Interest Rates",
-            "Tag_en": "Fed, Base interest rate, 3.75%, freezing, Suspension of interest rate cuts, monetary policy",
             "Region_en": "USA, Global",
             "BOT(eng)": "",
             "ViewCount": "",
