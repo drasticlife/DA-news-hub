@@ -815,3 +815,159 @@ article strong {
   color: white;
 }
 
+/* ===== 모바일 햄버거 메뉴 버튼 ===== */
+#mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: white;
+}
+
+/* ===== 모바일 드로어(Drawer) 사이드바 ===== */
+#mobile-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+#mobile-drawer-overlay.open {
+  display: block;
+}
+#mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 280px;
+  height: 100%;
+  background: white;
+  z-index: 300;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  padding: 16px;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+}
+.dark #mobile-drawer {
+  background: #25282c;
+}
+#mobile-drawer.open {
+  left: 0;
+}
+#mobile-drawer .drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.dark #mobile-drawer .drawer-header {
+  border-color: #3f444a;
+}
+#mobile-drawer .drawer-nav a {
+  display: block;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+.dark #mobile-drawer .drawer-nav a {
+  color: #e2e8f0;
+}
+#mobile-drawer .drawer-nav a:hover,
+#mobile-drawer .drawer-nav a.active-nav {
+  background: #eff6ff;
+  color: #1428a0;
+}
+.dark #mobile-drawer .drawer-nav a:hover,
+.dark #mobile-drawer .drawer-nav a.active-nav {
+  background: #1e293b;
+  color: #93c5fd;
+}
+
+/* ===== 반응형 미디어 쿼리 ===== */
+@media (max-width: 768px) {
+  /* 햄버거 버튼 표시 */
+  #mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 데스크탑 사이드바 숨김 */
+  .sidebar {
+    display: none;
+  }
+
+  /* 메인 컨텐츠 왼쪽 마진 제거 */
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  /* 헤더 검색바 너비 조정 */
+  header .flex-1 {
+    display: none;
+  }
+
+  /* 헤더 우측 버튼 일부 숨김 (좁은 화면) */
+  #user-info-bar {
+    display: none !important;
+  }
+
+  /* 요약 그리드: 3열 → 1열 */
+  #summaryGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 뉴스 카드 내 봇 컬럼 숨김 (좁은 화면) */
+  .news-bot-col {
+    display: none !important;
+  }
+
+  /* 뉴스 카드 이미지 숨김 (좁은 화면) */
+  .news-item .w-44 {
+    display: none;
+  }
+
+  /* 랜딩 페이지 auth 컨테이너 위치 조정 */
+  #auth-container {
+    bottom: 20px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+  }
+
+  /* INDEX 모달 내 iframe 크기 조정 */
+  #indexModal iframe {
+    width: 100% !important;
+    height: 300px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* 헤더 타이틀 텍스트 크기 조정 */
+  header h1 {
+    font-size: 11px !important;
+  }
+
+  /* 버튼 텍스트 숨김, 아이콘만 표시 */
+  .header-btn-text {
+    display: none;
+  }
+
+  /* 페이지네이션 nav 텍스트 버튼 숨김 */
+  .pagination-btn.nav-text {
+    display: none;
+  }
+}
+

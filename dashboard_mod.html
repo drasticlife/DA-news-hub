@@ -29,6 +29,13 @@
     <!-- 4. Lottie Web Component (새 로딩 애니메이션) -->
     <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js" type="module"></script>
 
+    <!-- 5. Configuration & Supabase SDK -->
+    <script src="assets/js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
+
     <style>
         /* 커스텀 스크롤바 스타일 */
         .custom-scrollbar::-webkit-scrollbar {
@@ -473,8 +480,38 @@
             const mapRef = useRef(null);
 
             useEffect(() => {
-                const user = JSON.parse(localStorage.getItem('da_user'));
-                if (user) setCurrentUser(user);
+                const checkUser = async () => {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        setCurrentUser({
+                            userId: session.user.id,
+                            userName: session.user.user_metadata.full_name || session.user.email.split('@')[0],
+                            email: session.user.email
+                        });
+                    } else {
+                        // 로그인 정보 없으면 인덱스로 리다이렉트
+                        window.location.href = "index.html";
+                    }
+                };
+
+                checkUser();
+
+                // Auth 상태 변경 감지
+                const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, session) => {
+                    if (event === 'SIGNED_OUT') {
+                        window.location.href = "index.html";
+                    } else if (session) {
+                        setCurrentUser({
+                            userId: session.user.id,
+                            userName: session.user.user_metadata.full_name || session.user.email.split('@')[0],
+                            email: session.user.email
+                        });
+                    }
+                });
+
+                return () => {
+                    subscription.unsubscribe();
+                };
             }, []);
 
             useEffect(() => {
@@ -799,8 +836,8 @@
 
             const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
             const goToIndex = () => window.location.href = 'index.html?view=hub';
-            const logOut = () => {
-                localStorage.removeItem("da_user");
+            const logOut = async () => {
+                await supabaseClient.auth.signOut();
                 window.location.href = "index.html";
             };
             const resetFilters = () => { setSelectedFilter('All'); setSelectedRisk('All'); setSelectedRegion('All'); setSelectedTag(null); setSelectedDate('LastWeek'); setSearchKeyword(''); };

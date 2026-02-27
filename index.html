@@ -5,6 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SEC DA Purchase Intelligence Hub</title>
+  <!-- SEO & 공유 메타 -->
+  <meta name="description" content="삼성전자 DA사업부 구매 전략 인텔리전스 허브 — 원자재, 거시경제, 생산지역, 경쟁사 동향을 실시간으로 모니터링합니다." />
+  <meta name="robots" content="noindex, nofollow" />
+  <!-- favicon: 파비콘 대신 SVG 인라인 사용 (외부 파일 불필요) -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -15,6 +21,11 @@
   </script>
   <link rel="stylesheet" href="assets/css/index.css" />
   <script src="assets/js/config.js"></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
 
 <body class="bg-[#fcfcfc] text-[#333] landing-active">
@@ -39,20 +50,27 @@
       <!-- Login Form -->
       <div id="login-form">
         <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Welcome Back</h2>
-        <input type="text" id="login-id" class="auth-input" placeholder="User ID">
-        <input type="password" id="login-pw" class="auth-input" placeholder="Password"
-          onkeypress="if(event.key === 'Enter') handleLoginSubmit()">
-        <button onclick="handleLoginSubmit()" class="auth-btn">Sign In</button>
+        <form onsubmit="handleLoginSubmit(); return false;" autocomplete="on">
+          <input type="email" id="login-email" name="email" autocomplete="email" class="auth-input"
+            placeholder="Email Address">
+          <input type="password" id="login-pw" name="current-password" autocomplete="current-password"
+            class="auth-input" placeholder="Password">
+          <button type="submit" class="auth-btn">Sign In</button>
+        </form>
         <p class="auth-switch">Don't have an account? <span onclick="toggleAuthForm('register')">Register</span></p>
       </div>
 
       <!-- Register Form -->
       <div id="register-form" style="display: none;">
         <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Join Community</h2>
-        <input type="text" id="reg-id" class="auth-input" placeholder="Choose User ID">
-        <input type="text" id="reg-name" class="auth-input" placeholder="Your Name">
-        <input type="password" id="reg-pw" class="auth-input" placeholder="Password">
-        <button onclick="handleRegisterSubmit()" class="auth-btn">Register</button>
+        <form onsubmit="handleRegisterSubmit(); return false;" autocomplete="on">
+          <input type="email" id="reg-email" name="email" autocomplete="email" class="auth-input"
+            placeholder="Email Address">
+          <input type="text" id="reg-name" name="name" autocomplete="name" class="auth-input" placeholder="Your Name">
+          <input type="password" id="reg-pw" name="new-password" autocomplete="new-password" class="auth-input"
+            placeholder="Password">
+          <button type="submit" class="auth-btn">Register</button>
+        </form>
         <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Sign In</span></p>
       </div>
     </div>
@@ -163,6 +181,10 @@
 
   <header class="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl">
     <div class="flex items-center gap-4">
+      <!-- 모바일 햄버거 버튼 -->
+      <button id="mobile-menu-btn" onclick="toggleMobileDrawer()" aria-label="메뉴 열기">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
       <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
         <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">
           DA
@@ -237,6 +259,40 @@
       </button>
     </div>
   </header>
+
+  <!-- 모바일 드로어 오버레이 (배경 클릭시 닫힘) -->
+  <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
+
+  <!-- 모바일 드로어 사이드 메뉴 -->
+  <div id="mobile-drawer">
+    <div class="drawer-header">
+      <div class="flex items-center gap-2">
+        <div class="bg-[#0033A0] text-white px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+        <span class="font-bold text-[13px] text-[#0033A0] dark:text-white uppercase">Purchase Intelligence</span>
+      </div>
+      <button onclick="closeMobileDrawer()" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+        aria-label="메뉴 닫기">
+        <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+      </button>
+    </div>
+    <nav class="drawer-nav">
+      <a href="#" onclick="resetFilters(); closeMobileDrawer();" id="drawer-nav-all" class="active-nav">전략 시황</a>
+      <a href="#" onclick="filterNews('원자재'); closeMobileDrawer();">원자재</a>
+      <a href="#" onclick="filterNews('거시경제'); closeMobileDrawer();">거시/정책</a>
+      <a href="#" onclick="filterNews('생산지역'); closeMobileDrawer();">생산지역</a>
+      <a href="#" onclick="filterNews('경쟁사'); closeMobileDrawer();">경쟁사</a>
+      <a href="#" onclick="filterNews('신기술동향'); closeMobileDrawer();">신기술동향</a>
+      <a href="#" onclick="showIndexModal(); closeMobileDrawer();">INDEX</a>
+    </nav>
+    <!-- 모바일 검색창 -->
+    <div class="mt-4 pt-4 border-t dark:border-gray-700">
+      <div class="flex items-center bg-gray-50 dark:bg-gray-800 rounded-full px-3 py-2 gap-2">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" onkeyup="handleSearch(event); closeMobileDrawer();" placeholder="키워드 검색..."
+          class="bg-transparent border-none text-[12px] text-[#172B4D] dark:text-gray-200 font-bold focus:ring-0 w-full outline-none placeholder:text-slate-300" />
+      </div>
+    </div>
+  </div>
 
   <!-- Improvement Board Modal -->
   <div id="boardModal"
@@ -501,15 +557,7 @@
     </div>
   </div>
 
-  <!-- Dynamic Report Modal -->
-  <div id="reportModal" class="modal-overlay hidden" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div id="modalBody"></div>
-      <button class="close-btn" onclick="closeModal()">
-        <i data-lucide="x"></i>
-      </button>
-    </div>
-  </div>
+  <!-- Dynamic Report Modal (중복 제거됨: reportModal은 위 487번줄 하나만 사용) -->
 
   <!-- Global Bot Follower Element -->
   <div id="global-bot-follower"
@@ -518,6 +566,39 @@
 
   <script>
     /* GAS_URL and GITHUB_DATA_URL are now loaded from assets/js/config.js */
+
+    /* ===== 모바일 드로어 제어 ===== */
+    function toggleMobileDrawer() {
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
+      } else {
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        lucide.createIcons();
+      }
+    }
+    function closeMobileDrawer() {
+      document.getElementById('mobile-drawer').classList.remove('open');
+      document.getElementById('mobile-drawer-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    /* ===== XSS 방어용 HTML 이스케이프 함수 ===== */
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     function showBoardModal() {
       if (!currentUser) return alert("Please login to use the board.");
@@ -571,10 +652,10 @@
           boardDiv.innerHTML = result.posts.map(post => `
               <div class="p-4 rounded-xl border dark:bg-[#1a1c1e] dark:border-gray-700">
                 <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">${post.userName}</span>
+                  <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">${escapeHtml(post.userName)}</span>
                   <span class="text-[10px] text-slate-400">${new Date(post.timestamp).toLocaleString()}</span>
                 </div>
-                <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${post.content}</p>
+                <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${escapeHtml(post.content)}</p>
               </div>
             `).join('');
         } else {
@@ -593,9 +674,16 @@
     }
 
     // [인증 관련] 전역 상태 및 유틸리티
-    let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
+    let currentUser = null;
 
-    function updateUserInfoUI() {
+    async function updateUserInfoUI() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      currentUser = session ? {
+        userId: session.user.id,
+        userName: session.user.user_metadata.full_name || session.user.email.split('@')[0],
+        email: session.user.email
+      } : null;
+
       const userInfoBar = document.getElementById("user-info-bar");
       const displayUserName = document.getElementById("display-user-name");
       const authContainer = document.getElementById("auth-container");
@@ -625,11 +713,21 @@
           userInfoBar.classList.add("hidden");
           userInfoBar.classList.remove("flex");
         }
+        // Redirect to login if user is not logged in and not on landing page
+        if (isDashboardActive) {
+          window.location.href = "index.html";
+        }
       }
     }
 
     // 페이지 로드 시 상태 업데이트
     window.addEventListener('load', () => {
+      updateUserInfoUI();
+    });
+
+    // Auth state listener
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event);
       updateUserInfoUI();
     });
 
@@ -646,19 +744,19 @@
     }
 
     async function handleLoginSubmit() {
-      const userId = document.getElementById("login-id").value;
+      const email = document.getElementById("login-email").value;
       const password = document.getElementById("login-pw").value;
-      if (!userId || !password) return alert("Please enter ID and Password");
+      if (!email || !password) return alert("Please enter Email and Password");
 
       try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "login", userId, password }),
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password,
         });
-        const result = await res.json();
-        if (result.success) {
-          currentUser = { userId: result.userId, userName: result.userName };
-          localStorage.setItem("da_user", JSON.stringify(currentUser));
+
+        if (error) throw error;
+
+        if (data.user) {
           // 인트로 타이틀 페이드아웃 후 dashboard_3d.html로 이동
           const intro = document.getElementById('intro-title');
           const ct = document.getElementById('center-title');
@@ -667,40 +765,44 @@
           if (ct) { ct.style.transition = 'opacity 0.8s ease-in'; ct.style.opacity = '1'; }
           if (lp) { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
           setTimeout(() => { window.location.replace("dashboard_3d.html"); }, 1200);
-        } else {
-          alert(result.message || "Invalid credentials");
         }
       } catch (e) {
         console.error("Login error:", e);
-        alert("Login failed. Please check connection.");
+        alert(e.message || "Login failed. Please check connection.");
       }
     }
+
     async function handleRegisterSubmit() {
-      const userId = document.getElementById("reg-id").value;
-      const userName = document.getElementById("reg-name").value;
+      const email = document.getElementById("reg-email").value;
+      const name = document.getElementById("reg-name").value;
       const password = document.getElementById("reg-pw").value;
-      if (!userId || !userName || !password) return alert("Fill all fields");
+      if (!email || !name || !password) return alert("Fill all fields");
 
       try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "register", userId, userName, password }),
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              full_name: name,
+            }
+          }
         });
-        const result = await res.json();
-        if (result.success) {
-          alert(result.message);
+
+        if (error) throw error;
+
+        if (data.user) {
+          alert("Registration successful! Please check your email for confirmation if required.");
           toggleAuthForm("login");
-        } else {
-          alert(result.message || "Registration failed");
         }
       } catch (e) {
         console.error("Reg error:", e);
+        alert(e.message || "Registration failed");
       }
     }
 
-    function logout() {
-      localStorage.removeItem("da_user");
-      // 로그아웃 시 무조건 본래의 랜딩 페이지로 리다이렉트
+    async function logout() {
+      await supabaseClient.auth.signOut();
       window.location.href = "index.html";
     }
 
@@ -829,7 +931,7 @@
         .then((result) => {
           if (result.success) {
             sessionStorage.setItem(storageKey, "true");
-            console.log("View tracked:", title);
+            // View tracked successfully
           }
         })
         .catch((err) => console.error("Tracking error:", err));
@@ -1079,16 +1181,10 @@
 
       for (const source of sources) {
         try {
-          console.log(`Attempting to fetch from ${source.name}...`);
           const res = await fetch(source.url);
 
           if (res.ok) {
             allNews = await res.json();
-            console.log(
-              `Successfully loaded news from ${source.name}:`,
-              allNews.length,
-              "items",
-            );
             success = true;
             break;
           } else {
@@ -1110,7 +1206,6 @@
         currentFilteredNews = [...allNews];
 
         // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
-        console.log("Starting staggered background rendering...");
         setTimeout(() => renderCalendar(allNews), 100);
         setTimeout(() => renderSummary(allNews), 300);
         setTimeout(() => renderTags(allNews), 500);
@@ -1413,7 +1508,7 @@
             }
                                   </div>
                               </div>
-                              ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
+                              ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" alt="${escapeHtml(displayTitle)}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
                           </div>
                       </div>
                   </article>`;
@@ -1504,7 +1599,7 @@
     function renderTags(data) {
       if (tagAnimationId) cancelAnimationFrame(tagAnimationId);
 
-      console.log("renderTags called with", data.length, "items");
+
       const tagMap = {};
 
       const t = translations[currentLang];
@@ -1715,7 +1810,7 @@
         filterByCountry(event.data.country);
       }
       if (event.data && event.data.type === "mapReady") {
-        console.log("Map reported ready, sending data...");
+
         sendDataToMap();
       }
     });
@@ -2116,7 +2211,7 @@
 
       <!-- Load the TradingView Widget.html inside an iframe -->
       <div class="w-full flex justify-center items-center">
-        <iframe src="TradingView Widget.html" style="width: 580px; height: 430px; border: none; overflow: hidden"
+        <iframe src="TradingView%20Widget.html" style="width: 580px; height: 430px; border: none; overflow: hidden"
           scrolling="no"></iframe>
       </div>
     </div>
