@@ -244,6 +244,64 @@
     <!-- 전환 오버레이 -->
     <div id="transition-overlay"></div>
 
+    <!-- ── 좌상단 햄버거 버튼 ── -->
+    <button onclick="toggleGlobalDrawer3d()" aria-label="메뉴 열기"
+        style="position:fixed;top:16px;left:16px;z-index:600;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:10px;cursor:pointer;transition:all 0.2s;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- ── 글로벌 네비 드로어 ── -->
+    <div id="drawer3d-overlay" onclick="closeGlobalDrawer3d()"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:700;backdrop-filter:blur(3px);"></div>
+    <div id="drawer3d"
+        style="position:fixed;top:0;left:-320px;width:280px;height:100%;background:#0f172a;border-right:1px solid rgba(255,255,255,0.08);z-index:800;transition:left 0.3s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;padding:20px 16px;box-shadow:8px 0 32px rgba(0,0,0,0.5);">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div style="background:#0033A0;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:900;letter-spacing:0.1em;">DA</div>
+                <span style="font-weight:700;font-size:13px;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.05em;">Purchase Intel</span>
+            </div>
+            <button onclick="closeGlobalDrawer3d()" style="padding:4px;border-radius:8px;border:none;background:transparent;cursor:pointer;color:rgba(255,255,255,0.4);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:rgba(255,255,255,0.3);text-transform:uppercase;padding:0 4px;margin-bottom:8px;">NAVIGATE</div>
+
+        <nav style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px;">
+            <a href="index.html?view=hub" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;" onmouseover="this.style.background='rgba(6,182,212,0.15)';this.style.color='#06b6d4';" onmouseout="this.style.background='';this.style.color='rgba(255,255,255,0.7)';">
+                <span style="width:28px;height:28px;background:rgba(255,255,255,0.05);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📰</span>
+                <span>News Hub</span>
+            </a>
+            <a href="dashboard_mod.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;" onmouseover="this.style.background='rgba(6,182,212,0.15)';this.style.color='#06b6d4';" onmouseout="this.style.background='';this.style.color='rgba(255,255,255,0.7)';">
+                <span style="width:28px;height:28px;background:rgba(255,255,255,0.05);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="dashboard_3d.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(6,182,212,0.15);color:#06b6d4;text-decoration:none;font-size:13px;font-weight:700;">
+                <span style="width:28px;height:28px;background:rgba(6,182,212,0.2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🌐</span>
+                <span>3D Globe</span>
+                <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:rgba(6,182,212,0.2);color:#06b6d4;margin-left:auto;">현재</span>
+            </a>
+            <a href="wiki.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;" onmouseover="this.style.background='rgba(6,182,212,0.15)';this.style.color='#06b6d4';" onmouseout="this.style.background='';this.style.color='rgba(255,255,255,0.7)';">
+                <span style="width:28px;height:28px;background:rgba(255,255,255,0.05);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📖</span>
+                <span>Product Wiki</span>
+                <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:rgba(253,224,71,0.15);color:#fbbf24;margin-left:auto;">NEW</span>
+            </a>
+        </nav>
+
+        <!-- 구분선 -->
+        <div style="border-top:1px solid rgba(255,255,255,0.08);margin:16px 0;"></div>
+
+        <!-- 유저 정보 + 로그아웃 -->
+        <div id="3d-drawer-user" style="font-size:11px;color:rgba(255,255,255,0.3);font-weight:600;margin-bottom:10px;padding:0 4px;"></div>
+        <button id="3d-logout-btn" onclick="drawer3dLogout()" style="display:none;width:100%;padding:9px 12px;border-radius:8px;border:none;background:rgba(239,68,68,0.12);color:#f87171;font-size:12px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.background='rgba(239,68,68,0.12)';">
+            🚪 로그아웃
+        </button>
+        <a href="index.html" id="3d-login-btn" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;background:rgba(34,197,94,0.12);color:#4ade80;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.2)';" onmouseout="this.style.background='rgba(34,197,94,0.12)';">
+            🔑 로그인 화면
+        </a>
+    </div>
+
     <!-- 우상단 네비게이션 -->
     <div id="top-nav">
         <button class="nav-btn-3d" onclick="goToNewsHub()">⬡ News Hub</button>
@@ -870,6 +928,34 @@
                 btn.innerHTML = '▦ Dashboard <span style="font-size:9px;opacity:0.7;">✓ Ready</span>';
                 btn.style.background = 'rgba(6,182,212,0.35)';
             }
+        }
+
+        // ── 글로벌 드로어 ──
+        function toggleGlobalDrawer3d() {
+            const drawer = document.getElementById('drawer3d');
+            const overlay = document.getElementById('drawer3d-overlay');
+            const isOpen = parseInt(drawer.style.left) === 0;
+            if (isOpen) {
+                closeGlobalDrawer3d();
+            } else {
+                const user = JSON.parse(localStorage.getItem('da_user'));
+                const userEl = document.getElementById('3d-drawer-user');
+                if (userEl) userEl.textContent = user ? user.userName + '님 로그인 중' : '로그인되지 않음';
+                document.getElementById('3d-logout-btn').style.display = user ? 'flex' : 'none';
+                document.getElementById('3d-login-btn').style.display = user ? 'none' : 'flex';
+                drawer.style.left = '0px';
+                overlay.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        function closeGlobalDrawer3d() {
+            document.getElementById('drawer3d').style.left = '-320px';
+            document.getElementById('drawer3d-overlay').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        function drawer3dLogout() {
+            localStorage.removeItem('da_user');
+            window.location.href = 'index.html';
         }
     </script>
 </body>

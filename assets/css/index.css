@@ -815,9 +815,11 @@ article strong {
   color: white;
 }
 
-/* ===== 모바일 햄버거 메뉴 버튼 ===== */
+/* ===== 글로벌 햄버거 메뉴 버튼 (항상 표시) ===== */
 #mobile-menu-btn {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   cursor: pointer;
@@ -892,6 +894,144 @@ article strong {
 .dark #mobile-drawer .drawer-nav a.active-nav {
   background: #1e293b;
   color: #93c5fd;
+}
+
+/* ===== 글로벌 네비게이션 드로어 추가 스타일 ===== */
+.drawer-section-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  padding: 0 4px;
+  margin-bottom: 6px;
+}
+.dark .drawer-section-label {
+  color: #4b5563;
+}
+
+/* 글로벌 네비 아이템 */
+.drawer-nav-global {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gnav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+  position: relative;
+}
+.dark .gnav-item {
+  color: #e2e8f0;
+}
+.gnav-item:hover {
+  background: #eff6ff;
+  color: #0033A0;
+}
+.dark .gnav-item:hover {
+  background: #1e293b;
+  color: #93c5fd;
+}
+.gnav-active {
+  background: #eff6ff;
+  color: #0033A0 !important;
+}
+.dark .gnav-active {
+  background: #1e3a5f;
+  color: #93c5fd !important;
+}
+.gnav-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+.dark .gnav-icon {
+  background: #2d3748;
+}
+.gnav-active .gnav-icon {
+  background: #dbeafe;
+  color: #0033A0;
+}
+.gnav-text {
+  flex: 1;
+}
+.gnav-badge {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  color: #64748b;
+}
+.gnav-badge-new {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* 드로어 푸터 */
+.drawer-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dark .drawer-footer {
+  border-color: #3f444a;
+}
+.gnav-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+.gnav-logout-btn:hover {
+  background: #fee2e2;
+}
+.gnav-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+.gnav-login-btn:hover {
+  background: #dcfce7;
 }
 
 /* ===== 반응형 미디어 쿼리 ===== */

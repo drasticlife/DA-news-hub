@@ -9,8 +9,7 @@
   <meta name="description" content="삼성전자 DA사업부 구매 전략 인텔리전스 허브 — 원자재, 거시경제, 생산지역, 경쟁사 동향을 실시간으로 모니터링합니다." />
   <meta name="robots" content="noindex, nofollow" />
   <!-- favicon: 파비콘 대신 SVG 인라인 사용 (외부 파일 불필요) -->
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -21,11 +20,6 @@
   </script>
   <link rel="stylesheet" href="assets/css/index.css" />
   <script src="assets/js/config.js"></script>
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
 </head>
 
 <body class="bg-[#fcfcfc] text-[#333] landing-active">
@@ -51,10 +45,8 @@
       <div id="login-form">
         <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Welcome Back</h2>
         <form onsubmit="handleLoginSubmit(); return false;" autocomplete="on">
-          <input type="email" id="login-email" name="email" autocomplete="email" class="auth-input"
-            placeholder="Email Address">
-          <input type="password" id="login-pw" name="current-password" autocomplete="current-password"
-            class="auth-input" placeholder="Password">
+          <input type="text" id="login-id" name="username" autocomplete="username" class="auth-input" placeholder="User ID">
+          <input type="password" id="login-pw" name="current-password" autocomplete="current-password" class="auth-input" placeholder="Password">
           <button type="submit" class="auth-btn">Sign In</button>
         </form>
         <p class="auth-switch">Don't have an account? <span onclick="toggleAuthForm('register')">Register</span></p>
@@ -64,11 +56,9 @@
       <div id="register-form" style="display: none;">
         <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Join Community</h2>
         <form onsubmit="handleRegisterSubmit(); return false;" autocomplete="on">
-          <input type="email" id="reg-email" name="email" autocomplete="email" class="auth-input"
-            placeholder="Email Address">
+          <input type="text" id="reg-id" name="username" autocomplete="username" class="auth-input" placeholder="Choose User ID">
           <input type="text" id="reg-name" name="name" autocomplete="name" class="auth-input" placeholder="Your Name">
-          <input type="password" id="reg-pw" name="new-password" autocomplete="new-password" class="auth-input"
-            placeholder="Password">
+          <input type="password" id="reg-pw" name="new-password" autocomplete="new-password" class="auth-input" placeholder="Password">
           <button type="submit" class="auth-btn">Register</button>
         </form>
         <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Sign In</span></p>
@@ -158,22 +148,27 @@
     }
 
 
-    // DOM 로드 시 지구본 초기화
+    // DOM 로드 시 초기화
     document.addEventListener("DOMContentLoaded", () => {
-      // dashboard_mod.html에서 돌아올 때 랜딩 페이지를 건너뛰기 위한 파라미터 체크
       const urlParams = new URLSearchParams(window.location.search);
-      const hasTarget =
-        urlParams.get("targetId") || urlParams.get("view") === "hub";
+      const hasTarget = urlParams.get("targetId") || urlParams.get("view") === "hub";
+      const user = JSON.parse(localStorage.getItem("da_user"));
 
-      if (hasTarget) {
-        isDashboardActive = true; // 대시보드 모드 활성화 (지구본 스킵)
+      if (hasTarget || user) {
+        // ① ?view=hub 파라미터로 진입 (다른 페이지에서 링크)
+        // ② 이미 로그인된 상태로 index.html 직접 접근
+        // → 두 경우 모두 랜딩/로그인 화면 스킵, 바로 뉴스허브 진입
+        isDashboardActive = true;
         document.body.classList.remove("landing-active");
         const lp = document.getElementById("landing-page");
         if (lp) {
           lp.style.display = "none";
           lp.classList.add("hidden");
         }
+        // 유저 정보 UI 업데이트 (헤더 이름 표시 등)
+        if (user) updateUserInfoUI();
       } else {
+        // 비로그인 상태 → 랜딩(로그인) 화면 표시
         initLandingGlobe();
       }
     });
@@ -206,8 +201,8 @@
           class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
         <a href="#" onclick="filterNews('신기술동향')"
           class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
-        <a href="#" onclick="showIndexModal()"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">INDEX</a>
+        <a href="wiki.html"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">WIKI</a>
       </nav>
     </div>
 
@@ -260,38 +255,80 @@
     </div>
   </header>
 
-  <!-- 모바일 드로어 오버레이 (배경 클릭시 닫힘) -->
+  <!-- ============================================================
+       글로벌 네비게이션 드로어 (모든 페이지 공용)
+  ============================================================ -->
+  <!-- 오버레이 -->
   <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
 
-  <!-- 모바일 드로어 사이드 메뉴 -->
+  <!-- 드로어 패널 -->
   <div id="mobile-drawer">
-    <div class="drawer-header">
-      <div class="flex items-center gap-2">
-        <div class="bg-[#0033A0] text-white px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
-        <span class="font-bold text-[13px] text-[#0033A0] dark:text-white uppercase">Purchase Intelligence</span>
+
+    <!-- 헤더 -->
+    <div class="drawer-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="background:#0033A0;color:white;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900;text-transform:uppercase;">DA</div>
+        <span style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;">Purchase Intelligence</span>
       </div>
-      <button onclick="closeMobileDrawer()" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-        aria-label="메뉴 닫기">
-        <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+      <button onclick="closeMobileDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;" aria-label="메뉴 닫기">
+        ✕
       </button>
     </div>
-    <nav class="drawer-nav">
-      <a href="#" onclick="resetFilters(); closeMobileDrawer();" id="drawer-nav-all" class="active-nav">전략 시황</a>
-      <a href="#" onclick="filterNews('원자재'); closeMobileDrawer();">원자재</a>
-      <a href="#" onclick="filterNews('거시경제'); closeMobileDrawer();">거시/정책</a>
-      <a href="#" onclick="filterNews('생산지역'); closeMobileDrawer();">생산지역</a>
-      <a href="#" onclick="filterNews('경쟁사'); closeMobileDrawer();">경쟁사</a>
-      <a href="#" onclick="filterNews('신기술동향'); closeMobileDrawer();">신기술동향</a>
-      <a href="#" onclick="showIndexModal(); closeMobileDrawer();">INDEX</a>
+
+    <!-- ── 섹션 1: 페이지 이동 ── -->
+    <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;">NAVIGATE</div>
+    <nav style="display:flex;flex-direction:column;gap:2px;">
+      <a href="index.html?view=hub" id="gnav-newshub" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#0033A0;text-decoration:none;background:#eff6ff;">
+        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#dbeafe;border-radius:7px;flex-shrink:0;">📰</span>
+        <span style="flex:1;color:#0033A0;">News Hub</span>
+        <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;">현재</span>
+      </a>
+      <a href="dashboard_mod.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📊</span>
+        <span style="flex:1;color:#1e293b;">Dashboard</span>
+      </a>
+      <a href="dashboard_3d.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">🌐</span>
+        <span style="flex:1;color:#1e293b;">3D Globe Briefing</span>
+      </a>
+      <a href="wiki.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📖</span>
+        <span style="flex:1;color:#1e293b;">Product Wiki</span>
+        <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;">NEW</span>
+      </a>
     </nav>
-    <!-- 모바일 검색창 -->
-    <div class="mt-4 pt-4 border-t dark:border-gray-700">
-      <div class="flex items-center bg-gray-50 dark:bg-gray-800 rounded-full px-3 py-2 gap-2">
-        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+
+    <!-- ── 섹션 2: 뉴스 필터 (뉴스허브 전용) ── -->
+    <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;margin-top:16px;">NEWS FILTER</div>
+    <nav class="drawer-nav">
+      <a href="#" onclick="resetFilters(); closeMobileDrawer();" id="drawer-nav-all" class="active-nav" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">전략 시황</a>
+      <a href="#" onclick="filterNews('원자재'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">원자재</a>
+      <a href="#" onclick="filterNews('거시경제'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">거시/정책</a>
+      <a href="#" onclick="filterNews('생산지역'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">생산지역</a>
+      <a href="#" onclick="filterNews('경쟁사'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">경쟁사</a>
+      <a href="#" onclick="filterNews('신기술동향'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">신기술동향</a>
+    </nav>
+
+    <!-- ── 섹션 3: 검색 ── -->
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+      <div style="display:flex;align-items:center;background:#f8fafc;border-radius:99px;padding:8px 12px;gap:8px;">
+        <span style="font-size:14px;color:#94a3b8;">🔍</span>
         <input type="text" onkeyup="handleSearch(event); closeMobileDrawer();" placeholder="키워드 검색..."
-          class="bg-transparent border-none text-[12px] text-[#172B4D] dark:text-gray-200 font-bold focus:ring-0 w-full outline-none placeholder:text-slate-300" />
+          style="background:transparent;border:none;font-size:12px;color:#172B4D;font-weight:700;width:100%;outline:none;" />
       </div>
     </div>
+
+    <!-- ── 푸터: 로그아웃 ── -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;flex-direction:column;gap:8px;">
+      <div id="drawer-user-info" style="font-size:11px;color:#94a3b8;font-weight:600;"></div>
+      <button onclick="logout()" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#fef2f2;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+        🚪 로그아웃
+      </button>
+      <button onclick="goToLogin()" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+        🔑 로그인 화면
+      </button>
+    </div>
+
   </div>
 
   <!-- Improvement Board Modal -->
@@ -567,7 +604,7 @@
   <script>
     /* GAS_URL and GITHUB_DATA_URL are now loaded from assets/js/config.js */
 
-    /* ===== 모바일 드로어 제어 ===== */
+    /* ===== 글로벌 네비게이션 드로어 제어 ===== */
     function toggleMobileDrawer() {
       const drawer = document.getElementById('mobile-drawer');
       const overlay = document.getElementById('mobile-drawer-overlay');
@@ -577,6 +614,15 @@
         overlay.classList.remove('open');
         document.body.style.overflow = '';
       } else {
+        // 드로어 열 때 유저 정보 업데이트
+        const user = JSON.parse(localStorage.getItem('da_user'));
+        const el = document.getElementById('drawer-user-info');
+        if (el) el.textContent = user ? user.userName + '님 로그인 중' : '로그인되지 않음';
+        // 로그아웃/로그인 버튼 표시 조건
+        const logoutBtn = document.querySelector('.gnav-logout-btn');
+        const loginBtn  = document.querySelector('.gnav-login-btn');
+        if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
+        if (loginBtn)  loginBtn.style.display  = user ? 'none'  : 'flex';
         drawer.classList.add('open');
         overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -587,6 +633,21 @@
       document.getElementById('mobile-drawer').classList.remove('open');
       document.getElementById('mobile-drawer-overlay').classList.remove('open');
       document.body.style.overflow = '';
+    }
+    function goToLogin() {
+      closeMobileDrawer();
+      // 랜딩(로그인) 화면으로 이동 — localStorage 유지 (로그아웃 아님)
+      isDashboardActive = false;
+      const lp = document.getElementById('landing-page');
+      if (lp) {
+        lp.style.display = 'block';
+        lp.classList.remove('hidden');
+        lp.style.opacity = '1';
+        document.body.classList.add('landing-active');
+        updateUserInfoUI();
+      } else {
+        window.location.href = 'index.html';
+      }
     }
 
     /* ===== XSS 방어용 HTML 이스케이프 함수 ===== */
@@ -674,16 +735,9 @@
     }
 
     // [인증 관련] 전역 상태 및 유틸리티
-    let currentUser = null;
+    let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
 
-    async function updateUserInfoUI() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      currentUser = session ? {
-        userId: session.user.id,
-        userName: session.user.user_metadata.full_name || session.user.email.split('@')[0],
-        email: session.user.email
-      } : null;
-
+    function updateUserInfoUI() {
       const userInfoBar = document.getElementById("user-info-bar");
       const displayUserName = document.getElementById("display-user-name");
       const authContainer = document.getElementById("auth-container");
@@ -713,21 +767,11 @@
           userInfoBar.classList.add("hidden");
           userInfoBar.classList.remove("flex");
         }
-        // Redirect to login if user is not logged in and not on landing page
-        if (isDashboardActive) {
-          window.location.href = "index.html";
-        }
       }
     }
 
     // 페이지 로드 시 상태 업데이트
     window.addEventListener('load', () => {
-      updateUserInfoUI();
-    });
-
-    // Auth state listener
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      console.log("Auth event:", event);
       updateUserInfoUI();
     });
 
@@ -744,65 +788,82 @@
     }
 
     async function handleLoginSubmit() {
-      const email = document.getElementById("login-email").value;
+      const userId = document.getElementById("login-id").value;
       const password = document.getElementById("login-pw").value;
-      if (!email || !password) return alert("Please enter Email and Password");
+      if (!userId || !password) return alert("Please enter ID and Password");
 
+      function doEnterHub(user) {
+        currentUser = user;
+        localStorage.setItem("da_user", JSON.stringify(currentUser));
+        const intro = document.getElementById('intro-title');
+        const ct    = document.getElementById('center-title');
+        const lp    = document.getElementById('landing-page');
+        if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
+        if (ct)    { ct.style.transition = 'opacity 0.8s ease-in';  ct.style.opacity = '1'; }
+        if (lp)    { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
+        setTimeout(() => {
+          isDashboardActive = true;
+          document.body.classList.remove('landing-active');
+          if (lp) { lp.style.display = 'none'; lp.classList.add('hidden'); }
+          updateUserInfoUI();
+        }, 1200);
+      }
+
+      // ── 1차: GAS 인증 시도 ──
       try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password,
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "login", userId, password }),
         });
-
-        if (error) throw error;
-
-        if (data.user) {
-          // 인트로 타이틀 페이드아웃 후 dashboard_3d.html로 이동
-          const intro = document.getElementById('intro-title');
-          const ct = document.getElementById('center-title');
-          const lp = document.getElementById('landing-page');
-          if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
-          if (ct) { ct.style.transition = 'opacity 0.8s ease-in'; ct.style.opacity = '1'; }
-          if (lp) { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
-          setTimeout(() => { window.location.replace("dashboard_3d.html"); }, 1200);
+        const result = await res.json();
+        if (result.success) {
+          // GAS 성공 → 캐시에도 저장 (다음번 오프라인 대비)
+          const cache = JSON.parse(localStorage.getItem("da_auth_cache") || "{}");
+          cache[userId] = { userName: result.userName, password };
+          localStorage.setItem("da_auth_cache", JSON.stringify(cache));
+          doEnterHub({ userId: result.userId, userName: result.userName });
+          return;
+        } else {
+          return alert(result.message || "Invalid credentials");
         }
       } catch (e) {
-        console.error("Login error:", e);
-        alert(e.message || "Login failed. Please check connection.");
+        // ── 2차: GAS 연결 실패(file://, 오프라인 등) → 캐시로 fallback ──
+        console.warn("GAS unreachable, trying local cache...", e);
+        const cache = JSON.parse(localStorage.getItem("da_auth_cache") || "{}");
+        const cached = cache[userId];
+        if (cached && cached.password === password) {
+          doEnterHub({ userId, userName: cached.userName });
+          return;
+        }
+        alert("로그인 서버에 연결할 수 없습니다.\n한 번이라도 온라인으로 로그인했다면 자동으로 진입됩니다.\n(최초 1회는 인터넷 연결이 필요합니다)");
       }
     }
-
     async function handleRegisterSubmit() {
-      const email = document.getElementById("reg-email").value;
-      const name = document.getElementById("reg-name").value;
+      const userId = document.getElementById("reg-id").value;
+      const userName = document.getElementById("reg-name").value;
       const password = document.getElementById("reg-pw").value;
-      if (!email || !name || !password) return alert("Fill all fields");
+      if (!userId || !userName || !password) return alert("Fill all fields");
 
       try {
-        const { data, error } = await supabaseClient.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: {
-              full_name: name,
-            }
-          }
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "register", userId, userName, password }),
         });
-
-        if (error) throw error;
-
-        if (data.user) {
-          alert("Registration successful! Please check your email for confirmation if required.");
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message);
           toggleAuthForm("login");
+        } else {
+          alert(result.message || "Registration failed");
         }
       } catch (e) {
         console.error("Reg error:", e);
-        alert(e.message || "Registration failed");
       }
     }
 
-    async function logout() {
-      await supabaseClient.auth.signOut();
+    function logout() {
+      localStorage.removeItem("da_user");
+      // 로그아웃 시 무조건 본래의 랜딩 페이지로 리다이렉트
       window.location.href = "index.html";
     }
 
@@ -827,8 +888,12 @@
     }
 
     function enterDashboardAction() {
-      // 로그인 후 항상 dashboard_3d.html로 (Globe 애니메이션 감상 + 프리로드)
-      window.location.replace("dashboard_3d.html");
+      // 로그인 후 뉴스허브(현재 페이지) 바로 진입
+      isDashboardActive = true;
+      document.body.classList.remove('landing-active');
+      const lp = document.getElementById('landing-page');
+      if (lp) { lp.style.display = 'none'; lp.classList.add('hidden'); }
+      updateUserInfoUI();
     }
 
     // [추가] 세션 ID 생성 및 관리
@@ -1172,9 +1237,9 @@
 
     async function fetchNews() {
       const sources = [
-        { name: "Local JSON", url: "data.json" },
         { name: "GitHub JSON", url: GITHUB_DATA_URL },
         { name: "Google Sheets (GAS)", url: GAS_URL },
+        { name: "Local JSON", url: "data.json" },
       ];
 
       let success = false;
