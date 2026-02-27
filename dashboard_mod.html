@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DA Strategic Dashboard</title>
-    
+
     <!-- 1. Tailwind CSS (디자인) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <link rel="stylesheet" href="assets/css/index.css" />
+
     <!-- 2. Import Map (리액트 및 라이브러리 모듈 설정) -->
     <script type="importmap">
     {
@@ -23,19 +25,44 @@
 
     <!-- 3. Babel (JSX 변환기) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <!-- 4. Lottie Web Component (새 로딩 애니메이션) -->
     <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js" type="module"></script>
 
     <style>
         /* 커스텀 스크롤바 스타일 */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 0px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        body { margin: 0; padding: 0; background-color: #F8F9FB; }
-        * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #E2E8F0;
+            border-radius: 0px;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #F8F9FB;
+        }
+
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
         /* Strategic Narrative 내 강조 스타일 (index.html 일관성) */
         h2 mark {
             background-color: #DBEAFE;
@@ -44,12 +71,14 @@
             padding: 0 3px;
             font-weight: 700;
         }
+
         h2 b {
             color: #1E40AF;
             font-weight: 900;
         }
     </style>
 </head>
+
 <body>
     <div id="root"></div>
 
@@ -57,12 +86,12 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { 
-            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, 
+        import {
+            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
             BarChart, Bar, Cell, Legend, AreaChart, Area
         } from 'recharts';
-        import { 
-            Globe, Calendar, LayoutGrid, ArrowUpRight, 
+        import {
+            Globe, Calendar, LayoutGrid, ArrowUpRight,
             Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
             Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
             ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target,
@@ -75,7 +104,7 @@
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
-            headerBlue: '#0033A0', 
+            headerBlue: '#0033A0',
             activeBlue: '#0747A6',
             riskHigh: '#DE350B',
             riskMed: '#FFAB00',
@@ -93,7 +122,7 @@
             '거시/정책': '#2684FF',
             '경쟁사': '#4C9AFF',
             '생산지역': '#8993A4',
-            '신기술동향': '#0052CC', 
+            '신기술동향': '#0052CC',
             '기타': '#B3D4FF'
         };
 
@@ -159,11 +188,11 @@
                 '통합 분석': 'Unified',
                 '공급망 통합': 'Supply Chain',
                 '전략 시황': 'Strategy',
-                
+
                 // 원본 데이터 시트 명칭 대응
                 '거시경제': 'Macro',
                 '생산지역': 'Region',
-                
+
                 // 상세 카테고리 및 상위 태그
                 '수급': 'Supply',
                 '원자재수급': 'Supply',
@@ -238,7 +267,7 @@
                 '코발트': 'Cobalt',
                 '흑연': 'Graphite'
             };
-            
+
             // 콜론 기반 세부 카테고리 처리
             if (cs.includes(':')) {
                 const parts = cs.split(':').map(p => p.trim());
@@ -246,7 +275,7 @@
                 const sub = mapping[parts[1]] || parts[1];
                 return `${main}: ${sub}`;
             }
-            
+
             return mapping[cs] || cs;
         };
 
@@ -276,8 +305,8 @@
                 if (!el) return;
                 const handleWheel = (e) => {
                     if (Math.abs(e.deltaY) > 0) {
-                        e.preventDefault(); 
-                        el.scrollLeft += (e.deltaY * 6); 
+                        e.preventDefault();
+                        el.scrollLeft += (e.deltaY * 6);
                     }
                 };
                 el.addEventListener('wheel', handleWheel, { passive: false });
@@ -312,8 +341,8 @@
                         </div>
                         <div className={`w-[1px] h-16 mx-2 ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}></div>
                         <div className="flex items-center gap-1">
-                           <button onClick={() => jumpDate(-30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsLeft size={22} /></button>
-                           <button onClick={() => jumpDate(-7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronLeft size={22} /></button>
+                            <button onClick={() => jumpDate(-30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsLeft size={22} /></button>
+                            <button onClick={() => jumpDate(-7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronLeft size={22} /></button>
                         </div>
                     </div>
                     <div ref={scrollRef} className="flex items-center gap-6 px-[5%] py-8 overflow-x-auto no-scrollbar scroll-smooth snap-x flex-1 h-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -331,8 +360,8 @@
                         })}
                     </div>
                     <div className={`flex items-center px-8 gap-1 z-30 shadow-[-15px_0_15px_-5px_rgba(0,0,0,0.05)] border-l h-full min-w-[120px] justify-center transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
-                         <button onClick={() => jumpDate(7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronRight size={22} /></button>
-                         <button onClick={() => jumpDate(30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsRight size={22} /></button>
+                        <button onClick={() => jumpDate(7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronRight size={22} /></button>
+                        <button onClick={() => jumpDate(30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsRight size={22} /></button>
                     </div>
                 </div>
             );
@@ -354,23 +383,90 @@
             );
         };
 
+        const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange, darkMode, lang }) => {
+            // Updated symmetry
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (totalPages <= 1) return null;
+
+
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            const pages = [];
+            for (let i = startPage; i <= endPage; i++) pages.push(i);
+
+            return (
+                <div className="pagination-container">
+                    <button
+                        className="pagination-btn nav-text"
+                        disabled={currentPage === 1}
+                        onClick={() => { onPageChange(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    >
+                        {lang === 'KO' ? '처음' : 'First'}
+                    </button>
+                    <button
+                        className="pagination-btn"
+                        disabled={currentPage === 1}
+                        onClick={() => { onPageChange(currentPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+
+                    {pages.map(p => (
+                        <button
+                            key={p}
+                            className={`pagination-btn ${p === currentPage ? 'active' : ''}`}
+                            onClick={() => { onPageChange(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        >
+                            {p}
+                        </button>
+                    ))}
+
+                    <button
+                        className="pagination-btn"
+                        disabled={currentPage === totalPages}
+                        onClick={() => { onPageChange(currentPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                    <button
+                        className="pagination-btn nav-text"
+                        disabled={currentPage === totalPages}
+                        onClick={() => { onPageChange(totalPages); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    >
+                        {lang === 'KO' ? '마지막' : 'Last'}
+                    </button>
+
+                </div>
+            );
+        };
+
         // --- 4. Main Application ---
+
         const App = () => {
             const [rawData, setRawData] = useState([]);
             const [intelData, setIntelData] = useState(null);
             const [selectedFilter, setSelectedFilter] = useState('All');
             const [selectedRisk, setSelectedRisk] = useState('All');
-            const [selectedTag, setSelectedTag] = useState(null); 
-            const [selectedDate, setSelectedDate] = useState('LastWeek'); 
+            const [selectedTag, setSelectedTag] = useState(null);
+            const [selectedDate, setSelectedDate] = useState('LastWeek');
             const [timeRange, setTimeRange] = useState('Weekly');
             const [loading, setLoading] = useState(true);
             const [darkMode, setDarkMode] = useState(false);
             const [language, setLanguage] = useState('KO');
-            const [searchTarget, setSearchTarget] = useState('Both'); 
+            const [searchTarget, setSearchTarget] = useState('Both');
             const [selectedRegion, setSelectedRegion] = useState('All');
             const [searchKeyword, setSearchKeyword] = useState('');
             const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
+            const [currPage, setCurrPage] = useState(1);
+            const itemsPerPage = 10;
             const [monthlyStats, setMonthlyStats] = useState([]);
+
             const [showReport, setShowReport] = useState(false);
             const [showIndex, setShowIndex] = useState(false);
             const [currentUser, setCurrentUser] = useState(null);
@@ -384,7 +480,7 @@
             useEffect(() => {
                 const fetchData = async () => {
                     setLoading(true);
-                    
+
                     // [최적화] 1. 캐시 데이터(sessionStorage) 확인
                     let cachedData = null;
                     let cachedIntel = null;
@@ -479,22 +575,22 @@
                         const formatted = json.map((item, index) => {
                             const ko_title = safeString(item.B || item.Title || item.title || '제목 없음');
                             const en_title = safeString(item.M || item.Title_en || item.title_en || ko_title || 'No Title');
-                            
+
                             const ko_category = normalizeCategory(item.C || item.Category || item.category);
                             const en_category = safeString(item.O || item.Category_en || item.category_en || 'MISC');
-                            
+
                             const ko_raw = item.D || item.Summary || item.summary || item.Content || item.content || item['기사내용'];
                             const en_raw = item.N || item.Summary_en || item.summary_en || item.n;
 
                             const ko_content = safeString(ko_raw || '상세 내용이 없습니다.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
                             const en_content = safeString(en_raw || ko_raw || 'No Content Available.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
-                            
+
                             const ko_tags = safeString(item.J || item.Tag || item.tag || "").split(',').map(t => t.trim()).filter(Boolean);
                             // P열(Tag_en) 필드 인식을 더 강화 (대소문자 무관하게 탐색 시도 가능하나 일단 키워드 추가)
                             const en_tags_found = item.P || item.Tag_en || item.tag_en || item.TAG_EN || item.TagEn || "";
                             const en_tags_raw = safeString(en_tags_found).split(',').map(t => t.trim()).filter(Boolean);
                             const en_tags = en_tags_raw.length > 0 ? en_tags_raw : ko_tags;
-                            
+
                             const ko_region = safeString(item.I || item.Region || 'Global').trim();
                             const en_region = safeString(item.Q || item.Region_en || item.region_en || 'Global').trim();
 
@@ -509,23 +605,23 @@
                                 ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region, bot: ko_bot },
                                 en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region, bot: en_bot }
                             };
-                        }).filter(item => item.date !== ""); 
+                        }).filter(item => item.date !== "");
 
                         setRawData(formatted);
-                        const dates = formatted.map(d => d.date).sort((a,b) => b.localeCompare(a));
+                        const dates = formatted.map(d => d.date).sort((a, b) => b.localeCompare(a));
                         if (dates.length > 0) setLatestDateStr(dates[0]);
-                        setSelectedDate('LastWeek'); 
+                        setSelectedDate('LastWeek');
                     } catch (err) {
                         console.error("Data Process Error:", err);
                     }
                 };
-                
+
                 fetchData();
             }, []);
 
             const availableDates = useMemo(() => {
-                const dates = []; 
-                const base = new Date(latestDateStr); 
+                const dates = [];
+                const base = new Date(latestDateStr);
                 const start = new Date(base);
                 start.setDate(base.getDate() - 90);
                 for (let i = 0; i <= 120; i++) {
@@ -553,9 +649,9 @@
                 if (selectedRisk !== 'All') data = data.filter(d => d.risk === selectedRisk);
                 if (selectedRegion !== 'All') data = data.filter(d => d.region === selectedRegion);
                 if (selectedTag) data = data.filter(d => d.tags.includes(selectedTag));
-                
+
                 const baseDate = new Date(latestDateStr);
-                
+
                 if (selectedDate === 'LastWeek') {
                     const lastWeek = new Date(baseDate); lastWeek.setDate(baseDate.getDate() - 7);
                     data = data.filter(d => { const itemDate = new Date(d.date); return itemDate >= lastWeek && itemDate <= baseDate; });
@@ -565,7 +661,7 @@
                 } else if (selectedDate !== 'All') {
                     data = data.filter(d => d.date === selectedDate);
                 }
-                
+
                 if (searchKeyword.trim()) {
                     const kw = searchKeyword.toLowerCase();
                     data = data.filter(d => {
@@ -580,17 +676,23 @@
                 return data;
             }, [currentLocaleData, selectedFilter, selectedRisk, selectedTag, selectedDate, searchKeyword, searchTarget, latestDateStr]);
 
+            // [추가] 필터 변경 시 페이지 초기화
+            useEffect(() => {
+                setCurrPage(1);
+            }, [selectedFilter, selectedRisk, selectedTag, selectedDate, searchKeyword, selectedRegion]);
+
             const cardStats = useMemo(() => {
+
                 if (!filteredData.length) return { count: 0, topRegion: '-', topCat: '-', critical: { level: 'None', title: '-', content: '-' } };
                 const regions = {}; filteredData.forEach(d => { regions[d.region] = (regions[d.region] || 0) + 1; });
                 const sortedRegions = Object.entries(regions).filter(([name]) => name !== 'Global').sort((a, b) => b[1] - a[1]);
                 const riskPriority = { 'High': 3, 'Med': 2, 'Low': 1 };
                 const topRiskItem = [...filteredData].sort((a, b) => (riskPriority[b.risk] || 0) - (riskPriority[a.risk] || 0))[0];
-                return { 
-                    count: filteredData.length, 
-                    topRegion: sortedRegions.length > 0 ? safeString(sortedRegions[0][0]) : 'Global', 
-                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : translateCategory(selectedFilter, language), 
-                    critical: { level: safeString(topRiskItem.risk), title: safeString(topRiskItem.title), content: safeString(topRiskItem.content) } 
+                return {
+                    count: filteredData.length,
+                    topRegion: sortedRegions.length > 0 ? safeString(sortedRegions[0][0]) : 'Global',
+                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : translateCategory(selectedFilter, language),
+                    critical: { level: safeString(topRiskItem.risk), title: safeString(topRiskItem.title), content: safeString(topRiskItem.content) }
                 };
             }, [filteredData, selectedFilter, language]);
 
@@ -628,7 +730,7 @@
                     }
                     if (intelData.dailyBriefing && intelData.dailyBriefing.script) return intelData.dailyBriefing.script;
                 }
-                
+
                 // 데이터 없을 때 자동 생성 fallback
                 if (!filteredData.length) return language === 'KO' ? `현재 선택된 조건에 부합하는 리스크 데이터가 부재합니다.` : `No risk data found for the selected context.`;
                 let dateLabel = selectedDate === 'LastMonth' ? (language === 'KO' ? '최근 30일' : 'Last 30 Days') : (selectedDate === 'LastWeek' ? (language === 'KO' ? '최근 7일' : 'Last 7 Days') : (selectedDate === 'All' ? (language === 'KO' ? '전체 기간' : 'All Period') : selectedDate));
@@ -659,8 +761,8 @@
             const dynamicTags = useMemo(() => {
                 if (!filteredData.length) return [];
                 const tagCounts = {}; filteredData.forEach(item => { item.tags.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
-                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({ 
-                    text: safeString(text), 
+                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({
+                    text: safeString(text),
                     count,
                     translated: translateCategory(text, language)
                 }));
@@ -816,15 +918,15 @@
                                 </div>
                             </div>
                             <button onClick={goToIndex} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"><List size={14} /> NEWS HUB</button>
-                            
+
                             {/* User info & Logout aligned with index.html */}
                             <div className="flex items-center gap-3 ml-2 border-l border-white/20 pl-4 h-8">
                                 <div className="flex flex-col leading-tight">
                                     <span className="text-[10px] font-black opacity-80">{currentUser ? currentUser.userName : 'Guest'}</span>
                                     <span className="text-[9px] font-bold opacity-60">님</span>
                                 </div>
-                                <button 
-                                    onClick={logOut} 
+                                <button
+                                    onClick={logOut}
                                     className="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest transition-all"
                                 >
                                     LOGOUT
@@ -857,7 +959,7 @@
                         <div className={`border-l-4 p-6 rounded-sm shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:shadow-md transition-shadow ${darkMode ? 'bg-slate-900 border-blue-500' : 'bg-white border-[#0033A0]'}`}>
                             <div className="flex items-center gap-6 flex-1">
                                 <div className={`p-3 rounded-full shadow-sm ${darkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#0033A0]'}`}><Sparkles size={24} /></div>
-                                 <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`} dangerouslySetInnerHTML={{__html: strategicNarrative.replace(/\n/g, '<br/>')}} /></div>
+                                <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`} dangerouslySetInnerHTML={{ __html: strategicNarrative.replace(/\n/g, '<br/>') }} /></div>
                             </div>
                             {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
                                 <button onClick={resetFilters} className={`flex items-center gap-2 text-[10px] font-black border px-5 py-2.5 rounded-sm transition-all uppercase whitespace-nowrap shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700' : 'text-[#0033A0] border-[#0033A0] hover:bg-blue-50'}`}><Clock size={12} /> {language === 'KO' ? '필터 해제' : 'Reset Filter'}</button>
@@ -875,11 +977,11 @@
                                 <div className="h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={timelineStats}>
-                                            <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0.15}/><stop offset="95%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0}/></linearGradient></defs>
+                                            <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0.15} /><stop offset="95%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0} /></linearGradient></defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#334155" : "#EDF2F7"} />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#8993A4', fontWeight: 700}} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{fontSize: 8, fill: '#8993A4', fontWeight: 700}} />
-                                            <RechartsTooltip contentStyle={darkMode ? {backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff'} : {}} />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: '#8993A4', fontWeight: 700 }} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: '#8993A4', fontWeight: 700 }} />
+                                            <RechartsTooltip contentStyle={darkMode ? { backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff' } : {}} />
                                             <Area type="monotone" dataKey="count" stroke={darkMode ? "#60A5FA" : "#0033A0"} strokeWidth={2} fillOpacity={1} fill="url(#chartGrad)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -893,10 +995,10 @@
                                     )}
                                 </div>
                                 <div className={`relative aspect-video rounded-sm overflow-hidden flex items-center justify-center shadow-inner ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                    <iframe 
+                                    <iframe
                                         ref={mapRef}
-                                        src="InteractiveMap.html" 
-                                        className="w-full h-full border-none" 
+                                        src="InteractiveMap.html"
+                                        className="w-full h-full border-none"
                                         title="Interactive Map"
                                     />
                                 </div>
@@ -923,11 +1025,11 @@
                                     <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><Filter size={12} /> {language === 'KO' ? '대상 인텔리전스 컨텍스트 피드' : 'Target Intelligence Context Feed'}</h2>
                                     <span className={`text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm ${darkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{filteredData.length} Articles Loaded</span>
                                 </div>
-                                <div className="divide-y divide-slate-100 max-h-[700px] overflow-y-auto custom-scrollbar dark:divide-slate-800">
-                                    {filteredData.slice(-40).reverse().map((item, idx) => (
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {(filteredData.slice().reverse().slice((currPage - 1) * itemsPerPage, currPage * itemsPerPage)).map((item, idx) => (
                                         <div key={idx} className={`p-6 transition-all cursor-pointer group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-blue-50/20'}`} onClick={() => handleLink(item._uId)}>
                                             <div className="flex items-center gap-3 mb-3 text-[8.5px] font-black uppercase tracking-widest">
-                                                <span className="px-2 py-0.5 rounded-sm text-white shadow-sm" style={{backgroundColor: item.risk === 'High' ? RISK_COLORS.High : (CATEGORY_COLORS[item.category] || COLORS.activeBlue)}}>{safeString(item.category)}</span>
+                                                <span className="px-2 py-0.5 rounded-sm text-white shadow-sm" style={{ backgroundColor: item.risk === 'High' ? RISK_COLORS.High : (CATEGORY_COLORS[item.category] || COLORS.activeBlue) }}>{safeString(item.category)}</span>
                                                 <span className="text-slate-400 border-l border-slate-200 pl-3 dark:border-slate-700">{safeString(item.region)}</span>
                                                 <span className="text-slate-300 border-l border-slate-200 pl-3 dark:border-slate-700 font-medium">{safeString(item.date)}</span>
                                                 <span className={`ml-auto font-bold ${item.risk === 'High' ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>{safeString(item.risk)} RISK</span>
@@ -935,7 +1037,7 @@
                                             <h4 className={`text-[15px] font-bold leading-snug transition-colors mb-3 group-hover:text-blue-500 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{safeString(item.title)}</h4>
                                             {/* 🚀 기사 본문 출력 보장 */}
                                             <p className="text-[12.5px] text-slate-500 leading-relaxed line-clamp-3 mb-3 dark:text-slate-400">{safeString(item.content)}</p>
-                                            
+
                                             {/* 🤖 BOT 인사이트 (Strategic Action) 추가 */}
                                             {item.bot && (
                                                 <div className={`mb-4 p-4 rounded-sm border-l-4 ${darkMode ? 'bg-blue-900/10 border-blue-500/50 text-blue-100' : 'bg-blue-50 border-blue-600/50 text-blue-900'}`}>
@@ -952,7 +1054,18 @@
                                             <div className="flex flex-wrap gap-1.5">{item.tags.map(t => (<span key={t} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm ${darkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-400 bg-blue-50/50'}`}>#{translateCategory(t, language)}</span>))}</div>
                                         </div>
                                     ))}
+                                    <div className="p-6 border-t dark:border-slate-800">
+                                        <Pagination
+                                            totalItems={filteredData.length}
+                                            itemsPerPage={itemsPerPage}
+                                            currentPage={currPage}
+                                            onPageChange={setCurrPage}
+                                            darkMode={darkMode}
+                                            lang={language}
+                                        />
+                                    </div>
                                 </div>
+
                             </div>
                             <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                 <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '인기 카테고리' : 'Popular Categories'}</h2>
@@ -960,7 +1073,7 @@
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={popularCategoryData} layout="vertical" margin={{ left: 5, right: 30, top: 0, bottom: 0 }}>
                                             <XAxis type="number" hide />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 8, fontWeight: 900, fill: '#64748b'}} width={70} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 900, fill: '#64748b' }} width={70} />
                                             <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                                                 {popularCategoryData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || COLORS.activeBlue} />
@@ -969,7 +1082,7 @@
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
-                                
+
                                 <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><Target size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '본 주간 최다 조회 기사' : 'Weekly Most Viewed'}</h2>
                                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
                                     {topArticles.map((article, i) => (
@@ -1021,7 +1134,7 @@
                                             {Object.entries(monthlyStats.reduce((acc, curr) => {
                                                 acc[curr.Category] = (acc[curr.Category] || 0) + (Number(curr.Views) || 0);
                                                 return acc;
-                                            }, {})).sort((a,b) => b[1] - a[1]).slice(0, 4).map(([cat, val], idx) => (
+                                            }, {})).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([cat, val], idx) => (
                                                 <div key={cat} className="flex flex-col">
                                                     <span className="text-[9px] font-black text-slate-400 uppercase line-clamp-1">{translateCategory(cat, language)}</span>
                                                     <span className="text-lg font-black">{val} <span className="text-[8px] font-bold text-blue-500">PV</span></span>
@@ -1048,4 +1161,5 @@
         root.render(<App />);
     </script>
 </body>
+
 </html>

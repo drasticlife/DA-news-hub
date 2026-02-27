@@ -1,719 +1,574 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SEC DA Purchase Intelligence Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://unpkg.com/globe.gl"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
-    />
-    <script>
-      tailwind.config = { darkMode: "class" };
-    </script>
-    <link rel="stylesheet" href="assets/css/index.css" />
-    <script src="assets/js/config.js"></script>
-  </head>
-  <body class="bg-[#fcfcfc] text-[#333] landing-active">
-    <!-- 3D 지구 랜딩 페이지 -->
-    <div id="landing-page" onclick="enterDashboard()">
-      <!-- 인트로: 중앙 대형 타이틀 -->
-      <div id="intro-title">
-        <div id="intro-label">■ DA PROCUREMENT DAILY INSIGHT</div>
-        <h1 id="intro-h1">Global<br>Intelligence</h1>
-      </div>
-      <!-- 좌상단 소형 타이틀 (페이드인 후 유지) -->
-      <div id="center-title">
-        <h1>DA Procurement</h1>
-        <div style="display:flex;align-items:center;margin-top:4px;">
-          <span class="ct-divider"></span>
-          <p>Daily Insight Journal</p>
-        </div>
-      </div>
 
-      <!-- Auth Container (Right Bottom) -->
-      <div id="auth-container" onclick="event.stopPropagation()">
-        <!-- Login Form -->
-        <div id="login-form">
-          <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Welcome Back</h2>
-          <input type="text" id="login-id" class="auth-input" placeholder="User ID">
-          <input type="password" id="login-pw" class="auth-input" placeholder="Password" onkeypress="if(event.key === 'Enter') handleLoginSubmit()">
-          <button onclick="handleLoginSubmit()" class="auth-btn">Sign In</button>
-          <p class="auth-switch">Don't have an account? <span onclick="toggleAuthForm('register')">Register</span></p>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEC DA Purchase Intelligence Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/globe.gl"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
+  <link rel="stylesheet" href="assets/css/index.css" />
+  <script src="assets/js/config.js"></script>
+</head>
 
-        <!-- Register Form -->
-        <div id="register-form" style="display: none;">
-          <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Join Community</h2>
-          <input type="text" id="reg-id" class="auth-input" placeholder="Choose User ID">
-          <input type="text" id="reg-name" class="auth-input" placeholder="Your Name">
-          <input type="password" id="reg-pw" class="auth-input" placeholder="Password">
-          <button onclick="handleRegisterSubmit()" class="auth-btn">Register</button>
-          <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Sign In</span></p>
-        </div>
+<body class="bg-[#fcfcfc] text-[#333] landing-active">
+  <!-- 3D 지구 랜딩 페이지 -->
+  <div id="landing-page" onclick="enterDashboard()">
+    <!-- 인트로: 중앙 대형 타이틀 -->
+    <div id="intro-title">
+      <div id="intro-label">■ DA PROCUREMENT DAILY INSIGHT</div>
+      <h1 id="intro-h1">Global<br>Intelligence</h1>
+    </div>
+    <!-- 좌상단 소형 타이틀 (페이드인 후 유지) -->
+    <div id="center-title">
+      <h1>DA Procurement</h1>
+      <div style="display:flex;align-items:center;margin-top:4px;">
+        <span class="ct-divider"></span>
+        <p>Daily Insight Journal</p>
       </div>
-
-      <div id="globeViz"></div>
     </div>
 
-    <script>
-      let isDashboardActive = false;
+    <!-- Auth Container (Right Bottom) -->
+    <div id="auth-container" onclick="event.stopPropagation()">
+      <!-- Login Form -->
+      <div id="login-form">
+        <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Welcome Back</h2>
+        <input type="text" id="login-id" class="auth-input" placeholder="User ID">
+        <input type="password" id="login-pw" class="auth-input" placeholder="Password"
+          onkeypress="if(event.key === 'Enter') handleLoginSubmit()">
+        <button onclick="handleLoginSubmit()" class="auth-btn">Sign In</button>
+        <p class="auth-switch">Don't have an account? <span onclick="toggleAuthForm('register')">Register</span></p>
+      </div>
 
-      function initLandingGlobe() {
-        const places = [
-          { name: "Samsung Digital City", country: "Korea",    product: "HQ / R&D",     lat: 37.263, lng: 127.028, txtLat: 39.5,  txtLng: 127.0  },
-          { name: "Gwangju Plant",        country: "Korea",    product: "Premium DA",    lat: 35.159, lng: 126.852, txtLat: 33.5,  txtLng: 127.5  },
-          { name: "SSEC",                 country: "China",    product: "DA Complex",    lat: 31.298, lng: 120.585, txtLat: 31.3,  txtLng: 116.0  },
-          { name: "TSE",                  country: "Thailand", product: "A/C, Ref",      lat: 13.111, lng: 100.927, txtLat: 16.5,  txtLng: 98.0   },
-          { name: "SEHC",                 country: "Vietnam",  product: "TV/DA Complex", lat: 10.762, lng: 106.66,  txtLat: 8.5,   txtLng: 109.0  },
-          { name: "SEDA",                 country: "Brazil",   product: "DA/TV",         lat: -3.119, lng: -60.021, txtLat: -3.119,txtLng: -60.021},
-          { name: "SEPM",                 country: "Poland",   product: "Ref/W/M",       lat: 52.711, lng: 16.381,  txtLat: 52.711,txtLng: 16.381 },
-          { name: "SAMEX",                country: "Mexico",   product: "Ref",           lat: 20.588, lng: -100.389,txtLat: 20.588,txtLng: -100.389},
-          { name: "SEM",                  country: "Mexico",   product: "TV/Monitor",    lat: 32.514, lng: -117.038,txtLat: 32.514,txtLng: -117.038},
-          { name: "SEHA",                 country: "USA",      product: "W/M",           lat: 34.274, lng: -81.618, txtLat: 34.274,txtLng: -81.618 },
-          { name: "SIEL",                 country: "India",    product: "DA/TV",         lat: 12.971, lng: 80.015,  txtLat: 12.971,txtLng: 80.015  }
-        ];
+      <!-- Register Form -->
+      <div id="register-form" style="display: none;">
+        <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Join Community</h2>
+        <input type="text" id="reg-id" class="auth-input" placeholder="Choose User ID">
+        <input type="text" id="reg-name" class="auth-input" placeholder="Your Name">
+        <input type="password" id="reg-pw" class="auth-input" placeholder="Password">
+        <button onclick="handleRegisterSubmit()" class="auth-btn">Register</button>
+        <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Sign In</span></p>
+      </div>
+    </div>
 
-        const world = Globe()(document.getElementById("globeViz"))
-          .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
-          .bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
-          .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
-          .atmosphereColor("#3a228a")
-          .atmosphereAltitude(0.2)
-          .pointsData(places).pointLat("lat").pointLng("lng")
-          .pointColor(() => "#00a9e0").pointAltitude(0.01).pointRadius(0.6)
-          .labelsData(places).labelLat("txtLat").labelLng("txtLng")
-          .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
-          .labelSize(1.0).labelDotRadius(0.3)
-          .labelColor(() => "rgba(255,255,255,0.9)")
-          .labelResolution(3).labelAltitude(0.02)
-          .onPointClick(point => {
-            world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 800);
-          });
+    <div id="globeViz"></div>
+  </div>
 
-        // 컨트롤 잠금
-        const lockTimer = setInterval(() => {
-          const ctrl = world.controls();
-          if (!ctrl) return;
-          ctrl.enableZoom = false;
-          ctrl.enablePan  = false;
-          ctrl.autoRotate = false;
-          const pa = Math.PI / 2 - (25 * Math.PI / 180);
-          ctrl.minPolarAngle = pa;
-          ctrl.maxPolarAngle = pa;
-          clearInterval(lockTimer);
-        }, 100);
+  <script>
+    let isDashboardActive = false;
 
-        // 초기 시점 & 페이드인
-        world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 }, 0);
-        document.getElementById("globeViz").style.opacity = "1";
-        setTimeout(() => world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 2500), 100);
+    function initLandingGlobe() {
+      const places = [
+        { name: "Samsung Digital City", country: "Korea", product: "HQ / R&D", lat: 37.263, lng: 127.028, txtLat: 39.5, txtLng: 127.0 },
+        { name: "Gwangju Plant", country: "Korea", product: "Premium DA", lat: 35.159, lng: 126.852, txtLat: 33.5, txtLng: 127.5 },
+        { name: "SSEC", country: "China", product: "DA Complex", lat: 31.298, lng: 120.585, txtLat: 31.3, txtLng: 116.0 },
+        { name: "TSE", country: "Thailand", product: "A/C, Ref", lat: 13.111, lng: 100.927, txtLat: 16.5, txtLng: 98.0 },
+        { name: "SEHC", country: "Vietnam", product: "TV/DA Complex", lat: 10.762, lng: 106.66, txtLat: 8.5, txtLng: 109.0 },
+        { name: "SEDA", country: "Brazil", product: "DA/TV", lat: -3.119, lng: -60.021, txtLat: -3.119, txtLng: -60.021 },
+        { name: "SEPM", country: "Poland", product: "Ref/W/M", lat: 52.711, lng: 16.381, txtLat: 52.711, txtLng: 16.381 },
+        { name: "SAMEX", country: "Mexico", product: "Ref", lat: 20.588, lng: -100.389, txtLat: 20.588, txtLng: -100.389 },
+        { name: "SEM", country: "Mexico", product: "TV/Monitor", lat: 32.514, lng: -117.038, txtLat: 32.514, txtLng: -117.038 },
+        { name: "SEHA", country: "USA", product: "W/M", lat: 34.274, lng: -81.618, txtLat: 34.274, txtLng: -81.618 },
+        { name: "SIEL", country: "India", product: "DA/TV", lat: 12.971, lng: 80.015, txtLat: 12.971, txtLng: 80.015 }
+      ];
 
-        // 인트로 타이틀: 로그인 전까지 유지 (로그인 시 JS로 페이드아웃)
-        // setTimeout 제거 — 로그인 성공 시 fadeOutIntro() 호출
+      const world = Globe()(document.getElementById("globeViz"))
+        .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg")
+        .bumpImageUrl("https://unpkg.com/three-globe/example/img/earth-topology.png")
+        .backgroundImageUrl("https://unpkg.com/three-globe/example/img/night-sky.png")
+        .atmosphereColor("#3a228a")
+        .atmosphereAltitude(0.2)
+        .pointsData(places).pointLat("lat").pointLng("lng")
+        .pointColor(() => "#00a9e0").pointAltitude(0.01).pointRadius(0.6)
+        .labelsData(places).labelLat("txtLat").labelLng("txtLng")
+        .labelText(d => `${d.name}\n${d.country} | ${d.product}`)
+        .labelSize(1.0).labelDotRadius(0.3)
+        .labelColor(() => "rgba(255,255,255,0.9)")
+        .labelResolution(3).labelAltitude(0.02)
+        .onPointClick(point => {
+          world.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.5 }, 800);
+        });
 
-        // RAF 기반 부드러운 회전
-        let rotLng = 110;
-        let isInteracting = false;
-        let interactionTimer = null;
+      // 컨트롤 잠금
+      const lockTimer = setInterval(() => {
+        const ctrl = world.controls();
+        if (!ctrl) return;
+        ctrl.enableZoom = false;
+        ctrl.enablePan = false;
+        ctrl.autoRotate = false;
+        const pa = Math.PI / 2 - (25 * Math.PI / 180);
+        ctrl.minPolarAngle = pa;
+        ctrl.maxPolarAngle = pa;
+        clearInterval(lockTimer);
+      }, 100);
 
-        const loop = () => {
-          if (!isInteracting) rotLng -= 0.18;
-          world.pointOfView({ lng: rotLng, lat: 25, altitude: 0.8 }, 0);
-          requestAnimationFrame(loop);
-        };
-        setTimeout(() => requestAnimationFrame(loop), 2600);
+      // 초기 시점 & 페이드인
+      world.pointOfView({ lat: 25, lng: 110, altitude: 2.5 }, 0);
+      document.getElementById("globeViz").style.opacity = "1";
+      setTimeout(() => world.pointOfView({ lat: 25, lng: 110, altitude: 0.8 }, 2500), 100);
 
-        window.addEventListener('wheel', e => {
-          if (isDashboardActive) return;
-          e.preventDefault();
-          if (e.ctrlKey) return;
-          isInteracting = true;
-          clearTimeout(interactionTimer);
-          interactionTimer = setTimeout(() => { isInteracting = false; }, 500);
-          rotLng += e.deltaY * 0.08;
-        }, { passive: false });
-      }
+      // 인트로 타이틀: 로그인 전까지 유지 (로그인 시 JS로 페이드아웃)
+      // setTimeout 제거 — 로그인 성공 시 fadeOutIntro() 호출
+
+      // RAF 기반 부드러운 회전
+      let rotLng = 110;
+      let isInteracting = false;
+      let interactionTimer = null;
+
+      const loop = () => {
+        if (!isInteracting) rotLng -= 0.09;
+        world.pointOfView({ lng: rotLng, lat: 25, altitude: 0.8 }, 0);
+        requestAnimationFrame(loop);
+      };
+      setTimeout(() => requestAnimationFrame(loop), 2600);
+
+      window.addEventListener('wheel', e => {
+        if (isDashboardActive) return;
+        e.preventDefault();
+        if (e.ctrlKey) return;
+        isInteracting = true;
+        clearTimeout(interactionTimer);
+        interactionTimer = setTimeout(() => { isInteracting = false; }, 500);
+        rotLng += e.deltaY * 0.08;
+      }, { passive: false });
+    }
 
 
-      // DOM 로드 시 지구본 초기화
-      document.addEventListener("DOMContentLoaded", () => {
-        // dashboard_mod.html에서 돌아올 때 랜딩 페이지를 건너뛰기 위한 파라미터 체크
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasTarget =
-          urlParams.get("targetId") || urlParams.get("view") === "hub";
+    // DOM 로드 시 지구본 초기화
+    document.addEventListener("DOMContentLoaded", () => {
+      // dashboard_mod.html에서 돌아올 때 랜딩 페이지를 건너뛰기 위한 파라미터 체크
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasTarget =
+        urlParams.get("targetId") || urlParams.get("view") === "hub";
 
-        if (hasTarget) {
-          isDashboardActive = true; // 대시보드 모드 활성화 (지구본 스킵)
-          document.body.classList.remove("landing-active");
-          const lp = document.getElementById("landing-page");
-          if (lp) {
-            lp.style.display = "none";
-            lp.classList.add("hidden");
-          }
-        } else {
-          initLandingGlobe();
+      if (hasTarget) {
+        isDashboardActive = true; // 대시보드 모드 활성화 (지구본 스킵)
+        document.body.classList.remove("landing-active");
+        const lp = document.getElementById("landing-page");
+        if (lp) {
+          lp.style.display = "none";
+          lp.classList.add("hidden");
         }
-      });
-    </script>
+      } else {
+        initLandingGlobe();
+      }
+    });
+  </script>
 
-    <header
-      class="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl"
-    >
-      <div class="flex items-center gap-4">
-        <div
-          class="flex items-center gap-3 cursor-pointer"
-          onclick="location.reload()"
-        >
-          <div
-            class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase"
-          >
-            DA
-          </div>
-          <h1
-            class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap"
-          >
-            Purchase Intelligence
-          </h1>
+  <header class="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+        <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">
+          DA
         </div>
-        <nav
-          class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap"
-        >
-          <a
-            href="#"
-            onclick="resetFilters()"
-            id="nav-all"
-            class="text-white border-b-2 border-white py-1 transition-all uppercase"
-            >전략 시황</a
-          >
-          <a
-            href="#"
-            onclick="filterNews('원자재')"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >원자재</a
-          >
-          <a
-            href="#"
-            onclick="filterNews('거시경제')"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >거시/정책</a
-          >
-          <a
-            href="#"
-            onclick="filterNews('생산지역')"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >생산지역</a
-          >
-          <a
-            href="#"
-            onclick="filterNews('경쟁사')"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >경쟁사</a
-          >
-          <a
-            href="#"
-            onclick="filterNews('신기술동향')"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >신기술동향</a
-          >
-          <a
-            href="#"
-            onclick="showIndexModal()"
-            class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase"
-            >INDEX</a
-          >
-        </nav>
+        <h1 class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap">
+          Purchase Intelligence
+        </h1>
       </div>
+      <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap">
+        <a href="#" onclick="resetFilters()" id="nav-all"
+          class="text-white border-b-2 border-white py-1 transition-all uppercase">전략 시황</a>
+        <a href="#" onclick="filterNews('원자재')"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">원자재</a>
+        <a href="#" onclick="filterNews('거시경제')"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">거시/정책</a>
+        <a href="#" onclick="filterNews('생산지역')"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">생산지역</a>
+        <a href="#" onclick="filterNews('경쟁사')"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
+        <a href="#" onclick="filterNews('신기술동향')"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
+        <a href="#" onclick="showIndexModal()"
+          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">INDEX</a>
+      </nav>
+    </div>
 
-      <div class="flex-1 flex justify-center px-4">
-        <div
-          class="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50 w-full max-w-sm"
-        >
-          <div class="relative">
-            <select
-              id="searchScope"
-              onchange="handleSearchScope(event)"
-              class="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer h-full"
-            >
-              <option value="all">제목+본문</option>
-              <option value="title">제목</option>
-              <option value="content">본문</option>
-            </select>
-            <i
-              data-lucide="chevron-down"
-              class="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            ></i>
-          </div>
-          <div class="w-[1px] h-4 bg-slate-200"></div>
-          <div class="flex items-center flex-1 px-3">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 mr-2"></i>
-            <input
-              type="text"
-              id="searchInput"
-              onkeyup="handleSearch(event)"
-              placeholder="뉴스 키워드 검색..."
-              class="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-full placeholder:text-slate-300 uppercase tracking-tighter outline-none"
-            />
-          </div>
+    <div class="flex-1 flex justify-center px-4">
+      <div
+        class="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50 w-full max-w-sm">
+        <div class="relative">
+          <select id="searchScope" onchange="handleSearchScope(event)"
+            class="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer h-full">
+            <option value="all">제목+본문</option>
+            <option value="title">제목</option>
+            <option value="content">본문</option>
+          </select>
+          <i data-lucide="chevron-down"
+            class="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
         </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button
-          onclick="showBoardModal()"
-          class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"
-        >
-          <i data-lucide="message-square" class="w-3.5 h-3.5"></i> BOARD
-        </button>
-        <button
-          onclick="window.location.href='dashboard_mod.html'"
-          class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"
-        >
-          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> DASHBOARD
-        </button>
-        <div id="user-info-bar" class="hidden items-center gap-3 ml-2 border-l pl-4 dark:border-gray-700">
-          <span id="display-user-name" class="text-[10px] font-bold opacity-60"></span>
-          <button
-            onclick="logout()"
-            class="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest transition-all"
-          >
-            LOGOUT
-          </button>
-        </div>
-        <button
-          onclick="toggleLanguage()"
-          id="langBtn"
-          class="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest"
-        >
-          KO
-        </button>
-        <button
-          onclick="toggleDarkMode()"
-          class="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white"
-        >
-          <i data-lucide="moon" id="themeIcon" class="w-4.5 h-4.5"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- Improvement Board Modal -->
-    <div
-      id="boardModal"
-      class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
-    >
-      <div class="modal-content bg-white dark:bg-[#25282c] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-indigo-600 text-white">
-          <h3 class="font-bold text-lg flex items-center gap-2">
-            <i data-lucide="message-square" class="w-5 h-5"></i>
-            <span>사이트 개선 제안 게시판</span>
-          </h3>
-          <button onclick="closeBoardModal()" class="hover:bg-white/20 p-1 rounded-full">
-            <i data-lucide="x" class="w-6 h-6"></i>
-          </button>
-        </div>
-        <div class="p-8 max-h-[70vh] overflow-y-auto">
-          <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
-            <p class="text-xs text-indigo-700 dark:text-indigo-300 font-medium">뉴스 허브의 발전을 위한 소중한 의견을 자유롭게 남겨주세요.</p>
-          </div>
-          <div id="board-posts" class="space-y-6 mb-8">
-            <p class="text-center py-10 text-slate-400 text-sm">게시글을 불러오는 중...</p>
-          </div>
-          <div class="border-t pt-6 dark:border-gray-700">
-            <textarea id="board-input" class="w-full p-4 rounded-xl border dark:bg-[#1a1c1e] dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all" rows="3" placeholder="제안이나 피드백을 입력하세요..."></textarea>
-            <div class="flex justify-end mt-4">
-              <button onclick="handleBoardSubmit()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg transition-all">
-                SUBMIT FEEDBACK
-              </button>
-            </div>
-          </div>
+        <div class="w-[1px] h-4 bg-slate-200"></div>
+        <div class="flex items-center flex-1 px-3">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 mr-2"></i>
+          <input type="text" id="searchInput" onkeyup="handleSearch(event)" placeholder="뉴스 키워드 검색..."
+            class="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-full placeholder:text-slate-300 uppercase tracking-tighter outline-none" />
         </div>
       </div>
     </div>
 
-    <aside class="sidebar dark:bg-[#25282c]">
-      <!-- TradingView Tickers Widget -->
-      <div class="mb-1">
-        <!-- Vertical Carousel Widget -->
-        <style>
-          .carousel-container {
-            width: 100%;
-            height: 100px; /* Single widget height */
-            overflow: hidden;
-            position: relative;
-            background: transparent;
-          }
-          .carousel-track {
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-          }
-          .carousel-item {
-            height: 100px;
-            width: 100%;
-            flex-shrink: 0;
-          }
-          /* Hide TradingView copyright for cleaner look */
-          .carousel-item .tradingview-widget-copyright {
-            display: none !important;
-          }
-        </style>
+    <div class="flex items-center gap-2">
+      <button onclick="showBoardModal()"
+        class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
+        <i data-lucide="message-square" class="w-3.5 h-3.5"></i> BOARD
+      </button>
+      <button onclick="window.location.href='dashboard_mod.html'"
+        class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> DASHBOARD
+      </button>
+      <div id="user-info-bar" class="hidden items-center gap-3 ml-2 border-l pl-4 dark:border-gray-700">
+        <span id="display-user-name" class="text-[10px] font-bold opacity-60"></span>
+        <button onclick="logout()"
+          class="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest transition-all">
+          LOGOUT
+        </button>
+      </div>
+      <button onclick="toggleLanguage()" id="langBtn"
+        class="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest">
+        KO
+      </button>
+      <button onclick="toggleDarkMode()"
+        class="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">
+        <i data-lucide="moon" id="themeIcon" class="w-4.5 h-4.5"></i>
+      </button>
+    </div>
+  </header>
 
-        <div class="carousel-container">
-          <div class="carousel-track" id="ticker-track">
-            <!-- 1. USDKRW -->
-            <div class="carousel-item">
-              <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script
-                  type="text/javascript"
-                  src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js"
-                  async
-                >
+  <!-- Improvement Board Modal -->
+  <div id="boardModal"
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]">
+    <div class="modal-content bg-white dark:bg-[#25282c] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-indigo-600 text-white">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i data-lucide="message-square" class="w-5 h-5"></i>
+          <span>사이트 개선 제안 게시판</span>
+        </h3>
+        <button onclick="closeBoardModal()" class="hover:bg-white/20 p-1 rounded-full">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div class="p-8 max-h-[70vh] overflow-y-auto">
+        <div
+          class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800">
+          <p class="text-xs text-indigo-700 dark:text-indigo-300 font-medium">뉴스 허브의 발전을 위한 소중한 의견을 자유롭게 남겨주세요.</p>
+        </div>
+        <div id="board-posts" class="space-y-6 mb-8">
+          <p class="text-center py-10 text-slate-400 text-sm">게시글을 불러오는 중...</p>
+        </div>
+        <div class="border-t pt-6 dark:border-gray-700">
+          <textarea id="board-input"
+            class="w-full p-4 rounded-xl border dark:bg-[#1a1c1e] dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
+            rows="3" placeholder="제안이나 피드백을 입력하세요..."></textarea>
+          <div class="flex justify-end mt-4">
+            <button onclick="handleBoardSubmit()"
+              class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-lg transition-all">
+              SUBMIT FEEDBACK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="sidebar dark:bg-[#25282c]">
+    <!-- TradingView Tickers Widget -->
+    <div class="mb-1">
+      <!-- Vertical Carousel Widget -->
+      <style>
+        .carousel-container {
+          width: 100%;
+          height: 100px;
+          /* Single widget height */
+          overflow: hidden;
+          position: relative;
+          background: transparent;
+        }
+
+        .carousel-track {
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .carousel-item {
+          height: 100px;
+          width: 100%;
+          flex-shrink: 0;
+        }
+
+        /* Hide TradingView copyright for cleaner look */
+        .carousel-item .tradingview-widget-copyright {
+          display: none !important;
+        }
+      </style>
+
+      <div class="carousel-container">
+        <div class="carousel-track" id="ticker-track">
+          <!-- 1. USDKRW -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
                   {
                     "symbol": "FX_IDC:USDKRW",
-                    "width": "100%",
-                    "colorTheme": "light",
-                    "isTransparent": true,
-                    "locale": "kr"
+                      "width": "100%",
+                        "colorTheme": "light",
+                          "isTransparent": true,
+                            "locale": "kr"
                   }
                 </script>
-              </div>
             </div>
-            <!-- 2. USDCNY -->
-            <div class="carousel-item">
-              <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script
-                  type="text/javascript"
-                  src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js"
-                  async
-                >
+          </div>
+          <!-- 2. USDCNY -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
                   {
                     "symbol": "FX_IDC:USDCNY",
-                    "width": "100%",
-                    "colorTheme": "light",
-                    "isTransparent": true,
-                    "locale": "kr"
+                      "width": "100%",
+                        "colorTheme": "light",
+                          "isTransparent": true,
+                            "locale": "kr"
                   }
                 </script>
-              </div>
             </div>
-            <!-- 3. USDTHB -->
-            <div class="carousel-item">
-              <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script
-                  type="text/javascript"
-                  src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js"
-                  async
-                >
+          </div>
+          <!-- 3. USDTHB -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
                   {
                     "symbol": "FX_IDC:USDTHB",
-                    "width": "100%",
-                    "colorTheme": "light",
-                    "isTransparent": true,
-                    "locale": "kr"
+                      "width": "100%",
+                        "colorTheme": "light",
+                          "isTransparent": true,
+                            "locale": "kr"
                   }
                 </script>
-              </div>
             </div>
-            <!-- 4. USDINR -->
-            <div class="carousel-item">
-              <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script
-                  type="text/javascript"
-                  src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js"
-                  async
-                >
+          </div>
+          <!-- 4. USDINR -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
                   {
                     "symbol": "FX_IDC:USDINR",
-                    "width": "100%",
-                    "colorTheme": "light",
-                    "isTransparent": true,
-                    "locale": "kr"
+                      "width": "100%",
+                        "colorTheme": "light",
+                          "isTransparent": true,
+                            "locale": "kr"
                   }
                 </script>
-              </div>
             </div>
-            <!-- 5. USDBRL -->
-            <div class="carousel-item">
-              <div class="tradingview-widget-container">
-                <div class="tradingview-widget-container__widget"></div>
-                <script
-                  type="text/javascript"
-                  src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js"
-                  async
-                >
+          </div>
+          <!-- 5. USDBRL -->
+          <div class="carousel-item">
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <script type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
                   {
                     "symbol": "FX_IDC:USDBRL",
-                    "width": "100%",
-                    "colorTheme": "light",
-                    "isTransparent": true,
-                    "locale": "kr"
+                      "width": "100%",
+                        "colorTheme": "light",
+                          "isTransparent": true,
+                            "locale": "kr"
                   }
                 </script>
-              </div>
             </div>
           </div>
         </div>
-        <script>
-          (function () {
-            // Initialize carousel if container exists
-            const track = document.getElementById("ticker-track");
-            if (track) {
-              const items = track.children;
-              const itemCount = items.length;
-              const itemHeight = 100;
-              let index = 0;
-
-              setInterval(() => {
-                index++;
-                if (index >= itemCount) {
-                  index = 0;
-                }
-                track.style.transform = `translateY(-${index * itemHeight}px)`;
-              }, 4000);
-            }
-          })();
-        </script>
       </div>
-      <!-- 달력 섹션 -->
-      <div class="mb-8">
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400 flex justify-between items-center"
-        >
-          <span
-            onclick="goToday()"
-            class="cursor-pointer hover:text-[#1428a0] transition-colors"
-            >TODAY</span
-          >
-          <div
-            class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md"
-          >
-            <i
-              data-lucide="chevrons-left"
-              class="w-3 h-3 nav-btn"
-              onclick="moveCalendar(-1, 0)"
-            ></i>
-            <i
-              data-lucide="chevron-left"
-              class="w-3 h-3 nav-btn"
-              onclick="moveCalendar(0, -1)"
-            ></i>
-            <span
-              id="calHeader"
-              class="text-[10px] font-bold text-[#1428a0] min-w-[55px] text-center"
-              >2026. 01</span
-            >
-            <i
-              data-lucide="chevron-right"
-              class="w-3 h-3 nav-btn"
-              onclick="moveCalendar(0, 1)"
-            ></i>
-            <i
-              data-lucide="chevrons-right"
-              class="w-3 h-3 nav-btn"
-              onclick="moveCalendar(1, 0)"
-            ></i>
-          </div>
-        </h3>
-        <div id="calendarGrid" class="calendar-grid text-slate-400"></div>
-      </div>
+      <script>
+        (function () {
+          // Initialize carousel if container exists
+          const track = document.getElementById("ticker-track");
+          if (track) {
+            const items = track.children;
+            const itemCount = items.length;
+            const itemHeight = 100;
+            let index = 0;
 
-      <!-- 글로벌 지도 섹션 -->
-      <div class="mb-8">
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400"
-        >
-          Global Map
-        </h3>
-        <div id="worldMap" style="height: 180px; overflow: hidden">
-          <iframe
-            id="mapFrame"
-            src="InteractiveMap.html"
-            style="width: 100%; height: 100%; border: none"
-          ></iframe>
+            setInterval(() => {
+              index++;
+              if (index >= itemCount) {
+                index = 0;
+              }
+              track.style.transform = `translateY(-${index * itemHeight}px)`;
+            }, 4000);
+          }
+        })();
+      </script>
+    </div>
+    <!-- 달력 섹션 -->
+    <div class="mb-8">
+      <h3
+        class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400 flex justify-between items-center">
+        <span onclick="goToday()" class="cursor-pointer hover:text-[#1428a0] transition-colors">TODAY</span>
+        <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md">
+          <i data-lucide="chevrons-left" class="w-3 h-3 nav-btn" onclick="moveCalendar(-1, 0)"></i>
+          <i data-lucide="chevron-left" class="w-3 h-3 nav-btn" onclick="moveCalendar(0, -1)"></i>
+          <span id="calHeader" class="text-[10px] font-bold text-[#1428a0] min-w-[55px] text-center">2026. 01</span>
+          <i data-lucide="chevron-right" class="w-3 h-3 nav-btn" onclick="moveCalendar(0, 1)"></i>
+          <i data-lucide="chevrons-right" class="w-3 h-3 nav-btn" onclick="moveCalendar(1, 0)"></i>
         </div>
-      </div>
+      </h3>
+      <div id="calendarGrid" class="calendar-grid text-slate-400"></div>
+    </div>
 
-      <!-- 3D Tag Cloud Section -->
-      <div class="mb-8">
-        <h3
-          class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400"
-        >
-          Trend Keywords
-        </h3>
-        <div id="tagCloudContainer">
-          <div id="tagCloud3D"></div>
-        </div>
+    <!-- 글로벌 지도 섹션 -->
+    <div class="mb-8">
+      <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">
+        Global Map
+      </h3>
+      <div id="worldMap" style="height: 180px; overflow: hidden">
+        <iframe id="mapFrame" src="InteractiveMap.html" style="width: 100%; height: 100%; border: none"></iframe>
       </div>
-    </aside>
+    </div>
 
-    <main class="main-content">
-      <div class="grid grid-cols-3 gap-6 mb-10" id="summaryGrid"></div>
-      <div
-        class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700"
-      >
-        <h2 class="font-bold text-lg" id="feedTitle">Strategic Feed</h2>
-        <div class="flex items-center gap-4">
-          <div
-            class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-lg"
-          >
-            <span class="text-[9px] px-2 text-slate-400">RISK:</span>
-            <button
-              onclick="filterByRisk('all')"
-              class="risk-filter-btn active px-2 py-0.5 rounded text-[9px] font-bold hover:bg-white dark:hover:bg-slate-700 transition-all"
-            >
-              ALL
-            </button>
-            <button
-              onclick="filterByRisk('High')"
-              class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-red-500 hover:bg-white dark:hover:bg-slate-700 transition-all"
-            >
-              HIGH
-            </button>
-            <button
-              onclick="filterByRisk('Med')"
-              class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-orange-500 hover:bg-white dark:hover:bg-slate-700 transition-all"
-            >
-              MED
-            </button>
-            <button
-              onclick="filterByRisk('Low')"
-              class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all"
-            >
-              LOW
-            </button>
-          </div>
-          <div
-            class="text-[10px] flex gap-4 uppercase font-bold text-slate-400 border-l pl-4 dark:border-gray-700"
-          >
-            <span
-              id="sortLatest"
-              class="cursor-pointer text-[#1428a0]"
-              onclick="sortNews('latest')"
-              >Latest</span
-            >
-            <span
-              id="sortOldest"
-              class="cursor-pointer hover:text-[#1428a0]"
-              onclick="sortNews('oldest')"
-              >Oldest</span
-            >
-          </div>
-        </div>
+    <!-- 3D Tag Cloud Section -->
+    <div class="mb-8">
+      <h3 class="text-[10px] font-black mb-4 dark:text-gray-200 uppercase tracking-widest text-slate-400">
+        Trend Keywords
+      </h3>
+      <div id="tagCloudContainer">
+        <div id="tagCloud3D"></div>
       </div>
-      <div
-        id="loading"
-        class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest"
-      >
-        SYNCING DATA...
-      </div>
-      <div id="news-feed" class="space-y-4"></div>
-    </main>
+    </div>
+  </aside>
 
-    <div
-      id="reportModal"
-      class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
-    >
-      <div
-        class="modal-content bg-white dark:bg-[#25282c] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 transform translate-y-4"
-      >
-        <div
-          class="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-[#1428a0] text-white"
-        >
-          <h3 class="font-bold text-lg flex items-center gap-2">
-            <i data-lucide="file-text" class="w-5 h-5"></i>
-            <span id="modalTitleText">전략 요약 보고서</span>
-          </h3>
-          <button
-            onclick="closeModal()"
-            class="hover:bg-white/20 p-1 rounded-full"
-          >
-            <i data-lucide="x" class="w-6 h-6"></i>
+  <main class="main-content">
+    <div class="grid grid-cols-3 gap-6 mb-10" id="summaryGrid"></div>
+    <div class="flex justify-between items-center mb-6 pb-2 border-b dark:border-gray-700">
+      <h2 class="font-bold text-lg" id="feedTitle">Strategic Feed</h2>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-lg">
+          <span class="text-[9px] px-2 text-slate-400">RISK:</span>
+          <button onclick="filterByRisk('all')"
+            class="risk-filter-btn active px-2 py-0.5 rounded text-[9px] font-bold hover:bg-white dark:hover:bg-slate-700 transition-all">
+            ALL
+          </button>
+          <button onclick="filterByRisk('High')"
+            class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-red-500 hover:bg-white dark:hover:bg-slate-700 transition-all">
+            HIGH
+          </button>
+          <button onclick="filterByRisk('Med')"
+            class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-orange-500 hover:bg-white dark:hover:bg-slate-700 transition-all">
+            MED
+          </button>
+          <button onclick="filterByRisk('Low')"
+            class="risk-filter-btn px-2 py-0.5 rounded text-[9px] font-bold text-blue-500 hover:bg-white dark:hover:bg-slate-700 transition-all">
+            LOW
           </button>
         </div>
-        <div
-          id="modalBody"
-          class="p-8 max-h-[70vh] overflow-y-auto space-y-6"
-        ></div>
+        <div class="text-[10px] flex gap-4 uppercase font-bold text-slate-400 border-l pl-4 dark:border-gray-700">
+          <span id="sortLatest" class="cursor-pointer text-[#1428a0]" onclick="sortNews('latest')">Latest</span>
+          <span id="sortOldest" class="cursor-pointer hover:text-[#1428a0]" onclick="sortNews('oldest')">Oldest</span>
+        </div>
       </div>
     </div>
+    <div id="loading" class="py-20 text-center animate-pulse text-blue-600 font-bold text-[10px] tracking-widest">
+      SYNCING DATA...
+    </div>
+    <div id="news-feed" class="space-y-4"></div>
+  </main>
 
-    <!-- Dynamic Report Modal -->
-    <div id="reportModal" class="modal-overlay hidden" onclick="closeModal()">
-      <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalBody"></div>
-        <button class="close-btn" onclick="closeModal()">
-          <i data-lucide="x"></i>
+  <div id="reportModal"
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]">
+    <div
+      class="modal-content bg-white dark:bg-[#25282c] w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 transform translate-y-4">
+      <div class="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-[#1428a0] text-white">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i data-lucide="file-text" class="w-5 h-5"></i>
+          <span id="modalTitleText">전략 요약 보고서</span>
+        </h3>
+        <button onclick="closeModal()" class="hover:bg-white/20 p-1 rounded-full">
+          <i data-lucide="x" class="w-6 h-6"></i>
         </button>
       </div>
+      <div id="modalBody" class="p-8 max-h-[70vh] overflow-y-auto space-y-6"></div>
     </div>
+  </div>
 
-    <!-- Global Bot Follower Element -->
-    <div
-      id="global-bot-follower"
-      class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150"
-    ></div>
+  <!-- Dynamic Report Modal -->
+  <div id="reportModal" class="modal-overlay hidden" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div id="modalBody"></div>
+      <button class="close-btn" onclick="closeModal()">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+  </div>
 
-    <script>
-      /* GAS_URL and GITHUB_DATA_URL are now loaded from assets/js/config.js */
+  <!-- Global Bot Follower Element -->
+  <div id="global-bot-follower"
+    class="fixed hidden bg-white dark:bg-[#25282c] p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 max-w-xs z-[1001] pointer-events-none transition-opacity duration-150">
+  </div>
 
-      function showBoardModal() {
-        if (!currentUser) return alert("Please login to use the board.");
-        document.getElementById("boardModal").classList.remove("hidden");
-        loadBoardPosts();
-      }
+  <script>
+    /* GAS_URL and GITHUB_DATA_URL are now loaded from assets/js/config.js */
 
-      function closeBoardModal() {
-        document.getElementById("boardModal").classList.add("hidden");
-      }
+    function showBoardModal() {
+      if (!currentUser) return alert("Please login to use the board.");
+      document.getElementById("boardModal").classList.remove("hidden");
+      loadBoardPosts();
+    }
 
-      async function handleBoardSubmit() {
-        const input = document.getElementById("board-input");
-        const content = input.value.trim();
-        if (!content) return;
+    function closeBoardModal() {
+      document.getElementById("boardModal").classList.add("hidden");
+    }
 
-        try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({
-              action: "board_post",
-              userId: currentUser.userId,
-              userName: currentUser.userName,
-              content: content,
-            }),
-          });
-          const result = await res.json();
-          if (result.success) {
-            input.value = "";
-            loadBoardPosts();
-          } else {
-            alert(result.message || "Post failed");
-          }
-        } catch (e) {
-          console.error("Board error:", e);
+    async function handleBoardSubmit() {
+      const input = document.getElementById("board-input");
+      const content = input.value.trim();
+      if (!content) return;
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "board_post",
+            userId: currentUser.userId,
+            userName: currentUser.userName,
+            content: content,
+          }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          input.value = "";
+          loadBoardPosts();
+        } else {
+          alert(result.message || "Post failed");
         }
+      } catch (e) {
+        console.error("Board error:", e);
       }
+    }
 
-      async function loadBoardPosts() {
-        const boardDiv = document.getElementById("board-posts");
-        if (!boardDiv) return;
-        boardDiv.innerHTML = '<p class="text-center py-10 text-slate-400 text-sm">게시글을 불러오는 중...</p>';
+    async function loadBoardPosts() {
+      const boardDiv = document.getElementById("board-posts");
+      if (!boardDiv) return;
+      boardDiv.innerHTML = '<p class="text-center py-10 text-slate-400 text-sm">게시글을 불러오는 중...</p>';
 
-        try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "get_board_posts" }),
-          });
-          const result = await res.json();
-          if (result.success && result.posts && result.posts.length > 0) {
-            boardDiv.innerHTML = result.posts.map(post => `
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "get_board_posts" }),
+        });
+        const result = await res.json();
+        if (result.success && result.posts && result.posts.length > 0) {
+          boardDiv.innerHTML = result.posts.map(post => `
               <div class="p-4 rounded-xl border dark:bg-[#1a1c1e] dark:border-gray-700">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">${post.userName}</span>
@@ -722,39 +577,39 @@
                 <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${post.content}</p>
               </div>
             `).join('');
-          } else {
-            boardDiv.innerHTML = `
+        } else {
+          boardDiv.innerHTML = `
               <div class="p-6 text-center border-2 border-dashed rounded-2xl dark:border-gray-700">
                 <i data-lucide="info" class="w-8 h-8 mx-auto mb-3 text-slate-300"></i>
                 <p class="text-sm text-slate-500">아직 등록된 게시글이 없습니다.<br>첫 번째 의견을 남겨주세요!</p>
               </div>
             `;
-            lucide.createIcons();
-          }
-        } catch (e) {
-          console.error("Board load error:", e);
-          boardDiv.innerHTML = '<p class="text-center py-10 text-red-400 text-sm">게시글을 불러오지 못했습니다.</p>';
+          lucide.createIcons();
         }
+      } catch (e) {
+        console.error("Board load error:", e);
+        boardDiv.innerHTML = '<p class="text-center py-10 text-red-400 text-sm">게시글을 불러오지 못했습니다.</p>';
       }
+    }
 
-      // [인증 관련] 전역 상태 및 유틸리티
-      let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
+    // [인증 관련] 전역 상태 및 유틸리티
+    let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
 
-      function updateUserInfoUI() {
-        const userInfoBar = document.getElementById("user-info-bar");
-        const displayUserName = document.getElementById("display-user-name");
-        const authContainer = document.getElementById("auth-container");
+    function updateUserInfoUI() {
+      const userInfoBar = document.getElementById("user-info-bar");
+      const displayUserName = document.getElementById("display-user-name");
+      const authContainer = document.getElementById("auth-container");
 
-        if (currentUser) {
-          if (userInfoBar) {
-            userInfoBar.classList.remove("hidden");
-            userInfoBar.classList.add("flex");
-          }
-          if (displayUserName) displayUserName.innerText = currentUser.userName + "님";
-          
-          // 랜딩 페이지 업데이트
-          if (authContainer) {
-            authContainer.innerHTML = `
+      if (currentUser) {
+        if (userInfoBar) {
+          userInfoBar.classList.remove("hidden");
+          userInfoBar.classList.add("flex");
+        }
+        if (displayUserName) displayUserName.innerText = currentUser.userName + "님";
+
+        // 랜딩 페이지 업데이트
+        if (authContainer) {
+          authContainer.innerHTML = `
               <div class="text-white text-center">
                 <p class="text-lg font-bold mb-4">${currentUser.userName}님, 환영합니다!</p>
                 <button onclick="enterDashboardAction()" class="bg-blue-600 hover:bg-blue-500 text-white px-10 py-3 rounded-full font-black uppercase tracking-widest shadow-2xl transition-all transform hover:scale-105">
@@ -763,1354 +618,1419 @@
                 <button onclick="logout()" class="block mt-6 text-xs opacity-50 hover:opacity-100 transition-opacity mx-auto">로그아웃</button>
               </div>
             `;
-            authContainer.classList.add("visible");
-          }
+          authContainer.classList.add("visible");
+        }
+      } else {
+        if (userInfoBar) {
+          userInfoBar.classList.add("hidden");
+          userInfoBar.classList.remove("flex");
+        }
+      }
+    }
+
+    // 페이지 로드 시 상태 업데이트
+    window.addEventListener('load', () => {
+      updateUserInfoUI();
+    });
+
+    function toggleAuthForm(mode) {
+      const loginForm = document.getElementById("login-form");
+      const regForm = document.getElementById("register-form");
+      if (mode === "register") {
+        loginForm.style.display = "none";
+        regForm.style.display = "block";
+      } else {
+        loginForm.style.display = "block";
+        regForm.style.display = "none";
+      }
+    }
+
+    async function handleLoginSubmit() {
+      const userId = document.getElementById("login-id").value;
+      const password = document.getElementById("login-pw").value;
+      if (!userId || !password) return alert("Please enter ID and Password");
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "login", userId, password }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          currentUser = { userId: result.userId, userName: result.userName };
+          localStorage.setItem("da_user", JSON.stringify(currentUser));
+          // 인트로 타이틀 페이드아웃 후 dashboard_3d.html로 이동
+          const intro = document.getElementById('intro-title');
+          const ct = document.getElementById('center-title');
+          const lp = document.getElementById('landing-page');
+          if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
+          if (ct) { ct.style.transition = 'opacity 0.8s ease-in'; ct.style.opacity = '1'; }
+          if (lp) { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
+          setTimeout(() => { window.location.replace("dashboard_3d.html"); }, 1200);
         } else {
-          if (userInfoBar) {
-            userInfoBar.classList.add("hidden");
-            userInfoBar.classList.remove("flex");
+          alert(result.message || "Invalid credentials");
+        }
+      } catch (e) {
+        console.error("Login error:", e);
+        alert("Login failed. Please check connection.");
+      }
+    }
+    async function handleRegisterSubmit() {
+      const userId = document.getElementById("reg-id").value;
+      const userName = document.getElementById("reg-name").value;
+      const password = document.getElementById("reg-pw").value;
+      if (!userId || !userName || !password) return alert("Fill all fields");
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "register", userId, userName, password }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message);
+          toggleAuthForm("login");
+        } else {
+          alert(result.message || "Registration failed");
+        }
+      } catch (e) {
+        console.error("Reg error:", e);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("da_user");
+      // 로그아웃 시 무조건 본래의 랜딩 페이지로 리다이렉트
+      window.location.href = "index.html";
+    }
+
+    // [기존 enterDashboard 수정] 로그인 연동 로직 분리
+    function enterDashboard() {
+      if (!currentUser) {
+        // 랜딩 페이지가 숨겨져 있다면(Hub 모드) 다시 표시
+        const lp = document.getElementById("landing-page");
+        if (lp && (lp.classList.contains("hidden") || lp.style.display === "none")) {
+          lp.style.display = "block";
+          lp.classList.remove("hidden");
+          // 지구본은 이미 멈췄거나 숨겨졌을 수 있으므로 배경만이라도 확보
+          lp.style.background = "rgba(0,0,0,0.85)";
+          lp.style.backdropFilter = "blur(8px)";
+        }
+        // 로그인 폼 표시
+        document.getElementById("auth-container").classList.add("visible");
+        return;
+      }
+      // 이미 로그인된 경우, 대시보드로 즉시 이동
+      enterDashboardAction();
+    }
+
+    function enterDashboardAction() {
+      // 로그인 후 항상 dashboard_3d.html로 (Globe 애니메이션 감상 + 프리로드)
+      window.location.replace("dashboard_3d.html");
+    }
+
+    // [추가] 세션 ID 생성 및 관리
+    function getSessionId() {
+      let sid = sessionStorage.getItem("da_session_id");
+      if (!sid) {
+        sid =
+          "sess_" + Date.now() + Math.random().toString(36).substring(2, 9);
+        sessionStorage.setItem("da_session_id", sid);
+      }
+      return sid;
+    }
+
+    // [추가] 통합 클릭 핸들러 (펼치기 + 조회수 추적 + 댓글 섹션)
+    function handleArticleClick(el, id) {
+      if (!el) return;
+      el.classList.toggle("expanded");
+
+      if (el.classList.contains("expanded")) {
+        const n = allNews.find((item) => item._uId === id);
+        if (n && n.Title) {
+          trackArticleView({
+            title: n.Title,
+            date: n.Date,
+            url: n.URL,
+            category: n.Category,
+            risk: n.Risk,
+          });
+        }
+      }
+    }
+
+    // [좋아요 로직]
+    function hasLiked(id) {
+      return localStorage.getItem("liked_" + id) === "true";
+    }
+
+    async function handleLikeClick(event, id) {
+      event.stopPropagation();
+      if (!currentUser) return alert("Please login to like articles.");
+      if (hasLiked(id)) return;
+
+      const n = allNews.find((item) => item._uId === id);
+      if (!n) return;
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "like", title: n.Title }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          localStorage.setItem("liked_" + id, "true");
+          const countEl = document.getElementById("like-count-" + id);
+          if (countEl) {
+            countEl.innerText = result.count || (parseInt(countEl.innerText) + 1);
           }
+          event.target.closest("button").classList.add("like-btn-active");
+        }
+      } catch (e) {
+        console.error("Like error:", e);
+      }
+    }
+
+
+    // [추가] 조회수 추적 함수
+    function trackArticleView(articleData) {
+      if (!articleData || !articleData.title) return;
+
+      const { title, date, url, category, risk } = articleData;
+      const sessionId = getSessionId();
+
+      // 고유 식별을 위한 키 생성
+      const uniqueString = title + (date || "") + (url || "");
+      const storageKey =
+        "viewed_" +
+        uniqueString.split("").reduce((a, b) => {
+          a = (a << 5) - a + b.charCodeAt(0);
+          return a & a;
+        }, 0);
+
+      // 중복 클릭 방지 (세션 단위)
+      const viewed = sessionStorage.getItem(storageKey);
+      if (viewed) return;
+
+      fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "view",
+          title: title,
+          date: date,
+          url: url,
+          category: category,
+          risk: risk,
+          sessionId: sessionId,
+        }),
+      })
+        .then(res => res.json())
+        .then((result) => {
+          if (result.success) {
+            sessionStorage.setItem(storageKey, "true");
+            console.log("View tracked:", title);
+          }
+        })
+        .catch((err) => console.error("Tracking error:", err));
+    }
+
+    let allNews = [],
+      currentFilteredNews = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+
+    // 통합 필터 상태 관리
+    let filterState = {
+      category: "all",
+      risk: "all",
+      sort: "latest",
+      search: "",
+      scope: "all",
+      dateType: null, // null | 'week' | 'day'
+      dateValue: null,
+      country: "all",
+      tag: "all",
+    };
+
+    // isDashboardActive는 상단 스크립트에서 이미 선언됨
+
+    // 언어 상태 및 번역 사전
+    let currentLang = "ko"; // 'ko' | 'en'
+    const translations = {
+      ko: {
+        nav_strategy: "전략 시황",
+        nav_material: "원자재",
+        nav_macro: "거시/정책",
+        nav_region: "생산지역",
+        nav_competitor: "경쟁사",
+        nav_tech: "신기술동향",
+        nav_index: "INDEX",
+        search_scope_all: "제목+본문",
+        search_scope_title: "제목",
+        search_scope_content: "본문",
+        search_placeholder: "뉴스 키워드 검색...",
+        today: "TODAY",
+        global_map: "Global Map",
+        cloud_title: "Intelligence Cloud",
+        feed_title: "Strategic Feed",
+        risk_all: "ALL",
+        sort_latest: "Latest",
+        sort_oldest: "Oldest",
+        syncing: "SYNCING DATA...",
+        modal_title: "전략 요약 보고서",
+        country_news_suffix: " 관련 뉴스",
+        data_error: "데이터 없음",
+        tag_data_error: "태그 데이터 없음",
+        region_data_error: "지역 데이터 없음",
+        briefing_suffix: " 전략 브리핑",
+      },
+      en: {
+        nav_strategy: "Strategy",
+        nav_material: "Material",
+        nav_macro: "Macro",
+        nav_region: "Region",
+        nav_competitor: "Competitors",
+        nav_tech: "New Tech",
+        nav_index: "Index",
+        search_scope_all: "Title+Content",
+        search_scope_title: "Title",
+        search_scope_content: "Content",
+        search_placeholder: "Search keywords...",
+        today: "TODAY",
+        global_map: "Global Map",
+        cloud_title: "Intelligence Cloud",
+        feed_title: "Strategic Feed",
+        risk_all: "ALL",
+        sort_latest: "Latest",
+        sort_oldest: "Oldest",
+        syncing: "SYNCING DATA...",
+        modal_title: "Strategy Summary Report",
+        country_news_suffix: " News",
+        data_error: "No Data",
+        tag_data_error: "No Tag Data",
+        region_data_error: "No Regional Data",
+        briefing_suffix: " Briefing",
+      },
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === "ko" ? "en" : "ko";
+      document.getElementById("langBtn").innerText =
+        currentLang.toUpperCase();
+
+      applyTranslations();
+      renderAllow(); // Re-render content
+    }
+
+    function applyTranslations() {
+      const t = translations[currentLang];
+
+      // Static UI Elements (Update logic)
+      // Note: For cleaner code, we will select elements by ID or data-i18n in a separate pass strictly if needed,
+      // but for now we'll update specific IDs directly or re-render components that contain them.
+
+      // Navbar
+      const navLinks = document.querySelectorAll("nav a");
+      if (navLinks.length >= 7) {
+        navLinks[0].innerText = t.nav_strategy;
+        navLinks[1].innerText = t.nav_material;
+        navLinks[2].innerText = t.nav_macro;
+        navLinks[3].innerText = t.nav_region;
+        navLinks[4].innerText = t.nav_competitor;
+        navLinks[5].innerText = t.nav_tech;
+        navLinks[6].innerText = t.nav_index;
+      }
+
+      // Search Scope
+      const scopeOpts = document.getElementById("searchScope").options;
+      scopeOpts[0].text = t.search_scope_all;
+      scopeOpts[1].text = t.search_scope_title;
+      scopeOpts[2].text = t.search_scope_content;
+
+      // Search Placeholder
+      document.getElementById("searchInput").placeholder =
+        t.search_placeholder;
+
+      // Feed Title (Default)
+      if (
+        document.getElementById("feedTitle").innerText ===
+        translations["ko"].feed_title ||
+        document.getElementById("feedTitle").innerText ===
+        translations["en"].feed_title
+      ) {
+        document.getElementById("feedTitle").innerText = t.feed_title;
+      }
+
+      // Modal Title
+      const modalTitle = document.getElementById("modalTitleText");
+      if (modalTitle) modalTitle.innerText = t.modal_title;
+
+      // Loading Text
+      const loadingEl = document.getElementById("loading");
+      if (loadingEl) loadingEl.innerText = t.syncing;
+    }
+
+    function renderAllow() {
+      renderAll(currentFilteredNews); // Re-use the existing renderAll logic but with current data
+    }
+
+    const todayDate = new Date();
+    let curYear = todayDate.getFullYear(),
+      curMonth = todayDate.getMonth();
+    let tagCloudInstance = null;
+
+    // 국가 좌표 맵핑 (실제 세계 지도 이미지 기준, %)
+    // 표준 메르카토르 투영법 - 정확한 실제 위치
+    const countryCoords = {
+      // 북미
+      미국: { x: 22, y: 38 },
+      USA: { x: 22, y: 38 },
+      캐나다: { x: 20, y: 25 },
+      Canada: { x: 20, y: 25 },
+      멕시코: { x: 18, y: 48 },
+      Mexico: { x: 18, y: 48 },
+
+      // 남미
+      브라질: { x: 32, y: 68 },
+      Brazil: { x: 32, y: 68 },
+
+      // 유럽
+      영국: { x: 48, y: 30 },
+      UK: { x: 48, y: 30 },
+      "United Kingdom": { x: 48, y: 30 },
+      프랑스: { x: 50, y: 34 },
+      France: { x: 50, y: 34 },
+      독일: { x: 52, y: 32 },
+      Germany: { x: 52, y: 32 },
+      이탈리아: { x: 53, y: 36 },
+      Italy: { x: 53, y: 36 },
+      스페인: { x: 47, y: 37 },
+      Spain: { x: 47, y: 37 },
+      러시아: { x: 70, y: 25 },
+      Russia: { x: 70, y: 25 },
+
+      // 아시아
+      중국: { x: 76, y: 40 },
+      China: { x: 76, y: 40 },
+      일본: { x: 86, y: 38 },
+      Japan: { x: 86, y: 38 },
+      한국: { x: 82, y: 38 },
+      Korea: { x: 82, y: 38 },
+      "South Korea": { x: 82, y: 38 },
+      인도: { x: 67, y: 45 },
+      India: { x: 67, y: 45 },
+      베트남: { x: 78, y: 50 },
+      Vietnam: { x: 78, y: 50 },
+      태국: { x: 76, y: 50 },
+      Thailand: { x: 76, y: 50 },
+      인도네시아: { x: 80, y: 58 },
+      Indonesia: { x: 80, y: 58 },
+
+      // 오세아니아
+      호주: { x: 85, y: 75 },
+      Australia: { x: 85, y: 75 },
+
+      // 전역
+      Global: { x: 50, y: 50 },
+    };
+
+    // 철통 날짜 파싱
+    function parseDate(dateStr) {
+      if (!dateStr) return new Date();
+      const clean = dateStr.toString().replace(/\./g, "-").replace(/\s/g, "");
+      const parts = clean.split("T")[0].split("-");
+      return parts.length < 3
+        ? new Date()
+        : new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    // 주차 계산 함수
+    function getWeekOfMonth(date) {
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+      const dayOfMonth = date.getDate();
+      const firstDayOfWeek = firstDay.getDay();
+      return Math.ceil((dayOfMonth + firstDayOfWeek) / 7);
+    }
+
+    // 날짜 범위로 필터링
+    function getDateRangeForWeek(year, month, weekNum) {
+      const firstDay = new Date(year, month, 1);
+      const firstDayOfWeek = firstDay.getDay();
+
+      const startDate = (weekNum - 1) * 7 - firstDayOfWeek + 1;
+      const endDate = startDate + 6;
+
+      return {
+        start: Math.max(1, startDate),
+        end: Math.min(endDate, new Date(year, month + 1, 0).getDate()),
+      };
+    }
+
+    async function fetchNews() {
+      const sources = [
+        { name: "Local JSON", url: "data.json" },
+        { name: "GitHub JSON", url: GITHUB_DATA_URL },
+        { name: "Google Sheets (GAS)", url: GAS_URL },
+      ];
+
+      let success = false;
+
+      for (const source of sources) {
+        try {
+          console.log(`Attempting to fetch from ${source.name}...`);
+          const res = await fetch(source.url);
+
+          if (res.ok) {
+            allNews = await res.json();
+            console.log(
+              `Successfully loaded news from ${source.name}:`,
+              allNews.length,
+              "items",
+            );
+            success = true;
+            break;
+          } else {
+            console.warn(
+              `Failed to fetch from ${source.name}: ${res.status} ${res.statusText}`,
+            );
+          }
+        } catch (e) {
+          console.error(`Error fetching from ${source.name}:`, e);
         }
       }
 
-      // 페이지 로드 시 상태 업데이트
-      window.addEventListener('load', () => {
-        updateUserInfoUI();
+      if (success) {
+        // 고유 ID 부여 (Deterministic ID for dashboard linkage)
+        allNews.forEach((n, i) => {
+          n._uId = `news-${i}`;
+        });
+
+        currentFilteredNews = [...allNews];
+
+        // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
+        console.log("Starting staggered background rendering...");
+        setTimeout(() => renderCalendar(allNews), 100);
+        setTimeout(() => renderSummary(allNews), 300);
+        setTimeout(() => renderTags(allNews), 500);
+        setTimeout(() => renderWorldMap(allNews), 700);
+        setTimeout(() => {
+          applyFilters(true);
+          // Initial filter apply
+
+          // [추가] URL 파라미터 체크 (Deep Link / Direct View)
+          const urlParams = new URLSearchParams(window.location.search);
+          const targetId = urlParams.get("targetId");
+          const view = urlParams.get("view");
+
+          if (targetId || view === "hub" || view === "news") {
+            // 대시보드에서 왔거나 직접 뷰 요청인 경우 랜딩 페이지 스킵
+            isDashboardActive = true;
+            const lp = document.getElementById("landing-page");
+            if (lp) {
+              lp.style.display = "none";
+              lp.classList.add("hidden");
+            }
+            document.body.classList.remove("landing-active");
+
+            if (targetId) {
+              // 특정 기사로 포커스 (데이터 렌더링 후 실행되도록 넉넉한 타이밍)
+              setTimeout(() => focusNews(targetId), 800);
+            }
+          }
+
+          document.getElementById("loading").style.display = "none";
+        }, 900);
+      } else {
+        document.getElementById("loading").innerHTML =
+          "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스(Local, GitHub, GAS)를 불러오는데 실패했습니다.</span>";
+        document.getElementById("loading").style.display = "none";
+      }
+    }
+
+    function renderAll(data) {
+      renderCalendar(data);
+      renderSummary(data);
+      renderTags(data);
+      renderWorldMap(data);
+      renderFeed(data);
+    }
+
+    function moveCalendar(yOff, mOff) {
+      curYear += yOff;
+      curMonth += mOff;
+      if (curMonth > 11) {
+        curMonth = 0;
+        curYear++;
+      }
+      if (curMonth < 0) {
+        curMonth = 11;
+        curYear--;
+      }
+
+      document.getElementById("calHeader").innerText =
+        `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+      renderCalendar(allNews);
+    }
+
+    function renderCalendar(data) {
+      const grid = document.getElementById("calendarGrid");
+      const dateCounts = data.reduce((acc, n) => {
+        const d = parseDate(n.Date);
+        if (d.getFullYear() === curYear && d.getMonth() === curMonth) {
+          const day = d.getDate();
+          acc[day] = (acc[day] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      let html = "";
+
+      // 헤더: 주차 + 요일
+      html += `<span class="font-bold opacity-30 text-[9px]">W</span>`;
+      ["S", "M", "T", "W", "T", "F", "S"].forEach(
+        (s) =>
+          (html += `<span class="font-bold opacity-30 text-[10px]">${s}</span>`),
+      );
+
+      const firstDay = new Date(curYear, curMonth, 1).getDay();
+      const lastDate = new Date(curYear, curMonth + 1, 0).getDate();
+
+      let currentWeek = 1;
+      let dayCount = 0;
+
+      // 첫 주
+      html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${currentWeek}</span>`;
+
+      // 첫 주의 빈 칸
+      for (let i = 0; i < firstDay; i++) {
+        html += `<span class="invisible">-</span>`;
+        dayCount++;
+      }
+
+      // 날짜 렌더링
+      for (let d = 1; d <= lastDate; d++) {
+        // 새로운 주 시작 (일요일)
+        if (dayCount > 0 && dayCount % 7 === 0) {
+          currentWeek++;
+          html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${currentWeek}</span>`;
+        }
+
+        const count = dateCounts[d] || 0;
+        let lv =
+          count >= 3
+            ? "calendar-ring ring-lv3"
+            : count === 2
+              ? "calendar-ring ring-lv2"
+              : count === 1
+                ? "calendar-ring ring-lv1"
+                : "";
+        const clickEvent = count > 0 ? `onclick="filterByDate(${d})"` : "";
+        html += `<span class="${lv}" id="cal-${d}" ${clickEvent}>${d}</span>`;
+        dayCount++;
+      }
+
+      // 마지막 주의 빈 칸
+      const remainingCells = dayCount % 7;
+      if (remainingCells !== 0) {
+        for (let i = remainingCells; i < 7; i++) {
+          html += `<span class="invisible">-</span>`;
+        }
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function filterByWeek(weekNum) {
+      // 모든 선택 해제
+      document
+        .querySelectorAll(".calendar-grid .week-label")
+        .forEach((el) => {
+          el.classList.remove("week-selected");
+        });
+
+      // 주차 라벨 선택 표시
+      const weekLabel = document.getElementById(`week-${weekNum}`);
+      if (weekLabel) weekLabel.classList.add("week-selected");
+
+      // 날짜 선택 상태면 해제 (주차와 일자는 상충)
+      document
+        .querySelectorAll(".calendar-grid span:not(.week-label)")
+        .forEach((el) => {
+          el.classList.remove("calendar-selected");
+        });
+
+      // 상태 업데이트
+      filterState.dateType = "week";
+      filterState.dateValue = weekNum;
+      applyFilters();
+    }
+
+    function filterByDate(day) {
+      document.querySelectorAll(".calendar-grid span").forEach((el) => {
+        el.classList.remove("calendar-selected", "week-selected");
+      });
+      const target = document.getElementById(`cal-${day}`);
+      if (target) target.classList.add("calendar-selected");
+
+      // 상태 업데이트
+      filterState.dateType = "day";
+      filterState.dateValue = day;
+      applyFilters();
+    }
+
+    function sortNews(type) {
+      filterState.sort = type;
+      applyFilters();
+    }
+
+    // 다중 URL 파싱 함수
+    function parseUrls(urlString) {
+      if (!urlString) return [];
+
+      // URL과 출처명 패턴 파싱: "출처명: URL" 또는 단순 URL
+      const urlPattern = /(?:([^:,]+):\s*)?(https?:\/\/[^\s,]+)/g;
+      const urls = [];
+      let match;
+
+      while ((match = urlPattern.exec(urlString)) !== null) {
+        urls.push({
+          name: match[1] ? match[1].trim() : extractDomain(match[2]),
+          url: match[2].trim(),
+        });
+      }
+
+      return urls.length > 0 ? urls : [{ name: "원문", url: urlString }];
+    }
+
+    // 도메인에서 출처명 추출
+    function extractDomain(url) {
+      try {
+        const domain = new URL(url).hostname.replace("www.", "");
+        return domain.split(".")[0];
+      } catch {
+        return "출처";
+      }
+    }
+
+    function renderFeed(data) {
+      const feed = document.getElementById("news-feed");
+      const t = translations[currentLang];
+
+      const totalItems = data.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+      // Ensure currentPage is within bounds
+      if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const pageData = data.slice(startIndex, endIndex);
+
+      const html = pageData
+        .map((n) => {
+          const urls = parseUrls(n.URL);
+          const sourceLinksHtml = urls
+            .map(
+              (src) =>
+                `<a href="${src.url}" target="_blank" class="source-link" onclick="event.stopPropagation()">
+                      <i data-lucide="external-link" class="w-3 h-3"></i>
+                      ${src.name}
+                  </a>`,
+            )
+            .join("");
+
+          let impactHtml = "";
+          if (n.Impact) {
+            const isPositive = n.Impact.includes("+");
+            const isNegative = n.Impact.includes("-");
+            const colorClass = isPositive
+              ? "text-green-600 bg-green-50"
+              : isNegative
+                ? "text-red-600 bg-red-50"
+                : "text-slate-600 bg-slate-50";
+            impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
+          }
+
+          let displayTitle = n.Title;
+          let displaySummary = n.Summary;
+          let displayCategory = n.Category || "N/A";
+          if (currentLang === "en") {
+            if (n.Title_en) displayTitle = n.Title_en;
+            if (n.Summary_en) displaySummary = n.Summary_en;
+            if (n.Category_en) displayCategory = n.Category_en;
+          }
+
+          const rawBot = n.BOT || n.Bot || n.bot || "";
+          const botContent = (currentLang === "en" ? (n.BOT_en || n["BOT(eng)"] || rawBot) : rawBot).trim();
+
+          const displaySummaryFull = displaySummary || "";
+
+          return `
+                  <article id="${n._uId}" 
+                      class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? "has-bot" : ""}" 
+                      onclick="handleArticleClick(this, '${n._uId}')">
+                      <div class="news-inner">
+                          <div class="flex gap-8 items-start">
+                              <div class="flex-1">
+                                  <div class="flex items-center gap-3 mb-3">
+                                      <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${displayCategory}</span>
+                                      ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
+                                      ${impactHtml}
+                                      <div class="engagement-tag">
+                                          <i data-lucide="eye" class="w-3 h-3"></i>
+                                          <span>${n.ViewCount || 0}</span>
+                                      </div>
+                                      <div class="engagement-tag">
+                                          <button onclick="handleLikeClick(event, '${n._uId}')" class="flex items-center gap-1 hover:text-red-500 transition-colors ${hasLiked(n._uId) ? 'like-btn-active' : ''}">
+                                              <i data-lucide="heart" class="w-3 h-3 text-red-400"></i>
+                                              <span id="like-count-${n._uId}">${n.LikeCount || 0}</span>
+                                          </button>
+                                      </div>
+                                      <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
+                                  </div>
+                                  <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
+                                  <div class="news-body-grid">
+                                      <div class="news-content-col">
+                                          <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                                              ${displaySummaryFull}
+                                          </p>
+                                          <div class="source-links">${sourceLinksHtml}</div>
+                                      </div>
+                                      ${botContent
+              ? `
+                                      <div class="news-bot-col" onclick="event.stopPropagation()">
+                                          <div class="bot-inner-bubble">
+                                              <div class="font-black text-xs opacity-70 mb-2">💡 AI Insight</div>
+                                              <div class="bot-text text-xs leading-relaxed">
+                                                  ${botContent}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      `
+              : ""
+            }
+                                  </div>
+                              </div>
+                              ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
+                          </div>
+                      </div>
+                  </article>`;
+        })
+        .join("");
+
+      feed.innerHTML = html;
+      renderPagination(totalItems);
+      lucide.createIcons();
+    }
+
+    function renderPagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const feed = document.getElementById("news-feed");
+
+      // Remove existing pagination if any
+      let paginationContainer = document.querySelector(".pagination-container");
+      if (paginationContainer) paginationContainer.remove();
+
+      if (totalPages <= 1) return;
+
+      paginationContainer = document.createElement("div");
+      paginationContainer.className = "pagination-container";
+
+      // "처음" / "First" button
+      const firstBtn = document.createElement("button");
+      firstBtn.className = "pagination-btn nav-text";
+      firstBtn.innerText = currentLang === "en" ? "First" : "처음";
+      firstBtn.disabled = currentPage === 1;
+      firstBtn.onclick = () => { currentPage = 1; applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      paginationContainer.appendChild(firstBtn);
+
+      // 이전 / Prev button
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "pagination-btn";
+      prevBtn.innerHTML = '<i data-lucide="chevron-left" class="w-4 h-4"></i>';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => { currentPage--; applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      paginationContainer.appendChild(prevBtn);
+
+      // Page Numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.innerText = i;
+        pageBtn.onclick = () => { currentPage = i; applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        paginationContainer.appendChild(pageBtn);
+      }
+
+      // 다음 / Next button (Icon)
+      const nextIconBtn = document.createElement("button");
+      nextIconBtn.className = "pagination-btn";
+      nextIconBtn.innerHTML = '<i data-lucide="chevron-right" class="w-4 h-4"></i>';
+      nextIconBtn.disabled = currentPage === totalPages;
+      nextIconBtn.onclick = () => { currentPage++; applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      paginationContainer.appendChild(nextIconBtn);
+
+      // "마지막" / "Last" button
+      const lastBtn = document.createElement("button");
+      lastBtn.className = "pagination-btn nav-text";
+      lastBtn.innerText = currentLang === "en" ? "Last" : "마지막";
+      lastBtn.disabled = currentPage === totalPages;
+      lastBtn.onclick = () => { currentPage = totalPages; applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      paginationContainer.appendChild(lastBtn);
+
+      feed.after(paginationContainer);
+      lucide.createIcons();
+    }
+
+
+    /* Global Bot Follower Logic */
+
+    // 3D 인터랙티브 태그 클라우드 - 순수 JavaScript 구현
+    let tag3DRotation = { x: 0, y: 0 };
+    let tag3DSpeed = { x: 0.5, y: 0.3 };
+    let isDraggingTag = false;
+    let tagDragStart = { x: 0, y: 0 };
+    let tagAnimationId = null;
+
+    function renderTags(data) {
+      if (tagAnimationId) cancelAnimationFrame(tagAnimationId);
+
+      console.log("renderTags called with", data.length, "items");
+      const tagMap = {};
+
+      const t = translations[currentLang];
+
+      if (!data || data.length === 0) {
+        const container = document.getElementById("tagCloud3D");
+        if (container)
+          container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
+        return;
+      }
+
+      data.forEach((n) => {
+        // 태그 필드 확인
+        let tagField =
+          n.Tag ||
+          n.tag ||
+          n.Tags ||
+          n.tags ||
+          n.KEYWORD ||
+          n.Keyword ||
+          n.keyword;
+        if (currentLang === "en" && n.Tag_en) tagField = n.Tag_en; // 영문 태그 우선
+
+        if (tagField) {
+          tagField.split(",").forEach((tag) => {
+            const t = tag.trim();
+            if (t && t.length > 0) tagMap[t] = (tagMap[t] || 0) + 1;
+          });
+        }
       });
 
-      function toggleAuthForm(mode) {
-        const loginForm = document.getElementById("login-form");
-        const regForm = document.getElementById("register-form");
-        if (mode === "register") {
-          loginForm.style.display = "none";
-          regForm.style.display = "block";
-        } else {
-          loginForm.style.display = "block";
-          regForm.style.display = "none";
-        }
+      const sortedTags = Object.entries(tagMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15);
+
+      if (sortedTags.length === 0) {
+        const container = document.getElementById("tagCloud3D");
+        if (container)
+          container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
+        return;
       }
 
-      async function handleLoginSubmit() {
-  const userId = document.getElementById("login-id").value;
-  const password = document.getElementById("login-pw").value;
-  if (!userId || !password) return alert("Please enter ID and Password");
+      const maxCount = Math.max(...sortedTags.map(([_, c]) => c), 1);
+      const container = document.getElementById("tagCloud3D");
+      container.innerHTML = "";
 
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "login", userId, password }),
-    });
-    const result = await res.json();
-    if (result.success) {
-      currentUser = { userId: result.userId, userName: result.userName };
-      localStorage.setItem("da_user", JSON.stringify(currentUser));
-      // 인트로 타이틀 페이드아웃 후 dashboard_3d.html로 이동
-      const intro = document.getElementById('intro-title');
-      const ct    = document.getElementById('center-title');
-      const lp    = document.getElementById('landing-page');
-      if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
-      if (ct)    { ct.style.transition    = 'opacity 0.8s ease-in';  ct.style.opacity    = '1'; }
-      if (lp)    { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
-      setTimeout(() => { window.location.replace("dashboard_3d.html"); }, 1200);
-    } else {
-      alert(result.message || "Invalid credentials");
+      // 3D 구 좌표 생성 (피보나치 구면 분포 알고리즘)
+      const tags3D = sortedTags.map(([tag, count], i) => {
+        const k = i + 1;
+        const phi = Math.acos(1 - (2 * k) / (sortedTags.length + 1));
+        const theta = Math.PI * (1 + Math.sqrt(5)) * k;
+        const radius = 80; // 200px 컨테이너에 적합한 반지름
+
+        return {
+          tag,
+          count,
+          x: radius * Math.cos(theta) * Math.sin(phi),
+          y: radius * Math.sin(theta) * Math.sin(phi),
+          z: radius * Math.cos(phi),
+        };
+      });
+
+      // 태그 요소 생성
+      tags3D.forEach((tagObj) => {
+        const elem = document.createElement("div");
+        elem.className = "tag3d";
+        elem.textContent = tagObj.tag;
+        elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 8}px`; // 폰트 크기 가독성 개선
+        elem.dataset.x = tagObj.x;
+        elem.dataset.y = tagObj.y;
+        elem.dataset.z = tagObj.z;
+        elem.onclick = (e) => {
+          e.stopPropagation();
+          showTagReport(tagObj.tag);
+        };
+        container.appendChild(elem);
+      });
+
+      // 애니메이션 루프 시작 (대시보드 입장 시에만 활성화되도록 renderTags 내 로직은 일단 유지하되 루프 제어)
+      if (isDashboardActive) {
+        animateTagCloud();
+      }
+
+      // 드래그 및 마우스 조작 이벤트 (전역 등록)
+      if (!window.isTagEventRegistered) {
+        const cloudBox = document.getElementById("tagCloudContainer");
+
+        cloudBox.addEventListener("mousedown", (e) => {
+          isDraggingTag = true;
+          tagDragStart = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener("mousemove", (e) => {
+          if (isDraggingTag) {
+            const dx = e.clientX - tagDragStart.x;
+            const dy = e.clientY - tagDragStart.y;
+            // 회전 감도 조절
+            tag3DRotation.y += dx * 0.005;
+            tag3DRotation.x -= dy * 0.005;
+            tagDragStart = { x: e.clientX, y: e.clientY };
+          }
+        });
+
+        window.addEventListener("mouseup", () => {
+          isDraggingTag = false;
+        });
+
+        window.isTagEventRegistered = true;
+      }
     }
-  } catch (e) {
-    console.error("Login error:", e);
-    alert("Login failed. Please check connection.");
-  }
-}
-      async function handleRegisterSubmit() {
-        const userId = document.getElementById("reg-id").value;
-        const userName = document.getElementById("reg-name").value;
-        const password = document.getElementById("reg-pw").value;
-        if (!userId || !userName || !password) return alert("Fill all fields");
 
-        try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "register", userId, userName, password }),
+    function animateTagCloud() {
+      if (!isDashboardActive) return; // 최적화: 랜딩 페이지에서는 태그 클라우드 애니메이션 중지
+
+      if (!isDraggingTag) {
+        // 자연스러운 자동 회전
+        tag3DRotation.x += 0.002;
+        tag3DRotation.y += 0.003;
+      }
+
+      const tags = document.querySelectorAll(".tag3d");
+      const radius = 80;
+
+      tags.forEach((tag) => {
+        const x0 = parseFloat(tag.dataset.x);
+        const y0 = parseFloat(tag.dataset.y);
+        const z0 = parseFloat(tag.dataset.z);
+
+        // 3D 회전 행렬 계산 (X, Y축 기준)
+        const cosX = Math.cos(tag3DRotation.x);
+        const sinX = Math.sin(tag3DRotation.x);
+        let y1 = y0 * cosX - z0 * sinX;
+        let z1 = y0 * sinX + z0 * cosX;
+
+        const cosY = Math.cos(tag3DRotation.y);
+        const sinY = Math.sin(tag3DRotation.y);
+        let x2 = x0 * cosY + z1 * sinY;
+        let z2 = -x0 * sinY + z1 * cosY;
+
+        // 투영 및 스타일 업데이트 (Z축 깊이에 따른 효과)
+        const depth = (z2 + radius) / (2 * radius); // 0 (뒤) ~ 1 (앞)
+        const scale = 0.5 + depth * 0.8; // 0.5x ~ 1.3x
+        const opacity = 0.2 + depth * 0.8; // 0.2 ~ 1.0
+
+        // translate3d를 사용하여 GPU 가속 활용
+        tag.style.transform = `translate3d(${x2}px, ${y1}px, ${z2}px) scale(${scale})`;
+        tag.style.opacity = opacity;
+        tag.style.zIndex = Math.round(depth * 100);
+
+        // 흐림 효과 (선택적: 깊이 표현 강조)
+        if (depth < 0.3) {
+          tag.style.filter = `blur(0.5px)`;
+        } else {
+          tag.style.filter = "none";
+        }
+      });
+
+      tagAnimationId = requestAnimationFrame(animateTagCloud);
+    }
+
+    // 글로벌 지도 렌더링 (Iframe 버전)
+    let lastCalculatedCountryMap = null;
+
+    function renderWorldMap(data) {
+      if (!data) return;
+
+      const countryMap = {};
+      data.forEach((n) => {
+        let regionField =
+          n.Region ||
+          n.region ||
+          n.Country ||
+          n.country ||
+          n.Place ||
+          n.place ||
+          n.Location ||
+          n.location;
+        if (currentLang === "en" && n.Region_en) regionField = n.Region_en;
+
+        if (regionField) {
+          const countries = regionField.split(",").map((c) => c.trim());
+          countries.forEach((country) => {
+            if (country) countryMap[country] = (countryMap[country] || 0) + 1;
           });
-          const result = await res.json();
-          if (result.success) {
-            alert(result.message);
-            toggleAuthForm("login");
-          } else {
-            alert(result.message || "Registration failed");
-          }
-        } catch (e) {
-          console.error("Reg error:", e);
         }
+      });
+
+      lastCalculatedCountryMap = countryMap;
+      sendDataToMap();
+    }
+
+    function sendDataToMap() {
+      const frame = document.getElementById("mapFrame");
+      if (frame && frame.contentWindow && lastCalculatedCountryMap) {
+        frame.contentWindow.postMessage(
+          {
+            type: "updateData",
+            data: lastCalculatedCountryMap,
+          },
+          "*",
+        );
       }
+    }
 
-      function logout() {
-        localStorage.removeItem("da_user");
-        // 로그아웃 시 무조건 본래의 랜딩 페이지로 리다이렉트
-        window.location.href = "index.html";
+    // Iframe 메시지 수신 (지도 클릭 처리)
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "filterByCountry") {
+        filterByCountry(event.data.country);
       }
-
-      // [기존 enterDashboard 수정] 로그인 연동 로직 분리
-      function enterDashboard() {
-        if (!currentUser) {
-          // 랜딩 페이지가 숨겨져 있다면(Hub 모드) 다시 표시
-          const lp = document.getElementById("landing-page");
-          if (lp && (lp.classList.contains("hidden") || lp.style.display === "none")) {
-            lp.style.display = "block";
-            lp.classList.remove("hidden");
-            // 지구본은 이미 멈췄거나 숨겨졌을 수 있으므로 배경만이라도 확보
-            lp.style.background = "rgba(0,0,0,0.85)";
-            lp.style.backdropFilter = "blur(8px)";
-          }
-          // 로그인 폼 표시
-          document.getElementById("auth-container").classList.add("visible");
-          return;
-        }
-        // 이미 로그인된 경우, 대시보드로 즉시 이동
-        enterDashboardAction();
+      if (event.data && event.data.type === "mapReady") {
+        console.log("Map reported ready, sending data...");
+        sendDataToMap();
       }
+    });
 
-      function enterDashboardAction() {
-        // 로그인 후 항상 dashboard_3d.html로 (Globe 애니메이션 감상 + 프리로드)
-        window.location.replace("dashboard_3d.html");
+    function filterByCountry(country) {
+      if (filterState.country === country) {
+        filterState.country = "all"; // Toggle off
+      } else {
+        filterState.country = country;
       }
+      applyFilters();
+    }
 
-      // [추가] 세션 ID 생성 및 관리
-      function getSessionId() {
-        let sid = sessionStorage.getItem("da_session_id");
-        if (!sid) {
-          sid =
-            "sess_" + Date.now() + Math.random().toString(36).substring(2, 9);
-          sessionStorage.setItem("da_session_id", sid);
-        }
-        return sid;
+    function showTagReport(tag) {
+      if (filterState.tag === tag) {
+        filterState.tag = "all"; // Toggle off
+      } else {
+        filterState.tag = tag;
       }
+      applyFilters();
+    }
 
-      // [추가] 통합 클릭 핸들러 (펼치기 + 조회수 추적 + 댓글 섹션)
-      function handleArticleClick(el, id) {
-        if (!el) return;
-        el.classList.toggle("expanded");
+    function closeModal() {
+      document.getElementById("reportModal").classList.add("hidden");
+    }
 
-        if (el.classList.contains("expanded")) {
-          const n = allNews.find((item) => item._uId === id);
-          if (n && n.Title) {
-            trackArticleView({
-              title: n.Title,
-              date: n.Date,
-              url: n.URL,
-              category: n.Category,
-              risk: n.Risk,
-            });
-          }
-        }
+    function showIndexModal() {
+      document.getElementById("indexModal").classList.remove("hidden");
+    }
+
+    function closeIndexModal(event) {
+      if (
+        !event ||
+        event.target.id === "indexModal" ||
+        event.target.closest("button")
+      ) {
+        document.getElementById("indexModal").classList.add("hidden");
       }
+    }
 
-      // [좋아요 로직]
-      function hasLiked(id) {
-        return localStorage.getItem("liked_" + id) === "true";
-      }
+    function goToday() {
+      const today = new Date();
+      curYear = today.getFullYear();
+      curMonth = today.getMonth();
 
-      async function handleLikeClick(event, id) {
-        event.stopPropagation();
-        if (!currentUser) return alert("Please login to like articles.");
-        if (hasLiked(id)) return;
+      document.getElementById("calHeader").innerText =
+        `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
 
-        const n = allNews.find((item) => item._uId === id);
-        if (!n) return;
+      renderCalendar(allNews);
+      filterByDate(today.getDate());
+    }
 
-        try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "like", title: n.Title }),
-          });
-          const result = await res.json();
-          if (result.success) {
-            localStorage.setItem("liked_" + id, "true");
-            const countEl = document.getElementById("like-count-" + id);
-            if (countEl) {
-              countEl.innerText = result.count || (parseInt(countEl.innerText) + 1);
-            }
-            event.target.closest("button").classList.add("like-btn-active");
-          }
-        } catch (e) {
-          console.error("Like error:", e);
-        }
-      }
+    function filterNews(cat) {
+      filterState.category = cat;
+      // 카테고리 선택 시 달력 상태는 유지 (중첩 필터)
+      applyFilters();
+    }
 
+    function filterByRisk(risk) {
+      filterState.risk = risk;
+      applyFilters();
+    }
 
-      // [추가] 조회수 추적 함수
-      function trackArticleView(articleData) {
-        if (!articleData || !articleData.title) return;
+    function handleSearch(event) {
+      filterState.search = event.target.value.toLowerCase();
+      applyFilters();
+    }
 
-        const { title, date, url, category, risk } = articleData;
-        const sessionId = getSessionId();
+    function handleSearchScope(event) {
+      filterState.scope = event.target.value;
+      applyFilters();
+    }
 
-        // 고유 식별을 위한 키 생성
-        const uniqueString = title + (date || "") + (url || "");
-        const storageKey =
-          "viewed_" +
-          uniqueString.split("").reduce((a, b) => {
-            a = (a << 5) - a + b.charCodeAt(0);
-            return a & a;
-          }, 0);
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
 
-        // 중복 클릭 방지 (세션 단위)
-        const viewed = sessionStorage.getItem(storageKey);
-        if (viewed) return;
-
-        fetch(GAS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "view",
-            title: title,
-            date: date,
-            url: url,
-            category: category,
-            risk: risk,
-            sessionId: sessionId,
-          }),
-        })
-          .then(res => res.json())
-          .then((result) => {
-            if (result.success) {
-              sessionStorage.setItem(storageKey, "true");
-              console.log("View tracked:", title);
-            }
-          })
-          .catch((err) => console.error("Tracking error:", err));
-      }
-
-      let allNews = [],
-        currentFilteredNews = [];
-
-      // 통합 필터 상태 관리
-      let filterState = {
+      // 상태 초기화
+      filterState = {
         category: "all",
         risk: "all",
         sort: "latest",
         search: "",
         scope: "all",
-        dateType: null, // null | 'week' | 'day'
+        dateType: null,
         dateValue: null,
         country: "all",
         tag: "all",
       };
 
-      // isDashboardActive는 상단 스크립트에서 이미 선언됨
+      document.getElementById("searchScope").value = "all";
 
-      // 언어 상태 및 번역 사전
-      let currentLang = "ko"; // 'ko' | 'en'
-      const translations = {
-        ko: {
-          nav_strategy: "전략 시황",
-          nav_material: "원자재",
-          nav_macro: "거시/정책",
-          nav_region: "생산지역",
-          nav_competitor: "경쟁사",
-          nav_tech: "신기술동향",
-          nav_index: "INDEX",
-          search_scope_all: "제목+본문",
-          search_scope_title: "제목",
-          search_scope_content: "본문",
-          search_placeholder: "뉴스 키워드 검색...",
-          today: "TODAY",
-          global_map: "Global Map",
-          cloud_title: "Intelligence Cloud",
-          feed_title: "Strategic Feed",
-          risk_all: "ALL",
-          sort_latest: "Latest",
-          sort_oldest: "Oldest",
-          syncing: "SYNCING DATA...",
-          modal_title: "전략 요약 보고서",
-          country_news_suffix: " 관련 뉴스",
-          data_error: "데이터 없음",
-          tag_data_error: "태그 데이터 없음",
-          region_data_error: "지역 데이터 없음",
-          briefing_suffix: " 전략 브리핑",
-        },
-        en: {
-          nav_strategy: "Strategy",
-          nav_material: "Material",
-          nav_macro: "Macro",
-          nav_region: "Region",
-          nav_competitor: "Competitors",
-          nav_tech: "New Tech",
-          nav_index: "Index",
-          search_scope_all: "Title+Content",
-          search_scope_title: "Title",
-          search_scope_content: "Content",
-          search_placeholder: "Search keywords...",
-          today: "TODAY",
-          global_map: "Global Map",
-          cloud_title: "Intelligence Cloud",
-          feed_title: "Strategic Feed",
-          risk_all: "ALL",
-          sort_latest: "Latest",
-          sort_oldest: "Oldest",
-          syncing: "SYNCING DATA...",
-          modal_title: "Strategy Summary Report",
-          country_news_suffix: " News",
-          data_error: "No Data",
-          tag_data_error: "No Tag Data",
-          region_data_error: "No Regional Data",
-          briefing_suffix: " Briefing",
-        },
-      };
+      // 달력 UI 초기화
+      document.querySelectorAll(".calendar-grid span").forEach((el) => {
+        el.classList.remove("calendar-selected", "week-selected");
+      });
 
-      function toggleLanguage() {
-        currentLang = currentLang === "ko" ? "en" : "ko";
-        document.getElementById("langBtn").innerText =
-          currentLang.toUpperCase();
+      // 달력 헤더 리셋 (현재 연월로)
+      const now = new Date();
+      curYear = now.getFullYear();
+      curMonth = now.getMonth();
+      const header = document.getElementById("calHeader");
+      if (header)
+        header.innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+      renderCalendar(allNews);
 
-        applyTranslations();
-        renderAllow(); // Re-render content
-      }
+      applyFilters();
+    }
 
-      function applyTranslations() {
-        const t = translations[currentLang];
+    // [핵심] 통합 필터링 로직
+    function applyFilters(resetPage = false) {
+      if (resetPage) currentPage = 1;
 
-        // Static UI Elements (Update logic)
-        // Note: For cleaner code, we will select elements by ID or data-i18n in a separate pass strictly if needed,
-        // but for now we'll update specific IDs directly or re-render components that contain them.
+      const t = translations[currentLang];
+      let result = [...allNews];
 
-        // Navbar
-        const navLinks = document.querySelectorAll("nav a");
-        if (navLinks.length >= 7) {
-          navLinks[0].innerText = t.nav_strategy;
-          navLinks[1].innerText = t.nav_material;
-          navLinks[2].innerText = t.nav_macro;
-          navLinks[3].innerText = t.nav_region;
-          navLinks[4].innerText = t.nav_competitor;
-          navLinks[5].innerText = t.nav_tech;
-          navLinks[6].innerText = t.nav_index;
-        }
-
-        // Search Scope
-        const scopeOpts = document.getElementById("searchScope").options;
-        scopeOpts[0].text = t.search_scope_all;
-        scopeOpts[1].text = t.search_scope_title;
-        scopeOpts[2].text = t.search_scope_content;
-
-        // Search Placeholder
-        document.getElementById("searchInput").placeholder =
-          t.search_placeholder;
-
-        // Feed Title (Default)
-        if (
-          document.getElementById("feedTitle").innerText ===
-            translations["ko"].feed_title ||
-          document.getElementById("feedTitle").innerText ===
-            translations["en"].feed_title
-        ) {
-          document.getElementById("feedTitle").innerText = t.feed_title;
-        }
-
-        // Modal Title
-        const modalTitle = document.getElementById("modalTitleText");
-        if (modalTitle) modalTitle.innerText = t.modal_title;
-
-        // Loading Text
-        const loadingEl = document.getElementById("loading");
-        if (loadingEl) loadingEl.innerText = t.syncing;
-      }
-
-      function renderAllow() {
-        renderAll(currentFilteredNews); // Re-use the existing renderAll logic but with current data
-      }
-
-      const todayDate = new Date();
-      let curYear = todayDate.getFullYear(),
-        curMonth = todayDate.getMonth();
-      let tagCloudInstance = null;
-
-      // 국가 좌표 맵핑 (실제 세계 지도 이미지 기준, %)
-      // 표준 메르카토르 투영법 - 정확한 실제 위치
-      const countryCoords = {
-        // 북미
-        미국: { x: 22, y: 38 },
-        USA: { x: 22, y: 38 },
-        캐나다: { x: 20, y: 25 },
-        Canada: { x: 20, y: 25 },
-        멕시코: { x: 18, y: 48 },
-        Mexico: { x: 18, y: 48 },
-
-        // 남미
-        브라질: { x: 32, y: 68 },
-        Brazil: { x: 32, y: 68 },
-
-        // 유럽
-        영국: { x: 48, y: 30 },
-        UK: { x: 48, y: 30 },
-        "United Kingdom": { x: 48, y: 30 },
-        프랑스: { x: 50, y: 34 },
-        France: { x: 50, y: 34 },
-        독일: { x: 52, y: 32 },
-        Germany: { x: 52, y: 32 },
-        이탈리아: { x: 53, y: 36 },
-        Italy: { x: 53, y: 36 },
-        스페인: { x: 47, y: 37 },
-        Spain: { x: 47, y: 37 },
-        러시아: { x: 70, y: 25 },
-        Russia: { x: 70, y: 25 },
-
-        // 아시아
-        중국: { x: 76, y: 40 },
-        China: { x: 76, y: 40 },
-        일본: { x: 86, y: 38 },
-        Japan: { x: 86, y: 38 },
-        한국: { x: 82, y: 38 },
-        Korea: { x: 82, y: 38 },
-        "South Korea": { x: 82, y: 38 },
-        인도: { x: 67, y: 45 },
-        India: { x: 67, y: 45 },
-        베트남: { x: 78, y: 50 },
-        Vietnam: { x: 78, y: 50 },
-        태국: { x: 76, y: 50 },
-        Thailand: { x: 76, y: 50 },
-        인도네시아: { x: 80, y: 58 },
-        Indonesia: { x: 80, y: 58 },
-
-        // 오세아니아
-        호주: { x: 85, y: 75 },
-        Australia: { x: 85, y: 75 },
-
-        // 전역
-        Global: { x: 50, y: 50 },
-      };
-
-      // 철통 날짜 파싱
-      function parseDate(dateStr) {
-        if (!dateStr) return new Date();
-        const clean = dateStr.toString().replace(/\./g, "-").replace(/\s/g, "");
-        const parts = clean.split("T")[0].split("-");
-        return parts.length < 3
-          ? new Date()
-          : new Date(parts[0], parts[1] - 1, parts[2]);
-      }
-
-      // 주차 계산 함수
-      function getWeekOfMonth(date) {
-        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-        const dayOfMonth = date.getDate();
-        const firstDayOfWeek = firstDay.getDay();
-        return Math.ceil((dayOfMonth + firstDayOfWeek) / 7);
-      }
-
-      // 날짜 범위로 필터링
-      function getDateRangeForWeek(year, month, weekNum) {
-        const firstDay = new Date(year, month, 1);
-        const firstDayOfWeek = firstDay.getDay();
-
-        const startDate = (weekNum - 1) * 7 - firstDayOfWeek + 1;
-        const endDate = startDate + 6;
-
-        return {
-          start: Math.max(1, startDate),
-          end: Math.min(endDate, new Date(year, month + 1, 0).getDate()),
-        };
-      }
-
-      async function fetchNews() {
-        const sources = [
-          { name: "Local JSON", url: "data.json" },
-          { name: "GitHub JSON", url: GITHUB_DATA_URL },
-          { name: "Google Sheets (GAS)", url: GAS_URL },
-        ];
-
-        let success = false;
-
-        for (const source of sources) {
-          try {
-            console.log(`Attempting to fetch from ${source.name}...`);
-            const res = await fetch(source.url);
-
-            if (res.ok) {
-              allNews = await res.json();
-              console.log(
-                `Successfully loaded news from ${source.name}:`,
-                allNews.length,
-                "items",
-              );
-              success = true;
-              break;
-            } else {
-              console.warn(
-                `Failed to fetch from ${source.name}: ${res.status} ${res.statusText}`,
-              );
-            }
-          } catch (e) {
-            console.error(`Error fetching from ${source.name}:`, e);
-          }
-        }
-
-        if (success) {
-          // 고유 ID 부여 (Deterministic ID for dashboard linkage)
-          allNews.forEach((n, i) => {
-            n._uId = `news-${i}`;
-          });
-
-          currentFilteredNews = [...allNews];
-
-          // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
-          console.log("Starting staggered background rendering...");
-          setTimeout(() => renderCalendar(allNews), 100);
-          setTimeout(() => renderSummary(allNews), 300);
-          setTimeout(() => renderTags(allNews), 500);
-          setTimeout(() => renderWorldMap(allNews), 700);
-          setTimeout(() => {
-            applyFilters(); // Initial filter apply
-
-            // [추가] URL 파라미터 체크 (Deep Link / Direct View)
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get("targetId");
-            const view = urlParams.get("view");
-
-            if (targetId || view === "hub" || view === "news") {
-              // 대시보드에서 왔거나 직접 뷰 요청인 경우 랜딩 페이지 스킵
-              isDashboardActive = true;
-              const lp = document.getElementById("landing-page");
-              if (lp) {
-                lp.style.display = "none";
-                lp.classList.add("hidden");
-              }
-              document.body.classList.remove("landing-active");
-
-              if (targetId) {
-                // 특정 기사로 포커스 (데이터 렌더링 후 실행되도록 넉넉한 타이밍)
-                setTimeout(() => focusNews(targetId), 800);
-              }
-            }
-
-            document.getElementById("loading").style.display = "none";
-          }, 900);
-        } else {
-          document.getElementById("loading").innerHTML =
-            "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스(Local, GitHub, GAS)를 불러오는데 실패했습니다.</span>";
-          document.getElementById("loading").style.display = "none";
-        }
-      }
-
-      function renderAll(data) {
-        renderCalendar(data);
-        renderSummary(data);
-        renderTags(data);
-        renderWorldMap(data);
-        renderFeed(data);
-      }
-
-      function moveCalendar(yOff, mOff) {
-        curYear += yOff;
-        curMonth += mOff;
-        if (curMonth > 11) {
-          curMonth = 0;
-          curYear++;
-        }
-        if (curMonth < 0) {
-          curMonth = 11;
-          curYear--;
-        }
-
-        document.getElementById("calHeader").innerText =
-          `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
-        renderCalendar(allNews);
-      }
-
-      function renderCalendar(data) {
-        const grid = document.getElementById("calendarGrid");
-        const dateCounts = data.reduce((acc, n) => {
-          const d = parseDate(n.Date);
-          if (d.getFullYear() === curYear && d.getMonth() === curMonth) {
-            const day = d.getDate();
-            acc[day] = (acc[day] || 0) + 1;
-          }
-          return acc;
-        }, {});
-
-        let html = "";
-
-        // 헤더: 주차 + 요일
-        html += `<span class="font-bold opacity-30 text-[9px]">W</span>`;
-        ["S", "M", "T", "W", "T", "F", "S"].forEach(
-          (s) =>
-            (html += `<span class="font-bold opacity-30 text-[10px]">${s}</span>`),
+      // 0. 내비게이션 UI 하이라이트 업데이트
+      document.querySelectorAll("nav a").forEach((a) => {
+        a.classList.remove(
+          "text-white",
+          "text-white/60",
+          "border-white",
+          "border-transparent",
         );
 
-        const firstDay = new Date(curYear, curMonth, 1).getDay();
-        const lastDate = new Date(curYear, curMonth + 1, 0).getDate();
-
-        let currentWeek = 1;
-        let dayCount = 0;
-
-        // 첫 주
-        html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${currentWeek}</span>`;
-
-        // 첫 주의 빈 칸
-        for (let i = 0; i < firstDay; i++) {
-          html += `<span class="invisible">-</span>`;
-          dayCount++;
-        }
-
-        // 날짜 렌더링
-        for (let d = 1; d <= lastDate; d++) {
-          // 새로운 주 시작 (일요일)
-          if (dayCount > 0 && dayCount % 7 === 0) {
-            currentWeek++;
-            html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${currentWeek}</span>`;
-          }
-
-          const count = dateCounts[d] || 0;
-          let lv =
-            count >= 3
-              ? "calendar-ring ring-lv3"
-              : count === 2
-                ? "calendar-ring ring-lv2"
-                : count === 1
-                  ? "calendar-ring ring-lv1"
-                  : "";
-          const clickEvent = count > 0 ? `onclick="filterByDate(${d})"` : "";
-          html += `<span class="${lv}" id="cal-${d}" ${clickEvent}>${d}</span>`;
-          dayCount++;
-        }
-
-        // 마지막 주의 빈 칸
-        const remainingCells = dayCount % 7;
-        if (remainingCells !== 0) {
-          for (let i = remainingCells; i < 7; i++) {
-            html += `<span class="invisible">-</span>`;
-          }
-        }
-
-        grid.innerHTML = html;
-      }
-
-      function filterByWeek(weekNum) {
-        // 모든 선택 해제
-        document
-          .querySelectorAll(".calendar-grid .week-label")
-          .forEach((el) => {
-            el.classList.remove("week-selected");
-          });
-
-        // 주차 라벨 선택 표시
-        const weekLabel = document.getElementById(`week-${weekNum}`);
-        if (weekLabel) weekLabel.classList.add("week-selected");
-
-        // 날짜 선택 상태면 해제 (주차와 일자는 상충)
-        document
-          .querySelectorAll(".calendar-grid span:not(.week-label)")
-          .forEach((el) => {
-            el.classList.remove("calendar-selected");
-          });
-
-        // 상태 업데이트
-        filterState.dateType = "week";
-        filterState.dateValue = weekNum;
-        applyFilters();
-      }
-
-      function filterByDate(day) {
-        document.querySelectorAll(".calendar-grid span").forEach((el) => {
-          el.classList.remove("calendar-selected", "week-selected");
-        });
-        const target = document.getElementById(`cal-${day}`);
-        if (target) target.classList.add("calendar-selected");
-
-        // 상태 업데이트
-        filterState.dateType = "day";
-        filterState.dateValue = day;
-        applyFilters();
-      }
-
-      function sortNews(type) {
-        filterState.sort = type;
-        applyFilters();
-      }
-
-      // 다중 URL 파싱 함수
-      function parseUrls(urlString) {
-        if (!urlString) return [];
-
-        // URL과 출처명 패턴 파싱: "출처명: URL" 또는 단순 URL
-        const urlPattern = /(?:([^:,]+):\s*)?(https?:\/\/[^\s,]+)/g;
-        const urls = [];
-        let match;
-
-        while ((match = urlPattern.exec(urlString)) !== null) {
-          urls.push({
-            name: match[1] ? match[1].trim() : extractDomain(match[2]),
-            url: match[2].trim(),
-          });
-        }
-
-        return urls.length > 0 ? urls : [{ name: "원문", url: urlString }];
-      }
-
-      // 도메인에서 출처명 추출
-      function extractDomain(url) {
-        try {
-          const domain = new URL(url).hostname.replace("www.", "");
-          return domain.split(".")[0];
-        } catch {
-          return "출처";
-        }
-      }
-
-      function renderFeed(data) {
-        const feed = document.getElementById("news-feed");
-        const t = translations[currentLang];
-
-        // 초기 렌더링 성능을 위해 청크 단위로 나누어 처리
-        const chunkSize = 15;
-        let renderedCount = 0;
-
-        function renderChunk() {
-          const chunk = data.slice(renderedCount, renderedCount + chunkSize);
-          const html = chunk
-            .map((n) => {
-              const urls = parseUrls(n.URL);
-              const sourceLinksHtml = urls
-                .map(
-                  (src) =>
-                    `<a href="${src.url}" target="_blank" class="source-link" onclick="event.stopPropagation()">
-                        <i data-lucide="external-link" class="w-3 h-3"></i>
-                        ${src.name}
-                    </a>`,
-                )
-                .join("");
-
-              let impactHtml = "";
-              if (n.Impact) {
-                const isPositive = n.Impact.includes("+");
-                const isNegative = n.Impact.includes("-");
-                const colorClass = isPositive
-                  ? "text-green-600 bg-green-50"
-                  : isNegative
-                    ? "text-red-600 bg-red-50"
-                    : "text-slate-600 bg-slate-50";
-                impactHtml = `<span class="px-2 py-0.5 rounded text-[9px] font-bold ${colorClass}">Impact: ${n.Impact}</span>`;
-              }
-
-              let displayTitle = n.Title;
-              let displaySummary = n.Summary;
-              let displayCategory = n.Category || "N/A";
-              if (currentLang === "en") {
-                if (n.Title_en) displayTitle = n.Title_en;
-                if (n.Summary_en) displaySummary = n.Summary_en;
-                if (n.Category_en) displayCategory = n.Category_en;
-              }
-
-              const rawBot = n.BOT || n.Bot || n.bot || "";
-              const botContent = (currentLang === "en" ? (n.BOT_en || n["BOT(eng)"] || rawBot) : rawBot).trim();
-              
-              const displaySummaryFull = displaySummary || "";
-
-              return `
-                    <article id="${n._uId}" 
-                        class="news-item bg-white dark:bg-[#25282c] p-6 rounded-xl shadow-sm border border-transparent hover:border-blue-100 transition-all ${botContent ? "has-bot" : ""}" 
-                        onclick="handleArticleClick(this, '${n._uId}')">
-                        <div class="news-inner">
-                            <div class="flex gap-8 items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${n.Risk === "High" ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}">${displayCategory}</span>
-                                        ${n.Region || n.Country ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600">${n.Region || n.Country}</span>` : ""}
-                                        ${impactHtml}
-                                        <div class="engagement-tag">
-                                            <i data-lucide="eye" class="w-3 h-3"></i>
-                                            <span>${n.ViewCount || 0}</span>
-                                        </div>
-                                        <div class="engagement-tag">
-                                            <button onclick="handleLikeClick(event, '${n._uId}')" class="flex items-center gap-1 hover:text-red-500 transition-colors ${hasLiked(n._uId) ? 'like-btn-active' : ''}">
-                                                <i data-lucide="heart" class="w-3 h-3 text-red-400"></i>
-                                                <span id="like-count-${n._uId}">${n.LikeCount || 0}</span>
-                                            </button>
-                                        </div>
-                                        <span class="text-[10px] text-slate-400 ml-auto font-medium">${n.Date ? n.Date.toString().split("T")[0] : ""}</span>
-                                    </div>
-                                    <h4 class="font-bold text-base mb-3 leading-snug">${displayTitle || "No Title"}</h4>
-                                    <div class="news-body-grid">
-                                        <div class="news-content-col">
-                                            <p class="summary-text text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                                                ${displaySummaryFull}
-                                            </p>
-                                            <div class="source-links">${sourceLinksHtml}</div>
-                                        </div>
-                                        ${
-                                          botContent
-                                            ? `
-                                        <div class="news-bot-col" onclick="event.stopPropagation()">
-                                            <div class="bot-inner-bubble">
-                                                <div class="font-black text-xs opacity-70 mb-2">💡 AI Insight</div>
-                                                <div class="bot-text text-xs leading-relaxed">
-                                                    ${botContent}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        `
-                                            : ""
-                                        }
-                                    </div>
-                                </div>
-                                ${n.Image ? `<div class="w-44 h-32 rounded-lg overflow-hidden flex-shrink-0 border dark:border-gray-800"><img src="${n.Image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.style.display='none';"></div>` : ""}
-                            </div>
-                        </div>
-                    </article>`;
-            })
-            .join("");
-
-          if (renderedCount === 0) feed.innerHTML = html;
-          else feed.insertAdjacentHTML("beforeend", html);
-
-          renderedCount += chunkSize;
-          if (renderedCount < data.length) {
-            // 다음 프레임이나 짧은 지연 후 나머지 렌더링
-            if (!isDashboardActive) {
-              setTimeout(renderChunk, 300); // 랜딩 페이지 중에는 더 천천히
-            } else {
-              requestAnimationFrame(renderChunk); // 접속 후에는 빠르게
-            }
-          }
-        }
-        renderChunk();
-      }
-
-      /* Global Bot Follower Logic */
-
-      // 3D 인터랙티브 태그 클라우드 - 순수 JavaScript 구현
-      let tag3DRotation = { x: 0, y: 0 };
-      let tag3DSpeed = { x: 0.5, y: 0.3 };
-      let isDraggingTag = false;
-      let tagDragStart = { x: 0, y: 0 };
-      let tagAnimationId = null;
-
-      function renderTags(data) {
-        if (tagAnimationId) cancelAnimationFrame(tagAnimationId);
-
-        console.log("renderTags called with", data.length, "items");
-        const tagMap = {};
-
-        const t = translations[currentLang];
-
-        if (!data || data.length === 0) {
-          const container = document.getElementById("tagCloud3D");
-          if (container)
-            container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
-          return;
-        }
-
-        data.forEach((n) => {
-          // 태그 필드 확인
-          let tagField =
-            n.Tag ||
-            n.tag ||
-            n.Tags ||
-            n.tags ||
-            n.KEYWORD ||
-            n.Keyword ||
-            n.keyword;
-          if (currentLang === "en" && n.Tag_en) tagField = n.Tag_en; // 영문 태그 우선
-
-          if (tagField) {
-            tagField.split(",").forEach((tag) => {
-              const t = tag.trim();
-              if (t && t.length > 0) tagMap[t] = (tagMap[t] || 0) + 1;
-            });
-          }
-        });
-
-        const sortedTags = Object.entries(tagMap)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 15);
-
-        if (sortedTags.length === 0) {
-          const container = document.getElementById("tagCloud3D");
-          if (container)
-            container.innerHTML = `<div style="color: #94a3b8; font-size: 11px; text-align: center; padding: 80px;">${t.tag_data_error}</div>`;
-          return;
-        }
-
-        const maxCount = Math.max(...sortedTags.map(([_, c]) => c), 1);
-        const container = document.getElementById("tagCloud3D");
-        container.innerHTML = "";
-
-        // 3D 구 좌표 생성 (피보나치 구면 분포 알고리즘)
-        const tags3D = sortedTags.map(([tag, count], i) => {
-          const k = i + 1;
-          const phi = Math.acos(1 - (2 * k) / (sortedTags.length + 1));
-          const theta = Math.PI * (1 + Math.sqrt(5)) * k;
-          const radius = 80; // 200px 컨테이너에 적합한 반지름
-
-          return {
-            tag,
-            count,
-            x: radius * Math.cos(theta) * Math.sin(phi),
-            y: radius * Math.sin(theta) * Math.sin(phi),
-            z: radius * Math.cos(phi),
-          };
-        });
-
-        // 태그 요소 생성
-        tags3D.forEach((tagObj) => {
-          const elem = document.createElement("div");
-          elem.className = "tag3d";
-          elem.textContent = tagObj.tag;
-          elem.style.fontSize = `${10 + (tagObj.count / maxCount) * 8}px`; // 폰트 크기 가독성 개선
-          elem.dataset.x = tagObj.x;
-          elem.dataset.y = tagObj.y;
-          elem.dataset.z = tagObj.z;
-          elem.onclick = (e) => {
-            e.stopPropagation();
-            showTagReport(tagObj.tag);
-          };
-          container.appendChild(elem);
-        });
-
-        // 애니메이션 루프 시작 (대시보드 입장 시에만 활성화되도록 renderTags 내 로직은 일단 유지하되 루프 제어)
-        if (isDashboardActive) {
-          animateTagCloud();
-        }
-
-        // 드래그 및 마우스 조작 이벤트 (전역 등록)
-        if (!window.isTagEventRegistered) {
-          const cloudBox = document.getElementById("tagCloudContainer");
-
-          cloudBox.addEventListener("mousedown", (e) => {
-            isDraggingTag = true;
-            tagDragStart = { x: e.clientX, y: e.clientY };
-          });
-
-          window.addEventListener("mousemove", (e) => {
-            if (isDraggingTag) {
-              const dx = e.clientX - tagDragStart.x;
-              const dy = e.clientY - tagDragStart.y;
-              // 회전 감도 조절
-              tag3DRotation.y += dx * 0.005;
-              tag3DRotation.x -= dy * 0.005;
-              tagDragStart = { x: e.clientX, y: e.clientY };
-            }
-          });
-
-          window.addEventListener("mouseup", () => {
-            isDraggingTag = false;
-          });
-
-          window.isTagEventRegistered = true;
-        }
-      }
-
-      function animateTagCloud() {
-        if (!isDashboardActive) return; // 최적화: 랜딩 페이지에서는 태그 클라우드 애니메이션 중지
-
-        if (!isDraggingTag) {
-          // 자연스러운 자동 회전
-          tag3DRotation.x += 0.002;
-          tag3DRotation.y += 0.003;
-        }
-
-        const tags = document.querySelectorAll(".tag3d");
-        const radius = 80;
-
-        tags.forEach((tag) => {
-          const x0 = parseFloat(tag.dataset.x);
-          const y0 = parseFloat(tag.dataset.y);
-          const z0 = parseFloat(tag.dataset.z);
-
-          // 3D 회전 행렬 계산 (X, Y축 기준)
-          const cosX = Math.cos(tag3DRotation.x);
-          const sinX = Math.sin(tag3DRotation.x);
-          let y1 = y0 * cosX - z0 * sinX;
-          let z1 = y0 * sinX + z0 * cosX;
-
-          const cosY = Math.cos(tag3DRotation.y);
-          const sinY = Math.sin(tag3DRotation.y);
-          let x2 = x0 * cosY + z1 * sinY;
-          let z2 = -x0 * sinY + z1 * cosY;
-
-          // 투영 및 스타일 업데이트 (Z축 깊이에 따른 효과)
-          const depth = (z2 + radius) / (2 * radius); // 0 (뒤) ~ 1 (앞)
-          const scale = 0.5 + depth * 0.8; // 0.5x ~ 1.3x
-          const opacity = 0.2 + depth * 0.8; // 0.2 ~ 1.0
-
-          // translate3d를 사용하여 GPU 가속 활용
-          tag.style.transform = `translate3d(${x2}px, ${y1}px, ${z2}px) scale(${scale})`;
-          tag.style.opacity = opacity;
-          tag.style.zIndex = Math.round(depth * 100);
-
-          // 흐림 효과 (선택적: 깊이 표현 강조)
-          if (depth < 0.3) {
-            tag.style.filter = `blur(0.5px)`;
-          } else {
-            tag.style.filter = "none";
-          }
-        });
-
-        tagAnimationId = requestAnimationFrame(animateTagCloud);
-      }
-
-      // 글로벌 지도 렌더링 (Iframe 버전)
-      let lastCalculatedCountryMap = null;
-
-      function renderWorldMap(data) {
-        if (!data) return;
-
-        const countryMap = {};
-        data.forEach((n) => {
-          let regionField =
-            n.Region ||
-            n.region ||
-            n.Country ||
-            n.country ||
-            n.Place ||
-            n.place ||
-            n.Location ||
-            n.location;
-          if (currentLang === "en" && n.Region_en) regionField = n.Region_en;
-
-          if (regionField) {
-            const countries = regionField.split(",").map((c) => c.trim());
-            countries.forEach((country) => {
-              if (country) countryMap[country] = (countryMap[country] || 0) + 1;
-            });
-          }
-        });
-
-        lastCalculatedCountryMap = countryMap;
-        sendDataToMap();
-      }
-
-      function sendDataToMap() {
-        const frame = document.getElementById("mapFrame");
-        if (frame && frame.contentWindow && lastCalculatedCountryMap) {
-          frame.contentWindow.postMessage(
-            {
-              type: "updateData",
-              data: lastCalculatedCountryMap,
-            },
-            "*",
-          );
-        }
-      }
-
-      // Iframe 메시지 수신 (지도 클릭 처리)
-      window.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "filterByCountry") {
-          filterByCountry(event.data.country);
-        }
-        if (event.data && event.data.type === "mapReady") {
-          console.log("Map reported ready, sending data...");
-          sendDataToMap();
+        const isAll =
+          filterState.category === "all" &&
+          (a.id === "nav-all" ||
+            a.innerText === "전략 시황" ||
+            a.innerText === t.nav_strategy);
+        const isMatch =
+          a.innerText === filterState.category ||
+          (filterState.category === "신기술동향" &&
+            (a.innerText === "신기술동향" || a.innerText === t.nav_tech)) ||
+          (filterState.category === "거시경제" &&
+            (a.innerText === "거시경제" ||
+              a.innerText === "거시/정책" ||
+              a.innerText === t.nav_macro));
+
+        if (isAll || isMatch) {
+          a.classList.add("text-white", "border-white");
+        } else {
+          a.classList.add("text-white/60", "border-transparent");
         }
       });
 
-      function filterByCountry(country) {
-        if (filterState.country === country) {
-          filterState.country = "all"; // Toggle off
-        } else {
-          filterState.country = country;
-        }
-        applyFilters();
+      const breadcrumbs = [];
+
+      // 1. 카테고리 필터
+      if (filterState.category !== "all") {
+        result = result.filter((n) => {
+          const cat = n.Category ? n.Category.split(":")[0].trim() : "";
+          if (filterState.category === "신기술동향") {
+            return cat === "AI기술" || cat === "신기술";
+          }
+          return cat === filterState.category;
+        });
+
+        let catName = filterState.category;
+        if (catName === "신기술동향" && currentLang === "en")
+          catName = t.nav_tech;
+        breadcrumbs.push(`[${catName}]`);
+      } else {
+        breadcrumbs.push(
+          `[${currentLang === "en" ? "Strategy" : "전략 시황"}]`,
+        );
       }
 
-      function showTagReport(tag) {
-        if (filterState.tag === tag) {
-          filterState.tag = "all"; // Toggle off
-        } else {
-          filterState.tag = tag;
-        }
-        applyFilters();
+      // 2. 날짜 필터 (Calendar)
+      if (filterState.dateType === "week") {
+        const range = getDateRangeForWeek(
+          curYear,
+          curMonth,
+          filterState.dateValue,
+        );
+        result = result.filter((n) => {
+          const d = parseDate(n.Date);
+          return (
+            d.getFullYear() === curYear &&
+            d.getMonth() === curMonth &&
+            d.getDate() >= range.start &&
+            d.getDate() <= range.end
+          );
+        });
+        breadcrumbs.push(
+          `Week ${filterState.dateValue} (${curYear}.${String(curMonth + 1).padStart(2, "0")})`,
+        );
+      } else if (filterState.dateType === "day") {
+        result = result.filter((n) => {
+          const d = parseDate(n.Date);
+          return (
+            d.getFullYear() === curYear &&
+            d.getMonth() === curMonth &&
+            d.getDate() === filterState.dateValue
+          );
+        });
+        breadcrumbs.push(
+          `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`,
+        );
       }
 
-      function closeModal() {
-        document.getElementById("reportModal").classList.add("hidden");
+      // 3. 리스크 필터
+      document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
+        btn.classList.remove("active");
+        if (btn.innerText === filterState.risk.toUpperCase())
+          btn.classList.add("active");
+      });
+
+      if (filterState.risk !== "all") {
+        result = result.filter((n) => n.Risk === filterState.risk);
+        breadcrumbs.push(`(${filterState.risk} Risk)`);
       }
 
-      function showIndexModal() {
-        document.getElementById("indexModal").classList.remove("hidden");
+      // 4. 국가/지역 필터
+      if (filterState.country !== "all") {
+        result = result.filter((n) => {
+          const region = n.Region || n.Country;
+          return region && region.includes(filterState.country);
+        });
+        breadcrumbs.push(`[${filterState.country}]`);
       }
 
-      function closeIndexModal(event) {
-        if (
-          !event ||
-          event.target.id === "indexModal" ||
-          event.target.closest("button")
-        ) {
-          document.getElementById("indexModal").classList.add("hidden");
-        }
+      // 5. 태그 필터
+      if (filterState.tag !== "all") {
+        result = result.filter((n) => {
+          const tags = n.Tag || n.Tags;
+          return tags && tags.includes(filterState.tag);
+        });
+        breadcrumbs.push(`#${filterState.tag}`);
       }
 
-      function goToday() {
-        const today = new Date();
-        curYear = today.getFullYear();
-        curMonth = today.getMonth();
+      // 6. 검색 필터
+      if (filterState.search) {
+        const q = filterState.search;
+        const scope = filterState.scope || "all";
 
-        document.getElementById("calHeader").innerText =
-          `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+        result = result.filter((n) => {
+          const titleMatch =
+            (n.Title && n.Title.toLowerCase().includes(q)) ||
+            (n.Title_en && n.Title_en.toLowerCase().includes(q));
+          const summaryMatch =
+            (n.Summary && n.Summary.toLowerCase().includes(q)) ||
+            (n.Summary_en && n.Summary_en.toLowerCase().includes(q));
+          const tagMatch = n.Tag && n.Tag.toLowerCase().includes(q);
+          const regionMatch = n.Region && n.Region.toLowerCase().includes(q);
 
-        renderCalendar(allNews);
-        filterByDate(today.getDate());
-      }
+          if (scope === "title") return titleMatch;
+          if (scope === "content") return summaryMatch;
+          return titleMatch || summaryMatch || tagMatch || regionMatch;
+        });
 
-      function filterNews(cat) {
-        filterState.category = cat;
-        // 카테고리 선택 시 달력 상태는 유지 (중첩 필터)
-        applyFilters();
-      }
-
-      function filterByRisk(risk) {
-        filterState.risk = risk;
-        applyFilters();
-      }
-
-      function handleSearch(event) {
-        filterState.search = event.target.value.toLowerCase();
-        applyFilters();
-      }
-
-      function handleSearchScope(event) {
-        filterState.scope = event.target.value;
-        applyFilters();
-      }
-
-      function resetFilters() {
-        document.getElementById("searchInput").value = "";
-
-        // 상태 초기화
-        filterState = {
-          category: "all",
-          risk: "all",
-          sort: "latest",
-          search: "",
-          scope: "all",
-          dateType: null,
-          dateValue: null,
-          country: "all",
-          tag: "all",
+        const scopeMap = {
+          title: t.search_scope_title,
+          content: t.search_scope_content,
+          all: currentLang === "en" ? "All" : "전체",
         };
-
-        document.getElementById("searchScope").value = "all";
-
-        // 달력 UI 초기화
-        document.querySelectorAll(".calendar-grid span").forEach((el) => {
-          el.classList.remove("calendar-selected", "week-selected");
-        });
-
-        // 달력 헤더 리셋 (현재 연월로)
-        const now = new Date();
-        curYear = now.getFullYear();
-        curMonth = now.getMonth();
-        const header = document.getElementById("calHeader");
-        if (header)
-          header.innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
-        renderCalendar(allNews);
-
-        applyFilters();
+        const searchLabel =
+          currentLang === "en"
+            ? `Search: '${q}'`
+            : `'${q}' 검색 (${scopeMap[scope]})`;
+        breadcrumbs.push(searchLabel);
       }
 
-      // [핵심] 통합 필터링 로직
-      function applyFilters() {
-        const t = translations[currentLang];
-        let result = [...allNews];
+      // 브레드크럼 타이틀 생성
+      let title = breadcrumbs.join(" ");
+      if (
+        breadcrumbs.length === 0 ||
+        (breadcrumbs.length === 1 &&
+          breadcrumbs[0].includes(
+            currentLang === "en" ? "Strategy" : "전략 시황",
+          ))
+      ) {
+        title = t.feed_title;
+      }
+      document.getElementById("feedTitle").innerText = title;
 
-        // 0. 내비게이션 UI 하이라이트 업데이트
-        document.querySelectorAll("nav a").forEach((a) => {
-          a.classList.remove(
-            "text-white",
-            "text-white/60",
-            "border-white",
-            "border-transparent",
-          );
+      // 5. 정렬 (Latest / Oldest)
+      const lb = document.getElementById("sortLatest");
+      const rb = document.getElementById("sortOldest");
+      if (lb && rb) {
+        lb.classList.remove("text-[#1428a0]", "text-slate-400");
+        rb.classList.remove("text-[#1428a0]", "text-slate-400");
 
-          const isAll =
-            filterState.category === "all" &&
-            (a.id === "nav-all" ||
-              a.innerText === "전략 시황" ||
-              a.innerText === t.nav_strategy);
-          const isMatch =
-            a.innerText === filterState.category ||
-            (filterState.category === "신기술동향" &&
-              (a.innerText === "신기술동향" || a.innerText === t.nav_tech)) ||
-            (filterState.category === "거시경제" &&
-              (a.innerText === "거시경제" ||
-                a.innerText === "거시/정책" ||
-                a.innerText === t.nav_macro));
-
-          if (isAll || isMatch) {
-            a.classList.add("text-white", "border-white");
-          } else {
-            a.classList.add("text-white/60", "border-transparent");
-          }
-        });
-
-        const breadcrumbs = [];
-
-        // 1. 카테고리 필터
-        if (filterState.category !== "all") {
-          result = result.filter((n) => {
-            const cat = n.Category ? n.Category.split(":")[0].trim() : "";
-            if (filterState.category === "신기술동향") {
-              return cat === "AI기술" || cat === "신기술";
-            }
-            return cat === filterState.category;
-          });
-
-          let catName = filterState.category;
-          if (catName === "신기술동향" && currentLang === "en")
-            catName = t.nav_tech;
-          breadcrumbs.push(`[${catName}]`);
+        if (filterState.sort === "latest") {
+          lb.classList.add("text-[#1428a0]");
+          rb.classList.add("text-slate-400");
+          result.sort((a, b) => parseDate(b.Date) - parseDate(a.Date));
         } else {
-          breadcrumbs.push(
-            `[${currentLang === "en" ? "Strategy" : "전략 시황"}]`,
-          );
+          rb.classList.add("text-[#1428a0]");
+          lb.classList.add("text-slate-400");
+          result.sort((a, b) => parseDate(a.Date) - parseDate(b.Date));
         }
-
-        // 2. 날짜 필터 (Calendar)
-        if (filterState.dateType === "week") {
-          const range = getDateRangeForWeek(
-            curYear,
-            curMonth,
-            filterState.dateValue,
-          );
-          result = result.filter((n) => {
-            const d = parseDate(n.Date);
-            return (
-              d.getFullYear() === curYear &&
-              d.getMonth() === curMonth &&
-              d.getDate() >= range.start &&
-              d.getDate() <= range.end
-            );
-          });
-          breadcrumbs.push(
-            `Week ${filterState.dateValue} (${curYear}.${String(curMonth + 1).padStart(2, "0")})`,
-          );
-        } else if (filterState.dateType === "day") {
-          result = result.filter((n) => {
-            const d = parseDate(n.Date);
-            return (
-              d.getFullYear() === curYear &&
-              d.getMonth() === curMonth &&
-              d.getDate() === filterState.dateValue
-            );
-          });
-          breadcrumbs.push(
-            `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(filterState.dateValue).padStart(2, "0")}`,
-          );
-        }
-
-        // 3. 리스크 필터
-        document.querySelectorAll(".risk-filter-btn").forEach((btn) => {
-          btn.classList.remove("active");
-          if (btn.innerText === filterState.risk.toUpperCase())
-            btn.classList.add("active");
-        });
-
-        if (filterState.risk !== "all") {
-          result = result.filter((n) => n.Risk === filterState.risk);
-          breadcrumbs.push(`(${filterState.risk} Risk)`);
-        }
-
-        // 4. 국가/지역 필터
-        if (filterState.country !== "all") {
-          result = result.filter((n) => {
-            const region = n.Region || n.Country;
-            return region && region.includes(filterState.country);
-          });
-          breadcrumbs.push(`[${filterState.country}]`);
-        }
-
-        // 5. 태그 필터
-        if (filterState.tag !== "all") {
-          result = result.filter((n) => {
-            const tags = n.Tag || n.Tags;
-            return tags && tags.includes(filterState.tag);
-          });
-          breadcrumbs.push(`#${filterState.tag}`);
-        }
-
-        // 6. 검색 필터
-        if (filterState.search) {
-          const q = filterState.search;
-          const scope = filterState.scope || "all";
-
-          result = result.filter((n) => {
-            const titleMatch =
-              (n.Title && n.Title.toLowerCase().includes(q)) ||
-              (n.Title_en && n.Title_en.toLowerCase().includes(q));
-            const summaryMatch =
-              (n.Summary && n.Summary.toLowerCase().includes(q)) ||
-              (n.Summary_en && n.Summary_en.toLowerCase().includes(q));
-            const tagMatch = n.Tag && n.Tag.toLowerCase().includes(q);
-            const regionMatch = n.Region && n.Region.toLowerCase().includes(q);
-
-            if (scope === "title") return titleMatch;
-            if (scope === "content") return summaryMatch;
-            return titleMatch || summaryMatch || tagMatch || regionMatch;
-          });
-
-          const scopeMap = {
-            title: t.search_scope_title,
-            content: t.search_scope_content,
-            all: currentLang === "en" ? "All" : "전체",
-          };
-          const searchLabel =
-            currentLang === "en"
-              ? `Search: '${q}'`
-              : `'${q}' 검색 (${scopeMap[scope]})`;
-          breadcrumbs.push(searchLabel);
-        }
-
-        // 브레드크럼 타이틀 생성
-        let title = breadcrumbs.join(" ");
-        if (
-          breadcrumbs.length === 0 ||
-          (breadcrumbs.length === 1 &&
-            breadcrumbs[0].includes(
-              currentLang === "en" ? "Strategy" : "전략 시황",
-            ))
-        ) {
-          title = t.feed_title;
-        }
-        document.getElementById("feedTitle").innerText = title;
-
-        // 5. 정렬 (Latest / Oldest)
-        const lb = document.getElementById("sortLatest");
-        const rb = document.getElementById("sortOldest");
-        if (lb && rb) {
-          lb.classList.remove("text-[#1428a0]", "text-slate-400");
-          rb.classList.remove("text-[#1428a0]", "text-slate-400");
-
-          if (filterState.sort === "latest") {
-            lb.classList.add("text-[#1428a0]");
-            rb.classList.add("text-slate-400");
-            result.sort((a, b) => parseDate(b.Date) - parseDate(a.Date));
-          } else {
-            rb.classList.add("text-[#1428a0]");
-            lb.classList.add("text-slate-400");
-            result.sort((a, b) => parseDate(a.Date) - parseDate(b.Date));
-          }
-        }
-
-        currentFilteredNews = result;
-        renderFeed(result);
-        renderSummary(result);
-        renderWorldMap(result);
-        renderTags(result);
       }
 
-      function renderSummary(data) {
-        // 리스크 가중치 맵
-        const riskMap = { High: 3, Med: 2, Low: 1 };
+      currentFilteredNews = result;
+      renderFeed(result);
+      renderSummary(result);
+      renderWorldMap(result);
+      renderTags(result);
+    }
 
-        // 현재 필터링된 데이터 중에서 리스크 순으로 정렬하여 상위 3개 추출
-        const topRisks = [...data]
-          .sort((a, b) => (riskMap[b.Risk] || 0) - (riskMap[a.Risk] || 0))
-          .slice(0, 3);
+    function renderSummary(data) {
+      // 리스크 가중치 맵
+      const riskMap = { High: 3, Med: 2, Low: 1 };
 
-        document.getElementById("summaryGrid").innerHTML = topRisks
-          .map((a) => {
-            let displayTitle = a.Title;
-            if (currentLang === "en" && a.Title_en) displayTitle = a.Title_en;
+      // 현재 필터링된 데이터 중에서 리스크 순으로 정렬하여 상위 3개 추출
+      const topRisks = [...data]
+        .sort((a, b) => (riskMap[b.Risk] || 0) - (riskMap[a.Risk] || 0))
+        .slice(0, 3);
 
-            return `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg cursor-pointer transform hover:scale-[1.02] transition-all" 
+      document.getElementById("summaryGrid").innerHTML = topRisks
+        .map((a) => {
+          let displayTitle = a.Title;
+          if (currentLang === "en" && a.Title_en) displayTitle = a.Title_en;
+
+          return `<div class="p-6 bg-white dark:bg-[#25282c] shadow-sm border-t-4 border-[#1428a0] rounded-lg cursor-pointer transform hover:scale-[1.02] transition-all" 
                     onclick="focusNews('${a._uId}')">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${a.Risk === "High" ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"}">${a.Risk || "Info"}</span>
@@ -2118,98 +2038,89 @@
                     </div>
                     <h4 class="font-bold text-sm line-clamp-2 hover:text-[#1428a0]">${displayTitle || "No Title"}</h4>
                 </div>`;
-          })
-          .join("");
-      }
+        })
+        .join("");
+    }
 
-      function focusNews(id) {
-        // [수정] 기사가 필터링되어 안 보일 수 있으므로 필터 초기화 후 진행
-        resetFilters(); 
-        
-        // 필터 초기화 후 렌더링 시간이 필요할 수 있으므로 약간의 지연
-        setTimeout(() => {
-          const el = document.getElementById(id);
-          if (el) {
-            // 부드럽게 스크롤 이동
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-  
-            // 카드 강조 효과 (반짝임)
-            el.classList.add("ring-4", "ring-[#1428a0]", "ring-offset-4");
-            setTimeout(
-              () =>
-                el.classList.remove("ring-4", "ring-[#1428a0]", "ring-offset-4"),
-              3000,
-            );
-  
-            // 내용 펼치기
-            if (!el.classList.contains("expanded")) {
-              el.classList.add("expanded");
-  
-              // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
-              const article = allNews.find((n) => n._uId === id);
-              if (article && article.Title) {
-                trackArticleView({
-                  title: article.Title,
-                  date: article.Date,
-                  url: article.URL,
-                  category: article.Category,
-                  risk: article.Risk,
-                });
-              }
+    function focusNews(id) {
+      // [수정] 기사가 필터링되어 안 보일 수 있으므로 필터 초기화 후 진행
+      resetFilters();
+
+      // 필터 초기화 후 렌더링 시간이 필요할 수 있으므로 약간의 지연
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          // 부드럽게 스크롤 이동
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+          // 카드 강조 효과 (반짝임)
+          el.classList.add("ring-4", "ring-[#1428a0]", "ring-offset-4");
+          setTimeout(
+            () =>
+              el.classList.remove("ring-4", "ring-[#1428a0]", "ring-offset-4"),
+            3000,
+          );
+
+          // 내용 펼치기
+          if (!el.classList.contains("expanded")) {
+            el.classList.add("expanded");
+
+            // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
+            const article = allNews.find((n) => n._uId === id);
+            if (article && article.Title) {
+              trackArticleView({
+                title: article.Title,
+                date: article.Date,
+                url: article.URL,
+                category: article.Category,
+                risk: article.Risk,
+              });
             }
           }
-        }, 100);
-      }
+        }
+      }, 100);
+    }
 
-      function toggleDarkMode() {
-        document.documentElement.classList.toggle("dark");
-        lucide.createIcons();
-      }
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle("dark");
+      lucide.createIcons();
+    }
 
-      window.onload = () => {
-        lucide.createIcons();
+    window.onload = () => {
+      lucide.createIcons();
 
-        // 초기 캘린더 헤더 설정 (JS 로드 시점에 즉시 반영)
-        document.getElementById("calHeader").innerText =
-          `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+      // 초기 캘린더 헤더 설정 (JS 로드 시점에 즉시 반영)
+      document.getElementById("calHeader").innerText =
+        `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
 
-        fetchNews();
-        // renderFXRates();
-        // renderMaterialPrices();
+      fetchNews();
+      // renderFXRates();
+      // renderMaterialPrices();
 
-        // 1분마다 환율/원자재 데이터 업데이트
-        // setInterval(() => {
-        //   renderFXRates();
-        //   renderMaterialPrices();
-        // }, 60000);
-      };
-    </script>
+      // 1분마다 환율/원자재 데이터 업데이트
+      // setInterval(() => {
+      //   renderFXRates();
+      //   renderMaterialPrices();
+      // }, 60000);
+    };
+  </script>
 
-    <div
-      id="indexModal"
-      class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
-      onclick="closeIndexModal(event)"
-    >
-      <div
-        class="bg-white dark:bg-[#25282c] p-6 rounded-2xl shadow-2xl relative"
-        onclick="event.stopPropagation()"
-      >
-        <button
-          onclick="closeIndexModal()"
-          class="absolute top-4 right-4 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full transition-colors"
-        >
-          <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
-        </button>
+  <div id="indexModal"
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
+    onclick="closeIndexModal(event)">
+    <div class="bg-white dark:bg-[#25282c] p-6 rounded-2xl shadow-2xl relative" onclick="event.stopPropagation()">
+      <button onclick="closeIndexModal()"
+        class="absolute top-4 right-4 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full transition-colors">
+        <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
+      </button>
 
-        <!-- Load the TradingView Widget.html inside an iframe -->
-        <div class="w-full flex justify-center items-center">
-          <iframe
-            src="TradingView Widget.html"
-            style="width: 580px; height: 430px; border: none; overflow: hidden"
-            scrolling="no"
-          ></iframe>
-        </div>
+      <!-- Load the TradingView Widget.html inside an iframe -->
+      <div class="w-full flex justify-center items-center">
+        <iframe src="TradingView Widget.html" style="width: 580px; height: 430px; border: none; overflow: hidden"
+          scrolling="no"></iframe>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>

@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strategic Insight Globe v2</title>
-    
+
     <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- 2. Import Map -->
     <script type="importmap">
     {
@@ -22,7 +23,7 @@
         }
     }
     </script>
-    
+
     <!-- 3. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- 4. Lottie Web Component -->
@@ -30,13 +31,13 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
-        
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background-color: #000; 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: white;
+            font-family: 'Inter', sans-serif;
         }
 
         .glass-panel {
@@ -47,17 +48,40 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 169, 224, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
 
-        .glow-cyan { box-shadow: 0 0 30px rgba(0, 169, 224, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 169, 224, 0.3);
+            border-radius: 10px;
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 30px rgba(0, 169, 224, 0.2);
+        }
 
         @keyframes reveal {
-            from { opacity: 0; transform: translateY(10px); filter: blur(10px); }
-            to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+                filter: blur(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
         }
-        .title-reveal { animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .title-reveal {
+            animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
 
         /* 앵커봇 패널 */
         #anchor-panel {
@@ -71,12 +95,15 @@
             gap: 16px;
             pointer-events: none;
         }
+
         #anchor-panel .speech-bubble {
             pointer-events: auto;
         }
+
         #anchor-badge {
             position: absolute;
-            top: -30px; /* 머리 위로 이동 */
+            top: -30px;
+            /* 머리 위로 이동 */
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
@@ -92,17 +119,53 @@
             text-transform: uppercase;
             animation: float 2s ease-in-out infinite;
         }
-        #anchor-badge.on-air { background: rgba(239,68,68,0.9); box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
-        #anchor-badge.standby { background: rgba(51,65,85,0.8); }
-        #anchor-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: white; animation: pulse 1.5s infinite; }
-        
-        @keyframes float {
-            0%, 100% { transform: translate(-50%, 0); shadow: 0 4px 15px rgba(239,68,68,0.4); }
-            50% { transform: translate(-50%, -5px); shadow: 0 8px 25px rgba(239,68,68,0.6); }
-        }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-        dotlottie-wc { display: block; }
+        #anchor-badge.on-air {
+            background: rgba(239, 68, 68, 0.9);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        #anchor-badge.standby {
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        #anchor-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(-50%, 0);
+                shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                transform: translate(-50%, -5px);
+                shadow: 0 8px 25px rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.4
+            }
+        }
+
+        dotlottie-wc {
+            display: block;
+        }
 
         #progress-bar-fill {
             height: 100%;
@@ -121,6 +184,7 @@
             align-items: center;
             gap: 10px;
         }
+
         .nav-btn-3d {
             display: flex;
             align-items: center;
@@ -132,27 +196,30 @@
             letter-spacing: 0.12em;
             text-transform: uppercase;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(15,23,42,0.55);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.55);
             backdrop-filter: blur(16px);
-            color: rgba(255,255,255,0.75);
+            color: rgba(255, 255, 255, 0.75);
             transition: all 0.25s ease;
             text-decoration: none;
         }
+
         .nav-btn-3d:hover {
-            background: rgba(6,182,212,0.2);
-            border-color: rgba(6,182,212,0.5);
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.5);
             color: #06b6d4;
             transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(6,182,212,0.2);
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.2);
         }
+
         .nav-btn-3d.primary {
-            background: rgba(6,182,212,0.25);
-            border-color: rgba(6,182,212,0.4);
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.4);
             color: #06b6d4;
         }
+
         .nav-btn-3d.primary:hover {
-            background: rgba(6,182,212,0.4);
+            background: rgba(6, 182, 212, 0.4);
         }
 
         /* 전환 오버레이 */
@@ -165,12 +232,14 @@
             z-index: 9999;
             transition: opacity 0.6s ease-in;
         }
+
         #transition-overlay.fade-in {
             opacity: 1;
             pointer-events: all;
         }
     </style>
 </head>
+
 <body>
     <!-- 전환 오버레이 -->
     <div id="transition-overlay"></div>
@@ -184,53 +253,72 @@
     <!-- dashboard_mod.html 프리로드 (숨김 iframe) -->
     <iframe id="preload-frame" src="dashboard_mod.html"
         style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;border:none;top:-9999px;left:-9999px;"
-        title="preload"
-        onload="onPreloadDone()">
+        title="preload" onload="onPreloadDone()">
     </iframe>
 
     <!-- 앵커봇 패널 (React 밖, 순수 HTML) -->
     <div id="anchor-panel">
         <!-- BOT 캐릭터 -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;pointer-events:auto;">
-            <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
+            <div
+                style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
                 <div id="anchor-badge" class="standby">
                     <div class="dot"></div>
                     <span id="badge-text">Standby</span>
                 </div>
                 <div id="lottie-container" style="width:280px;height:280px;"></div>
-                <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.3),transparent);border-radius:50%;pointer-events:none;"></div>
+                <div
+                    style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.3),transparent);border-radius:50%;pointer-events:none;">
+                </div>
             </div>
             <div class="glass-panel" style="padding:6px 16px;border-radius:9999px;border-color:rgba(6,182,212,0.2);">
-                <span id="bot-name" style="font-size:10px;font-weight:900;letter-spacing:0.15em;text-transform:uppercase;color:rgba(6,182,212,0.4);">⚡ Strategic-Bot</span>
+                <span id="bot-name"
+                    style="font-size:10px;font-weight:900;letter-spacing:0.15em;text-transform:uppercase;color:rgba(6,182,212,0.4);">⚡
+                    Strategic-Bot</span>
             </div>
         </div>
 
         <!-- 말풍선 -->
-        <div id="speech-bubble" class="speech-bubble" style="display:none;position:relative;margin-bottom:0;pointer-events:auto;align-self:flex-end;">
+        <div id="speech-bubble" class="speech-bubble"
+            style="display:none;position:relative;margin-bottom:0;pointer-events:auto;align-self:flex-end;">
             <!-- 꼬리 (아래쪽) -->
-            <div style="position:absolute;left:40px;bottom:-12px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid rgba(15,23,42,0.6);"></div>
-            <div class="glass-panel" style="padding:28px;border-radius:32px;width:440px;border-color:rgba(6,182,212,0.2);box-shadow:0 0 60px rgba(0,169,224,0.12);">
+            <div
+                style="position:absolute;left:40px;bottom:-12px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid rgba(15,23,42,0.6);">
+            </div>
+            <div class="glass-panel"
+                style="padding:28px;border-radius:32px;width:440px;border-color:rgba(6,182,212,0.2);box-shadow:0 0 60px rgba(0,169,224,0.12);">
                 <!-- 헤더 -->
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
                     <div style="display:flex;align-items:center;gap:8px;">
                         <div id="status-dot" style="width:8px;height:8px;border-radius:50%;background:#06b6d4;"></div>
-                        <span style="font-size:10px;font-weight:900;color:#06b6d4;text-transform:uppercase;letter-spacing:0.15em;">Global Intelligence Briefing</span>
+                        <span
+                            style="font-size:10px;font-weight:900;color:#06b6d4;text-transform:uppercase;letter-spacing:0.15em;">Global
+                            Intelligence Briefing</span>
                     </div>
-                    <span id="line-counter" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);">1 / 1</span>
+                    <span id="line-counter" style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);">1 /
+                        1</span>
                 </div>
                 <!-- 타이핑 텍스트 -->
                 <div style="min-height:100px;display:flex;align-items:flex-start;">
-                    <p id="typing-text" style="font-size:17px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.6;letter-spacing:-0.01em;margin:0;"></p>
-                    <span id="cursor" style="display:inline-block;width:2px;height:20px;background:#06b6d4;margin-left:2px;animation:pulse 0.8s infinite;vertical-align:middle;"></span>
+                    <p id="typing-text"
+                        style="font-size:17px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.6;letter-spacing:-0.01em;margin:0;">
+                    </p>
+                    <span id="cursor"
+                        style="display:inline-block;width:2px;height:20px;background:#06b6d4;margin-left:2px;animation:pulse 0.8s infinite;vertical-align:middle;"></span>
                 </div>
                 <!-- 진행 바 -->
                 <div style="margin-top:20px;">
-                    <div style="width:100%;height:2px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;margin-bottom:12px;">
+                    <div
+                        style="width:100%;height:2px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;margin-bottom:12px;">
                         <div id="progress-bar-fill" style="width:0%;"></div>
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;">
-                        <span style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.2em;">AI Strategic Anchor Bot</span>
-                        <button id="next-btn" style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.15em;background:none;border:none;cursor:pointer;padding:4px 8px;">Next ▶</button>
+                        <span
+                            style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.2em;">AI
+                            Strategic Anchor Bot</span>
+                        <button id="next-btn"
+                            style="font-size:9px;font-weight:900;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.15em;background:none;border:none;cursor:pointer;padding:4px 8px;">Next
+                            ▶</button>
                     </div>
                 </div>
                 <!-- 도트 인디케이터 -->
@@ -289,7 +377,7 @@
             dotContainer.innerHTML = '';
             lines.forEach((_, i) => {
                 const d = document.createElement('div');
-                d.style.cssText = `height:4px;border-radius:9999px;background:${i===currentIndex?'#06b6d4':'rgba(255,255,255,0.1)'};width:${i===currentIndex?'20px':'4px'};transition:all 0.4s;`;
+                d.style.cssText = `height:4px;border-radius:9999px;background:${i === currentIndex ? '#06b6d4' : 'rgba(255,255,255,0.1)'};width:${i === currentIndex ? '20px' : '4px'};transition:all 0.4s;`;
                 dotContainer.appendChild(d);
             });
         }
@@ -324,7 +412,7 @@
                 progressFill.style.width = pct + '%';
                 if (pct >= 100) {
                     clearInterval(progressTimer);
-                    
+
                     // 0.5초 텀 후 다음 라인
                     statusDot.style.background = '#f59e0b'; // 오렌지 = 대기(Delay)
                     delayTimer = setTimeout(() => {
@@ -351,7 +439,7 @@
             clearAllTimers();
             const periodKey = PERIOD_ORDER[periodIndex];
             const scriptText = (scripts[periodKey] && scripts[periodKey].all) || "";
-            
+
             if (!scriptText) {
                 // 대본이 없으면 다음 기간으로 바로 건너뜀
                 periodIndex = (periodIndex + 1) % PERIOD_ORDER.length;
@@ -368,15 +456,15 @@
             statusDot.style.background = '#f59e0b'; // 오렌지 = 전환 대기
             delayTimer = setTimeout(() => {
                 // HTML 태그 제거 및 상세 분할 (문장 단위)
-                const stripTags = s => s.replace(/<[^>]*>/g, '').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
-                
+                const stripTags = s => s.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
                 // [수정] 단순 줄바꿈뿐만 아니라 마침표(. ) 등으로 문장을 분리하고, 각 문장을 적절한 길이로 여러 번 쪼개어 전체 내용을 다 보여줌
                 const rawLines = scriptText.split('\n').filter(l => l.trim() !== '');
                 lines = [];
                 rawLines.forEach(line => {
                     const cleaned = stripTags(line).trim();
                     if (!cleaned) return;
-                    
+
                     // 문장 부호 뒤 공백을 기준으로 쪼갬
                     const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(s => s.trim() !== '');
                     sentences.forEach(s => {
@@ -398,7 +486,7 @@
                         }
                     });
                 });
-                
+
                 currentIndex = 0;
                 startTyping();
             }, NEXT_LINE_DELAY);
@@ -456,20 +544,20 @@
         const DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
 
         const REGION_COORDS = {
-            'Global':      { lat: 20,  lng: 0   },
-            'USA':         { lat: 37,  lng: -95  },
-            'South Korea': { lat: 36,  lng: 127  },
-            'China':       { lat: 35,  lng: 104  },
-            'Europe':      { lat: 50,  lng: 10   },
-            'Japan':       { lat: 36,  lng: 138  },
-            'Vietnam':     { lat: 14,  lng: 108  },
-            'India':       { lat: 20,  lng: 78   },
-            'Mexico':      { lat: 23,  lng: -102 },
-            'Brazil':      { lat: -14, lng: -52  },
-            'Poland':      { lat: 52,  lng: 19   }
+            'Global': { lat: 20, lng: 0 },
+            'USA': { lat: 37, lng: -95 },
+            'South Korea': { lat: 36, lng: 127 },
+            'China': { lat: 35, lng: 104 },
+            'Europe': { lat: 50, lng: 10 },
+            'Japan': { lat: 36, lng: 138 },
+            'Vietnam': { lat: 14, lng: 108 },
+            'India': { lat: 20, lng: 78 },
+            'Mexico': { lat: 23, lng: -102 },
+            'Brazil': { lat: -14, lng: -52 },
+            'Poland': { lat: 52, lng: 19 }
         };
 
-        const stripHtml = str => str ? str.replace(/<[^>]*>/g, '').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&') : '';
+        const stripHtml = str => str ? str.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&') : '';
 
         const App = () => {
             const globeRef = useRef();
@@ -536,7 +624,7 @@
             useEffect(() => {
                 const loop = () => {
                     if (!isInteractingRef.current) {
-                        rotRef.current -= 0.18;
+                        rotRef.current -= 0.09;
                     }
                     if (globeRef.current) {
                         globeRef.current.pointOfView({ lng: rotRef.current, lat: 25, altitude: 0.8 }, 0);
@@ -570,7 +658,7 @@
 
             const memoizedLabels = useMemo(() =>
                 Object.entries(REGION_COORDS).map(([name, c]) => ({ ...c, name, type: 'region' }))
-            , []);
+                , []);
 
             const activeRegionNews = useMemo(() => {
                 if (!activeRegion) return rawData.slice(0, 5);
@@ -620,9 +708,9 @@
                     </div>
 
                     {/* UI Overlay */}
-                    <div style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none', zIndex:100 }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 100 }}>
                         {/* Header */}
-                        <div className="absolute top-10 left-12 title-reveal" style={{pointerEvents:'none'}}>
+                        <div className="absolute top-10 left-12 title-reveal" style={{ pointerEvents: 'none' }}>
                             <h1 className="text-4xl font-black tracking-tighter uppercase mb-1">DA PROCUREMENT</h1>
                             <div className="flex items-center gap-3">
                                 <div className="h-[2px] w-12 bg-[#00a9e0]"></div>
@@ -631,7 +719,7 @@
                         </div>
 
                         {/* Strategic Feed - 우측 하단 배치 (겹침 방지) */}
-                        <div className="absolute bottom-[24px] right-[48px] w-[420px]" style={{pointerEvents:'auto'}}>
+                        <div className="absolute bottom-[24px] right-[48px] w-[420px]" style={{ pointerEvents: 'auto' }}>
                             <div className="glass-panel rounded-[40px] p-8 glow-cyan border-white/10">
                                 <div className="flex items-center justify-between mb-8">
                                     <div className="flex items-center gap-3">
@@ -658,7 +746,7 @@
                         </div>
 
                         {/* Controls - 복구됨 */}
-                        <div className="absolute bottom-10 left-12" style={{pointerEvents:'auto'}}>
+                        <div className="absolute bottom-10 left-12" style={{ pointerEvents: 'auto' }}>
                             <div className="glass-panel px-6 py-3 rounded-2xl flex items-center gap-4 border-white/5 opacity-40 hover:opacity-100 transition-opacity">
                                 <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 rounded-full border border-white/30 flex items-center justify-center">
@@ -680,14 +768,14 @@
             const [chunkIdx, setChunkIdx] = useState(0);
 
             // 기사가 바뀌면 인덱스 초기화
-            useEffect(() => { 
-                setChunkIdx(0); 
+            useEffect(() => {
+                setChunkIdx(0);
             }, [item.id]);
 
             const chunks = useMemo(() => {
                 const fullText = item.bot || item.summary;
                 if (!fullText) return ['데이터 수집 중...'];
-                
+
                 // 1차 분할: 마침표 기준
                 const initialChunks = fullText.split(/(?<=\.)\s+/).filter(s => s.trim() !== '');
                 const finalChunks = [];
@@ -718,7 +806,7 @@
             const hasNext = chunkIdx < chunks.length - 1;
 
             return (
-                <div 
+                <div
                     onClick={() => window.navigateTo(`index.html?targetId=${item.id}`)}
                     className="bg-white/[0.03] border border-white/5 p-6 rounded-3xl hover:bg-white/[0.08] transition-all hover:-translate-y-1 cursor-pointer group"
                 >
@@ -727,7 +815,7 @@
                         <span className="text-[10px] text-white/20 font-bold ml-auto">{item.date}</span>
                     </div>
                     <h4 className="text-[15px] font-black leading-tight mb-3 text-white/90 group-hover:text-cyan-400 transition-colors">{item.title}</h4>
-                    
+
                     <p className="text-xs text-white/40 leading-relaxed min-h-[40px] transition-opacity duration-300">
                         {currentChunk}
                     </p>
@@ -739,7 +827,7 @@
                             ))}
                         </div>
                         {chunks.length > 1 && (
-                            <button 
+                            <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setChunkIdx(prev => (prev + 1) % chunks.length);
@@ -785,4 +873,5 @@
         }
     </script>
 </body>
+
 </html>

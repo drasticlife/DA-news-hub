@@ -748,3 +748,70 @@ article strong {
 .board-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ===== Pagination Styles ===== */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.pagination-btn.active {
+  background: #1428a0;
+  border-color: #1428a0;
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.nav-text {
+  padding: 0 12px;
+}
+
+.dark .pagination-btn {
+  background: #2d3135;
+  border-color: #3f444a;
+  color: #94a3b8;
+}
+
+.dark .pagination-btn:hover:not(:disabled) {
+  background: #3f444a;
+  color: #f1f5f9;
+}
+
+.dark .pagination-btn.active {
+  background: #1428a0;
+  border-color: #1428a0;
+  color: white;
+}
+
