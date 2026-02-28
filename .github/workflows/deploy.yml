@@ -1,0 +1,54 @@
+name: Deploy DA News Hub and Quartz Wiki
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Quartz
+        run: |
+          cd DA-news-wiki
+          npm ci
+          npx quartz build
+
+      - name: Prepare Deployment Directory
+        run: |
+          mkdir staging
+          # 1. 루트의 모든 HTML 및 자산 복사 (Quartz 소스 폴더 제외)
+          rsync -av --exclude='DA-news-wiki' --exclude='.git' --exclude='.github' --exclude='staging' ./ staging/
+          # 2. Quartz 빌드 결과물을 'wiki' 폴더로 복사
+          mkdir -p staging/wiki
+          cp -r DA-news-wiki/public/* staging/wiki/
+          echo "Deployment staging area prepared."
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: staging
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
