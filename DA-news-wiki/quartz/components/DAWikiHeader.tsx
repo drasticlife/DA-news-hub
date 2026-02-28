@@ -67,9 +67,9 @@ DAWikiHeader.css = `
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 99999 !important;
   height: 56px;
-  background: #0033A0;
+  background: #0033A0 !important;
   color: white;
   display: flex;
   align-items: center;
@@ -94,14 +94,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  opacity: 0.8;
+  color: white !important;
+  opacity: 0.8 !important;
   transition: opacity 0.15s;
   cursor: pointer;
   text-decoration: none;
 }
 .da-hamburger-btn:hover {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .da-header-left {

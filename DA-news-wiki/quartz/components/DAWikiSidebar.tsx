@@ -9,10 +9,15 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
   const isProd = process.env.GITHUB_ACTIONS === "true"
   const wikiPrefix = isProd ? "/DA-news-hub/wiki" : ""
 
-  // 파일명으로 실제 slug 탐색 헬퍼
+  // 파일명으로 실제 slug 탐색 헬퍼 (띄어쓰기/특수문자 매칭을 위해 정규화)
   const findSlug = (fileName: string): string => {
+    const normalize = (s: string) => s.toLowerCase().replace(/[\s-]/g, "")
+    const target = normalize(fileName)
     const found = allFiles.find(
-      (f) => f.slug?.split("/").pop()?.toLowerCase() === fileName.toLowerCase()
+      (f) => {
+        const slugName = f.slug?.split("/").pop() || ""
+        return normalize(slugName) === target
+      }
     )
     return found?.slug ?? ""
   }
