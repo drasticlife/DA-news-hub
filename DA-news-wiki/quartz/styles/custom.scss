@@ -1,0 +1,338 @@
+@use "./base.scss";
+
+// ═══════════════════════════════════════════════════════
+//  DA Product Wiki – custom.scss
+//  wiki.html 스타일 1:1 복제
+// ═══════════════════════════════════════════════════════
+
+:root {
+    --bodyFont: "Pretendard", "Segoe UI", sans-serif;
+    --headerFont: "Pretendard", "Segoe UI", sans-serif;
+}
+
+// ══════════════════════════════════════
+// 1. 전체 레이아웃 – 헤더 top spacing 보정
+// ══════════════════════════════════════
+
+// 좌측 사이드바: 스크롤 허용, 헤더 56px 아래에서 시작
+.page>#quartz-body .sidebar.left {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20, 40, 160, 0.15) transparent;
+    padding-top: 72px !important;
+    padding-bottom: 24px !important;
+    height: calc(100vh - 0px) !important; // sticky 유지
+}
+
+// 우측 사이드바: 헤더 아래에서 시작, 기본 동작 유지
+.page>#quartz-body .sidebar.right {
+    padding-top: 72px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: calc(100vh - 0px) !important;
+}
+
+// 콘텐츠 영역 상단 여백
+.page>#quartz-body .center {
+    max-width: 860px !important;
+    padding-top: 72px !important;
+}
+
+// overflow:hidden 해제 (Quartz 기본값 일부)
+ul.overflow,
+ol.overflow {
+    max-height: 400px !important;
+    overflow-y: auto !important;
+    mask-image: none !important;
+}
+
+// ══════════════════════════════════════
+// 2. 다크모드 색상 완전 정의
+// ══════════════════════════════════════
+
+[saved-theme="dark"] {
+    --light: #111317;
+    --lightgray: #1e293b;
+    --gray: #4b5563;
+    --darkgray: #9ca3af;
+    --dark: #f1f5f9;
+    --secondary: #60a5fa;
+    --tertiary: #93c5fd;
+    --highlight: rgba(30, 58, 95, 0.5);
+
+    body {
+        background-color: #111317 !important;
+    }
+}
+
+// ══════════════════════════════════════
+// 3. 테이블 – spec-table 1:1 복제
+// ══════════════════════════════════════
+
+.table-container>table,
+table {
+    width: 100%;
+    border-collapse: collapse !important;
+    margin: 16px 0;
+    font-size: 12px;
+
+    th {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        font-weight: 800 !important;
+        text-align: left;
+        padding: 8px 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 11px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    td {
+        padding: 8px 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #374151 !important;
+        line-height: 1.5;
+    }
+
+    tr {
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    tr:hover td {
+        background: #f8fafc !important;
+    }
+}
+
+[saved-theme="dark"] table {
+    th {
+        background: #1e293b !important;
+        border-color: #2d3748 !important;
+        color: #64748b !important;
+    }
+
+    td {
+        border-color: #2d3748 !important;
+        color: #9ca3af !important;
+    }
+
+    tr:hover td {
+        background: #1a1d21 !important;
+    }
+}
+
+// ══════════════════════════════════════
+// 4. 콜아웃 (info/tip/warn) – wiki.html 1:1 복제
+// ══════════════════════════════════════
+
+.callout {
+    border-radius: 0 10px 10px 0 !important;
+    border-left-width: 3px !important;
+    margin: 14px 0 !important;
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+
+    &[data-callout="info"],
+    &[data-callout="note"],
+    &[data-callout="abstract"] {
+        border-left-color: #0033A0 !important;
+        background-color: #eff6ff !important;
+        color: #1e40af !important;
+
+        .callout-title {
+            color: #1e40af !important;
+        }
+    }
+
+    &[data-callout="tip"],
+    &[data-callout="todo"] {
+        border-left-color: #16a34a !important;
+        background-color: #f0fdf4 !important;
+        color: #15803d !important;
+
+        .callout-title {
+            color: #15803d !important;
+        }
+    }
+
+    &[data-callout="warning"],
+    &[data-callout="caution"] {
+        border-left-color: #d97706 !important;
+        background-color: #fffbeb !important;
+        color: #92400e !important;
+
+        .callout-title {
+            color: #92400e !important;
+        }
+    }
+}
+
+[saved-theme="dark"] .callout {
+
+    &[data-callout="info"],
+    &[data-callout="note"] {
+        background-color: #1e3a5f !important;
+        color: #93c5fd !important;
+        border-left-color: #3b82f6 !important;
+
+        .callout-title {
+            color: #93c5fd !important;
+        }
+    }
+
+    &[data-callout="tip"],
+    &[data-callout="todo"] {
+        background-color: #14532d !important;
+        color: #86efac !important;
+        border-left-color: #22c55e !important;
+
+        .callout-title {
+            color: #86efac !important;
+        }
+    }
+
+    &[data-callout="warning"],
+    &[data-callout="caution"] {
+        background-color: #451a03 !important;
+        color: #fcd34d !important;
+        border-left-color: #f59e0b !important;
+
+        .callout-title {
+            color: #fcd34d !important;
+        }
+    }
+}
+
+// ══════════════════════════════════════
+// 5. 본문 텍스트 및 제목 (wiki.html 기준)
+// ══════════════════════════════════════
+
+article {
+    font-size: 14px !important;
+    line-height: 1.85 !important;
+}
+
+article strong,
+p>strong {
+    color: #0033A0 !important;
+    font-weight: 700 !important;
+}
+
+[saved-theme="dark"] article strong,
+[saved-theme="dark"] p>strong {
+    color: #60a5fa !important;
+}
+
+h3 {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    margin: 22px 0 10px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+[saved-theme="dark"] h3 {
+    color: #e2e8f0 !important;
+    border-bottom-color: #2d3748 !important;
+}
+
+h1 {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+}
+
+// ══════════════════════════════════════
+// 6. 우측 사이드바 – 목차/백링크 정상화
+// ══════════════════════════════════════
+
+// 목차 항상 표시
+.toc {
+    >button.toc-header {
+        display: none !important;
+    }
+
+    // 접기 버튼 숨김
+    >#toc-content,
+    >.depth-0,
+    >ul.toc-wrap {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        max-height: none !important;
+    }
+}
+
+// 백링크 스타일
+.backlinks {
+    >h3 {
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        border-bottom: none !important;
+    }
+
+    ul>li>a {
+        font-size: 12px !important;
+        color: #475569 !important;
+    }
+}
+
+// 그래프 뷰
+.graph>.graph-outer {
+    height: 160px !important;
+}
+
+.graph-outer>canvas {
+    border-radius: 8px !important;
+}
+
+// ══════════════════════════════════════
+// 7. 스크롤바
+// ══════════════════════════════════════
+
+.sidebar.left::-webkit-scrollbar,
+.sidebar.right::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sidebar.left::-webkit-scrollbar-track,
+.sidebar.right::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar.left::-webkit-scrollbar-thumb,
+.sidebar.right::-webkit-scrollbar-thumb {
+    background: rgba(20, 40, 160, 0.2);
+    border-radius: 10px;
+}
+
+// ══════════════════════════════════════
+// 8. 내부 링크 태그 (관련 항목)
+// ══════════════════════════════════════
+
+// a.internal 내부 링크는 Quartz 기본 스타일 유지 (커스텀 오버라이드 제거)
+
+// ══════════════════════════════════════
+// 9. 푸터
+// ══════════════════════════════════════
+
+footer {
+    font-size: 11px !important;
+}
+
+// ══════════════════════════════════════
+// 10. 모바일 보정
+// ══════════════════════════════════════
+
+@media (max-width: 800px) {
+    .page>#quartz-body .sidebar.left {
+        padding-top: 64px !important;
+        height: auto !important;
+    }
+
+    .page>#quartz-body .center {
+        padding-top: 64px !important;
+    }
+}
