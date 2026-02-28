@@ -1,10 +1,13 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
-import { resolveRelative, FullSlug } from "../util/path"
 
 // wiki.html의 사이드바 카테고리 메뉴를 1:1 복제한 컴포넌트
 // allFiles를 사용해 실제 Quartz slug를 동적으로 탐색 (하드코딩 제거)
 const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentProps) => {
   const currentSlug = fileData.slug ?? ""
+
+  // GitHub Actions 배포 환경인지 확인
+  const isProd = process.env.GITHUB_ACTIONS === "true"
+  const wikiPrefix = isProd ? "/DA-news-hub/wiki" : ""
 
   // 파일명으로 실제 slug 탐색 헬퍼
   const findSlug = (fileName: string): string => {
@@ -69,7 +72,7 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       {/* 전체 보기 */}
       <div class="da-cat-title">카테고리</div>
       <a
-        href={resolveRelative(fileData.slug!, "index" as FullSlug)}
+        href={`${wikiPrefix}/`}
         class={`da-cat-link${currentSlug === "index" ? " active" : ""}`}
       >
         <span class="da-cat-icon">≡</span>
@@ -83,8 +86,8 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
           {cat.items.map((item) => {
             const slug = findSlug(item.fileName)
             const isActive = currentSlug === slug
-            // 상대 경로 기반 동적 주소 생성
-            const href = slug ? resolveRelative(fileData.slug!, slug as FullSlug) : "#"
+            // 브라우저의 trailing slash 환경 오류 방지를 위한 절대경로 치환
+            const href = slug ? `${wikiPrefix}/${slug}` : "#"
             return (
               <a
                 href={href}

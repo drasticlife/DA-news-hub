@@ -1,24 +1,23 @@
-import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
-import { pathToRoot } from "../util/path"
+import { QuartzComponent, QuartzComponentConstructor } from "./types"
 // @ts-ignore
 import darkmodeScript from "./scripts/darkmode.inline"
 
 // wiki.html 헤더를 1:1 복제한 커스텀 상단 헤더 컴포넌트
-const DAWikiHeader: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
-  // Quartz 페이지(wiki/...)에서 바깥 바탕(DA-news-hub/)으로 나가기 위한 경로 계산
-  const baseDir = pathToRoot(fileData.slug!)
-  const rootDir = `${baseDir}/../`
+const DAWikiHeader: QuartzComponent = () => {
+  // GitHub Actions 배포 환경인지 확인
+  const isProd = process.env.GITHUB_ACTIONS === "true"
+  const siteRoot = isProd ? "/DA-news-hub" : ""
 
   return (
     <header class="da-wiki-header">
       {/* 좌측: 로고 + 사이트명 */}
       <div class="da-header-left">
-        <a href={`${rootDir}index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기">
+        <a href={`${siteRoot}/index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
           </svg>
         </a>
-        <a href={`${rootDir}index.html?view=hub`} class="da-logo-link">
+        <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link">
           <div class="da-logo-badge">DA</div>
           <span class="da-site-name">Purchase Intelligence</span>
         </a>
@@ -28,7 +27,7 @@ const DAWikiHeader: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
 
       {/* 우측: 네비게이션 + 다크모드 */}
       <div class="da-header-right">
-        <a href={`${rootDir}index.html?view=hub`} class="da-nav-btn da-nav-outline">
+        <a href={`${siteRoot}/index.html?view=hub`} class="da-nav-btn da-nav-outline">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
             <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
@@ -36,7 +35,7 @@ const DAWikiHeader: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
           </svg>
           News Hub
         </a>
-        <a href={`${rootDir}dashboard_mod.html`} class="da-nav-btn da-nav-solid">
+        <a href={`${siteRoot}/dashboard_mod.html`} class="da-nav-btn da-nav-solid">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
             <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
@@ -89,6 +88,20 @@ body {
 .page > #quartz-body .sidebar.right {
   top: 56px !important;
   height: calc(100vh - 56px) !important;
+}
+
+.da-hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+}
+.da-hamburger-btn:hover {
+  opacity: 1;
 }
 
 .da-header-left {
