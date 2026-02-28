@@ -31,7 +31,7 @@ jobs:
       - name: Build Quartz
         run: |
           cd DA-news-wiki
-          npm ci
+          npm install
           npx quartz build
 
       - name: Prepare Deployment Directory
