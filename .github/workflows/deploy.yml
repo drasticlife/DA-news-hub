@@ -26,23 +26,30 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Build Quartz
         run: |
           cd DA-news-wiki
           npm install
           npx quartz build
+          echo "Listing Build Output:"
+          ls -R public | head -n 20
 
       - name: Prepare Deployment Directory
         run: |
           mkdir staging
-          # 1. 루트의 모든 HTML 및 자산 복사 (Quartz 소스 폴더 제외)
+          # 1. 루트의 모든 HTML 및 자산 복사
           rsync -av --exclude='DA-news-wiki' --exclude='.git' --exclude='.github' --exclude='staging' ./ staging/
           # 2. Quartz 빌드 결과물을 'wiki' 폴더로 복사
           mkdir -p staging/wiki
-          cp -r DA-news-wiki/public/* staging/wiki/
-          echo "Deployment staging area prepared."
+          if [ -d "DA-news-wiki/public" ]; then
+            cp -r DA-news-wiki/public/* staging/wiki/
+            echo "Quartz build copied to staging/wiki."
+          else
+            echo "Error: DA-news-wiki/public directory not found!"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
