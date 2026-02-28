@@ -1,50 +1,60 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
+import { pathToRoot } from "../util/path"
 // @ts-ignore
 import darkmodeScript from "./scripts/darkmode.inline"
 
 // wiki.html 헤더를 1:1 복제한 커스텀 상단 헤더 컴포넌트
-const DAWikiHeader: QuartzComponent = (_props: QuartzComponentProps) => {
-    return (
-        <header class="da-wiki-header">
-            {/* 좌측: 로고 + 사이트명 */}
-            <div class="da-header-left">
-                <a href="../index.html" class="da-logo-link">
-                    <div class="da-logo-badge">DA</div>
-                    <span class="da-site-name">Purchase Intelligence</span>
-                </a>
-                <div class="da-header-divider">/</div>
-                <span class="da-page-label">Product Wiki</span>
-            </div>
+const DAWikiHeader: QuartzComponent = ({ fileData }: QuartzComponentProps) => {
+  // Quartz 페이지(wiki/...)에서 바깥 바탕(DA-news-hub/)으로 나가기 위한 경로 계산
+  const baseDir = pathToRoot(fileData.slug!)
+  const rootDir = `${baseDir}/../`
 
-            {/* 우측: 네비게이션 + 다크모드 */}
-            <div class="da-header-right">
-                <a href="../index.html" class="da-nav-btn da-nav-outline">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
-                        <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
-                        <path d="M14 13h4" /><path d="M14 9h4" /><path d="M14 17h4" />
-                    </svg>
-                    News Hub
-                </a>
-                <a href="../dashboard_mod.html" class="da-nav-btn da-nav-solid">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
-                        <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
-                    </svg>
-                    Dashboard
-                </a>
-                {/* 다크모드 버튼 – 기존 darkmode 스크립트 재사용 */}
-                <button class="darkmode da-darkmode-btn" aria-label="테마 전환">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="dayIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-                    </svg>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="nightIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                    </svg>
-                </button>
-            </div>
-        </header>
-    )
+  return (
+    <header class="da-wiki-header">
+      {/* 좌측: 로고 + 사이트명 */}
+      <div class="da-header-left">
+        <a href={`${rootDir}index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+        </a>
+        <a href={`${rootDir}index.html?view=hub`} class="da-logo-link">
+          <div class="da-logo-badge">DA</div>
+          <span class="da-site-name">Purchase Intelligence</span>
+        </a>
+        <div class="da-header-divider">/</div>
+        <span class="da-page-label">Product Wiki</span>
+      </div>
+
+      {/* 우측: 네비게이션 + 다크모드 */}
+      <div class="da-header-right">
+        <a href={`${rootDir}index.html?view=hub`} class="da-nav-btn da-nav-outline">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
+            <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
+            <path d="M14 13h4" /><path d="M14 9h4" /><path d="M14 17h4" />
+          </svg>
+          News Hub
+        </a>
+        <a href={`${rootDir}dashboard_mod.html`} class="da-nav-btn da-nav-solid">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
+          </svg>
+          Dashboard
+        </a>
+        {/* 다크모드 버튼 – 기존 darkmode 스크립트 재사용 */}
+        <button class="darkmode da-darkmode-btn" aria-label="테마 전환">
+          <svg xmlns="http://www.w3.org/2000/svg" class="dayIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="nightIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+  )
 }
 
 DAWikiHeader.beforeDOMLoaded = darkmodeScript

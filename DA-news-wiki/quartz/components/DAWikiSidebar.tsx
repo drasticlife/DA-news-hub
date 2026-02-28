@@ -1,10 +1,9 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
-import { pathToRoot } from "../util/path"
+import { resolveRelative, FullSlug } from "../util/path"
 
 // wiki.html의 사이드바 카테고리 메뉴를 1:1 복제한 컴포넌트
 // allFiles를 사용해 실제 Quartz slug를 동적으로 탐색 (하드코딩 제거)
 const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentProps) => {
-  const baseDir = pathToRoot(fileData.slug!)
   const currentSlug = fileData.slug ?? ""
 
   // 파일명으로 실제 slug 탐색 헬퍼
@@ -70,7 +69,7 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       {/* 전체 보기 */}
       <div class="da-cat-title">카테고리</div>
       <a
-        href={`${baseDir}`}
+        href={resolveRelative(fileData.slug!, "index" as FullSlug)}
         class={`da-cat-link${currentSlug === "index" ? " active" : ""}`}
       >
         <span class="da-cat-icon">≡</span>
@@ -84,8 +83,8 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
           {cat.items.map((item) => {
             const slug = findSlug(item.fileName)
             const isActive = currentSlug === slug
-            // 절대 경로 사용 (pathToRoot는 depth에 따라 달라져서 404 발생)
-            const href = slug ? `/${slug}` : "#"
+            // 상대 경로 기반 동적 주소 생성
+            const href = slug ? resolveRelative(fileData.slug!, slug as FullSlug) : "#"
             return (
               <a
                 href={href}
