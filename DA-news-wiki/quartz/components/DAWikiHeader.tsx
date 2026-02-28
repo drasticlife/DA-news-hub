@@ -6,18 +6,20 @@ import darkmodeScript from "./scripts/darkmode.inline"
 const DAWikiHeader: QuartzComponent = () => {
   // GitHub Actions 배포 환경인지 확인
   const isProd = process.env.GITHUB_ACTIONS === "true"
-  const siteRoot = isProd ? "/DA-news-hub" : ""
+  // 로컬 개발 서버(localhost:8080)는 위키 폴더만 서빙하므로 홈페이지가 없습니다.
+  // 따라서 로컬에서는 온라인 라이브 버전으로 넘어가도록 절대 주소를 사용합니다.
+  const siteRoot = isProd ? "/DA-news-hub" : "https://drasticlife.github.io/DA-news-hub"
 
   return (
     <header class="da-wiki-header">
       {/* 좌측: 로고 + 사이트명 */}
       <div class="da-header-left">
-        <a href={`${siteRoot}/index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기">
+        <a href={`${siteRoot}/index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기" data-router-ignore="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
           </svg>
         </a>
-        <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link">
+        <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link" data-router-ignore="true">
           <div class="da-logo-badge">DA</div>
           <span class="da-site-name">Purchase Intelligence</span>
         </a>
@@ -27,7 +29,7 @@ const DAWikiHeader: QuartzComponent = () => {
 
       {/* 우측: 네비게이션 + 다크모드 */}
       <div class="da-header-right">
-        <a href={`${siteRoot}/index.html?view=hub`} class="da-nav-btn da-nav-outline">
+        <a href={`${siteRoot}/index.html?view=hub`} class="da-nav-btn da-nav-outline" data-router-ignore="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
             <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
@@ -35,7 +37,7 @@ const DAWikiHeader: QuartzComponent = () => {
           </svg>
           News Hub
         </a>
-        <a href={`${siteRoot}/dashboard_mod.html`} class="da-nav-btn da-nav-solid">
+        <a href={`${siteRoot}/dashboard_mod.html`} class="da-nav-btn da-nav-solid" data-router-ignore="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
             <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
