@@ -14,11 +14,11 @@ const DAWikiHeader: QuartzComponent = () => {
     <header class="da-wiki-header">
       {/* 좌측: 로고 + 사이트명 */}
       <div class="da-header-left">
-        <a href={`${siteRoot}/index.html`} class="da-hamburger-btn" aria-label="메인 허브로 돌아가기" data-router-ignore="true">
+        <button class="da-hamburger-btn" aria-label="메인 허브 메뉴 열기" id="mobile-menu-btn" data-router-ignore="true">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
           </svg>
-        </a>
+        </button>
         <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link" data-router-ignore="true">
           <div class="da-logo-badge">DA</div>
           <span class="da-site-name">Purchase Intelligence</span>
@@ -54,11 +54,80 @@ const DAWikiHeader: QuartzComponent = () => {
           </svg>
         </button>
       </div>
+
+      {/* ── 글로벌 네비 드로어 (Wiki 내장형) ── */}
+      <div id="mobile-drawer-overlay"></div>
+      <div id="mobile-drawer">
+        <div class="drawer-header">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ background: "#0033A0", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "900", letterSpacing: "0.1em" }}>DA</div>
+            <span style={{ fontWeight: "700", fontSize: "13px", color: "#0033A0", textTransform: "uppercase", letterSpacing: "0.03em" }}>Purchase Intel</span>
+          </div>
+          <button id="close-drawer-btn" style={{ padding: "4px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="drawer-section-label">NAVIGATE</div>
+        <nav class="drawer-nav-global">
+          <a href={`${siteRoot}/index.html?view=hub`} class="gnav-item" data-router-ignore="true">
+            <span class="gnav-icon" style={{ fontSize: "14px" }}>📰</span>
+            <span class="gnav-text">News Hub</span>
+          </a>
+          <a href={`${siteRoot}/dashboard_mod.html`} class="gnav-item" data-router-ignore="true">
+            <span class="gnav-icon" style={{ fontSize: "14px" }}>📊</span>
+            <span class="gnav-text">Dashboard</span>
+          </a>
+          <a href={`${siteRoot}/dashboard_3d.html`} class="gnav-item" data-router-ignore="true">
+            <span class="gnav-icon" style={{ fontSize: "14px" }}>🌐</span>
+            <span class="gnav-text">3D Globe Briefing</span>
+          </a>
+          <a href={`${siteRoot}/wiki/index.html`} class="gnav-item gnav-active" data-router-ignore="true">
+            <span class="gnav-icon" style={{ fontSize: "14px" }}>📖</span>
+            <span class="gnav-text">Product Wiki</span>
+            <span class="gnav-badge gnav-badge-new">NEW</span>
+          </a>
+        </nav>
+
+        <div class="drawer-footer">
+          <a href={`${siteRoot}/index.html`} class="gnav-login-btn" data-router-ignore="true" style={{ textDecoration: "none" }}>
+            <span style={{ fontSize: "14px" }}>🔑</span> 메인 허브 (로그인)
+          </a>
+        </div>
+      </div>
     </header>
   )
 }
 
 DAWikiHeader.beforeDOMLoaded = darkmodeScript
+DAWikiHeader.afterDOMLoaded = `
+  const btn = document.getElementById('mobile-menu-btn');
+  const overlay = document.getElementById('mobile-drawer-overlay');
+  const drawer = document.getElementById('mobile-drawer');
+  const closeBtn = document.getElementById('close-drawer-btn');
+
+  function toggleDrawer() {
+    overlay.classList.toggle('open');
+    drawer.classList.toggle('open');
+    if (drawer.classList.contains('open')) {
+      document.body.style.overflow = 'hidden'; // 스크롤 방지
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function closeDrawer() {
+    overlay.classList.remove('open');
+    drawer.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (btn) btn.addEventListener('click', toggleDrawer);
+  if (overlay) overlay.addEventListener('click', closeDrawer);
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+`
 
 DAWikiHeader.css = `
 /* ═══════════════════════════════════════════
@@ -66,22 +135,32 @@ DAWikiHeader.css = `
    ═══════════════════════════════════════════ */
 .da-wiki-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
   z-index: 99999 !important;
   height: 56px;
-  background: #0033A0 !important;
+  background-color: #0033A0 !important; /* 투명도 0으로 오버라이드 보장 */
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 2px 16px rgba(0, 51, 160, 0.35);
+  box-shadow: 0 2px 16px rgba(0, 51, 160, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transform: translateZ(0); /* 강제 GPU 렌더링으로 겹침 방지 */
 }
 
 /* 헤더가 있으므로 페이지 상단 여백 추가 */
 body {
+  padding-top: 56px !important;
+}
+
+#quartz-root {
+  margin-top: 0 !important;
   padding-top: 56px !important;
 }
 
@@ -227,6 +306,164 @@ body {
 @media (max-width: 600px) {
   .da-site-name, .da-header-divider, .da-page-label { display: none; }
   .da-nav-btn span { display: none; }
+}
+
+/* ===== 모바일 드로어(Drawer) 사이드바 ===== */
+#mobile-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100000;
+  backdrop-filter: blur(2px);
+}
+#mobile-drawer-overlay.open {
+  display: block;
+}
+#mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 280px;
+  height: 100%;
+  background: white;
+  z-index: 100001;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  padding: 16px;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+[saved-theme="dark"] #mobile-drawer {
+  background: #25282c;
+  color: #e2e8f0;
+}
+#mobile-drawer.open {
+  left: 0;
+}
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+[saved-theme="dark"] .drawer-header {
+  border-color: #3f444a;
+}
+.drawer-section-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #94a3b8;
+  text-transform: uppercase;
+  padding: 0 4px;
+  margin-bottom: 6px;
+}
+[saved-theme="dark"] .drawer-section-label {
+  color: #4b5563;
+}
+.drawer-nav-global {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gnav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+  position: relative;
+}
+[saved-theme="dark"] .gnav-item {
+  color: #e2e8f0;
+}
+.gnav-item:hover {
+  background: #eff6ff;
+  color: #0033A0;
+}
+[saved-theme="dark"] .gnav-item:hover {
+  background: #1e293b;
+  color: #93c5fd;
+}
+.gnav-active {
+  background: #eff6ff;
+  color: #0033A0 !important;
+}
+[saved-theme="dark"] .gnav-active {
+  background: #1e3a5f;
+  color: #93c5fd !important;
+}
+.gnav-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+[saved-theme="dark"] .gnav-icon {
+  background: #2d3748;
+}
+.gnav-active .gnav-icon {
+  background: #dbeafe;
+  color: #0033A0;
+}
+.gnav-text {
+  flex: 1;
+}
+.gnav-badge {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  color: #64748b;
+}
+.gnav-badge-new {
+  background: #fef3c7;
+  color: #d97706;
+}
+.drawer-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[saved-theme="dark"] .drawer-footer {
+  border-color: #3f444a;
+}
+.gnav-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+.gnav-login-btn:hover {
+  background: #dcfce7;
 }
 `
 
