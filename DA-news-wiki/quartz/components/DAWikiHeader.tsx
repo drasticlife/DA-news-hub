@@ -11,49 +11,51 @@ const DAWikiHeader: QuartzComponent = () => {
   const siteRoot = isProd ? "/DA-news-hub" : "https://drasticlife.github.io/DA-news-hub"
 
   return (
-    <header class="da-wiki-header">
-      {/* 좌측: 로고 + 사이트명 */}
-      <div class="da-header-left">
-        <button class="da-hamburger-btn" aria-label="메인 허브 메뉴 열기" id="mobile-menu-btn" data-router-ignore="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
-          </svg>
-        </button>
-        <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link" data-router-ignore="true">
-          <div class="da-logo-badge">DA</div>
-          <span class="da-site-name">Purchase Intelligence</span>
-        </a>
-        <div class="da-header-divider">/</div>
-        <span class="da-page-label">Product Wiki</span>
-      </div>
+    <div>
+      <header class="da-wiki-header">
+        {/* 좌측: 로고 + 사이트명 */}
+        <div class="da-header-left">
+          <button class="da-hamburger-btn" aria-label="메인 허브 메뉴 열기" id="mobile-menu-btn" data-router-ignore="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
+            </svg>
+          </button>
+          <a href={`${siteRoot}/index.html?view=hub`} class="da-logo-link" data-router-ignore="true">
+            <div class="da-logo-badge">DA</div>
+            <span class="da-site-name">Purchase Intelligence</span>
+          </a>
+          <div class="da-header-divider">/</div>
+          <span class="da-page-label">Product Wiki</span>
+        </div>
 
-      {/* 우측: 네비게이션 + 다크모드 */}
-      <div class="da-header-right">
-        <a href={`${siteRoot}/index.html?view=hub`} class="da-nav-btn da-nav-outline" data-router-ignore="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
-            <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
-            <path d="M14 13h4" /><path d="M14 9h4" /><path d="M14 17h4" />
-          </svg>
-          News Hub
-        </a>
-        <a href={`${siteRoot}/dashboard_mod.html`} class="da-nav-btn da-nav-solid" data-router-ignore="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
-            <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
-          </svg>
-          Dashboard
-        </a>
-        {/* 다크모드 버튼 – 기존 darkmode 스크립트 재사용 */}
-        <button class="darkmode da-darkmode-btn" aria-label="테마 전환">
-          <svg xmlns="http://www.w3.org/2000/svg" class="dayIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" class="nightIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-          </svg>
-        </button>
-      </div>
+        {/* 우측: 네비게이션 + 다크모드 */}
+        <div class="da-header-right">
+          <a href={`${siteRoot}/index.html?view=hub`} class="da-nav-btn da-nav-outline" data-router-ignore="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
+              <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
+              <path d="M14 13h4" /><path d="M14 9h4" /><path d="M14 17h4" />
+            </svg>
+            News Hub
+          </a>
+          <a href={`${siteRoot}/dashboard_mod.html`} class="da-nav-btn da-nav-solid" data-router-ignore="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" />
+              <rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" />
+            </svg>
+            Dashboard
+          </a>
+          {/* 다크모드 버튼 – 기존 darkmode 스크립트 재사용 */}
+          <button class="darkmode da-darkmode-btn" aria-label="테마 전환">
+            <svg xmlns="http://www.w3.org/2000/svg" class="dayIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="nightIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
       {/* ── 글로벌 네비 드로어 (Wiki 내장형) ── */}
       <div id="mobile-drawer-overlay"></div>
@@ -97,7 +99,7 @@ const DAWikiHeader: QuartzComponent = () => {
           </a>
         </div>
       </div>
-    </header>
+    </div>
   )
 }
 
@@ -160,8 +162,8 @@ body {
 }
 
 #quartz-root {
+  /* quartz 자체의 상단 여백 제거 (이중 공백 방지) */
   margin-top: 0 !important;
-  padding-top: 56px !important;
 }
 
 /* Quartz 기본 상단 spacing 보정 */
@@ -169,6 +171,20 @@ body {
 .page > #quartz-body .sidebar.right {
   top: 56px !important;
   height: calc(100vh - 56px) !important;
+  padding-top: 2rem !important; /* 원래 6rem인 $topSpacing을 축소 */
+}
+
+/* 본문 상단 여백 절대 축소 (이중 마진 방지) */
+.page .page-header,
+.page .center,
+.page .center > article,
+.page > #quartz-body {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+.page > #quartz-body .sidebar.left,
+.page > #quartz-body .sidebar.right {
+  padding-top: 2rem !important;
 }
 
 .da-hamburger-btn {
@@ -180,9 +196,22 @@ body {
   transition: opacity 0.15s;
   cursor: pointer;
   text-decoration: none;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }
-.da-hamburger-btn:hover {
+.da-hamburger-btn:hover,
+.da-hamburger-btn:focus,
+.da-hamburger-btn:active {
   opacity: 1 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
 }
 
 .da-header-left {
@@ -321,11 +350,13 @@ body {
   display: block;
 }
 #mobile-drawer {
-  position: fixed;
-  top: 0;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
   left: -100%;
   width: 280px;
-  height: 100%;
+  height: 100vh !important;
+  max-height: 100vh !important;
   background: white;
   z-index: 100001;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);

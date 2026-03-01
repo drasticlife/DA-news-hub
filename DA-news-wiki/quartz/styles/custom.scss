@@ -20,14 +20,14 @@
     overflow-x: hidden !important;
     scrollbar-width: thin;
     scrollbar-color: rgba(20, 40, 160, 0.15) transparent;
-    padding-top: 72px !important;
+    padding-top: 24px !important;
     padding-bottom: 24px !important;
     height: calc(100vh - 0px) !important; // sticky 유지
 }
 
 // 우측 사이드바: 헤더 아래에서 시작, 기본 동작 유지
 .page>#quartz-body .sidebar.right {
-    padding-top: 72px !important;
+    padding-top: 24px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     height: calc(100vh - 0px) !important;
@@ -36,7 +36,7 @@
 // 콘텐츠 영역 상단 여백
 .page>#quartz-body .center {
     max-width: 860px !important;
-    padding-top: 72px !important;
+    padding-top: 24px !important;
 }
 
 // overflow:hidden 해제 (Quartz 기본값 일부)
@@ -328,11 +328,11 @@ footer {
 
 @media (max-width: 800px) {
     .page>#quartz-body .sidebar.left {
-        padding-top: 64px !important;
+        padding-top: 16px !important;
         height: auto !important;
     }
 
     .page>#quartz-body .center {
-        padding-top: 64px !important;
+        padding-top: 16px !important;
     }
 }
