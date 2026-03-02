@@ -19,10 +19,12 @@
   cursor: pointer;
   overflow: hidden;
 }
+
 #landing-page.hidden {
   opacity: 0;
   visibility: hidden;
 }
+
 #globeViz {
   width: 100vw;
   height: 100vh;
@@ -42,6 +44,7 @@
   opacity: 1;
   transition: opacity 1.2s ease-out;
 }
+
 #intro-label {
   font-size: 11px;
   font-weight: 700;
@@ -50,6 +53,7 @@
   text-transform: uppercase;
   margin-bottom: 12px;
 }
+
 #intro-h1 {
   margin: 0;
   font-size: clamp(3.5rem, 8vw, 7rem);
@@ -71,6 +75,7 @@
   opacity: 0;
   transition: opacity 1.2s ease-in;
 }
+
 #center-title h1 {
   margin: 0;
   font-size: 1.8rem;
@@ -78,6 +83,7 @@
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+
 #center-title p {
   margin: 0;
   font-size: 0.7rem;
@@ -86,6 +92,7 @@
   letter-spacing: 0.4em;
   text-transform: uppercase;
 }
+
 .ct-divider {
   display: inline-block;
   width: 36px;
@@ -99,6 +106,7 @@
 body.landing-active {
   overflow: hidden;
 }
+
 body {
   font-family: "Pretendard", sans-serif;
   transition: all 0.3s ease;
@@ -116,6 +124,7 @@ body {
   overflow-y: auto;
   background: white;
 }
+
 .main-content {
   margin-left: 280px;
   margin-top: 56px;
@@ -133,6 +142,7 @@ body {
   width: 100%;
   max-width: 280px;
 }
+
 .calendar-grid span {
   width: 24px;
   height: 24px;
@@ -155,10 +165,12 @@ body {
   cursor: pointer !important;
   transition: all 0.2s;
 }
+
 .week-label:hover {
   color: #1428a0;
   transform: scale(1.1);
 }
+
 .week-selected {
   background: #1428a0 !important;
   color: white !important;
@@ -170,6 +182,7 @@ body {
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
 .dark .risk-filter-btn.active {
   background: #3f444a;
 }
@@ -181,27 +194,70 @@ body {
   font-weight: 800;
   cursor: pointer !important;
 }
+
 .ring-lv1 {
   width: 20px !important;
   height: 20px !important;
   border-width: 1px;
 }
+
 .ring-lv2 {
   width: 24px !important;
   height: 24px !important;
   border-width: 2px;
 }
+
 .ring-lv3 {
   width: 28px !important;
   height: 28px !important;
   border-width: 3px;
   box-shadow: 0 0 8px rgba(20, 40, 160, 0.15);
 }
+
 .calendar-selected {
   background-color: #1428a0 !important;
   color: white !important;
   border: none !important;
 }
+
+/* 날짜 배지 스타일 (Risk 기반 색상 점) */
+.cal-day {
+  position: relative;
+  cursor: default;
+}
+
+.cal-day.has-news {
+  color: #1428a0;
+  font-weight: 800;
+  cursor: pointer !important;
+}
+
+.cal-day.has-news:hover {
+  background: #eef2ff;
+  border-radius: 50%;
+}
+
+.cal-day.calendar-selected {
+  background-color: #1428a0 !important;
+  color: white !important;
+}
+
+/* Risk 기반 배경색 (술자 뒤로 겨침) */
+.cal-day.risk-red {
+  background: rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+}
+
+.cal-day.risk-blue {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.cal-day.risk-red.calendar-selected,
+.cal-day.risk-blue.calendar-selected {
+  background: #1428a0 !important;
+  color: white !important;
+}
+
 
 /* 네비게이션 화살표 스타일 */
 .nav-btn {
@@ -211,6 +267,7 @@ body {
   transition: all 0.2s;
   color: #cbd5e1;
 }
+
 .nav-btn:hover {
   background: #f1f5f9;
   color: #1428a0;
@@ -223,18 +280,23 @@ body {
   cursor: pointer;
   position: relative;
 }
+
 .news-inner {
   transition: all 0.4s ease;
   overflow: hidden;
-  max-height: 280px; /* 조금 더 여유있게 조정 */
+  max-height: 280px;
+  /* 조금 더 여유있게 조정 */
 }
+
 .news-item.expanded .news-inner {
   max-height: 2000px;
 }
+
 .news-item.expanded {
   background: #fcfdfe;
   border-bottom: 2px solid #1428a0;
 }
+
 .summary-text {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -243,14 +305,17 @@ body {
   overflow: hidden;
   transition: all 0.3s ease;
 }
+
 .news-item.expanded .summary-text {
   -webkit-line-clamp: initial;
   line-clamp: initial;
 }
+
 .news-item img {
   filter: grayscale(100%);
   transition: all 0.5s ease;
 }
+
 .news-item:hover img {
   filter: grayscale(0%);
   transform: scale(1.05);
@@ -266,16 +331,19 @@ article mark {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(224, 231, 255, 0.5);
 }
+
 .dark article mark {
   background-color: #312e81 !important;
   color: #e0e7ff !important;
   border: 1px solid rgba(79, 70, 229, 0.3);
 }
+
 article b,
 article strong {
   color: #1428a0 !important;
   font-weight: 800;
 }
+
 .dark article b,
 .dark article strong {
   color: #93c5fd !important;
@@ -289,12 +357,14 @@ article strong {
   overflow: hidden;
   perspective: 600px;
 }
+
 #tagCloud3D {
   width: 100%;
   height: 200px;
   position: relative;
   transform-style: preserve-3d;
 }
+
 .tag3d {
   position: absolute;
   left: 50%;
@@ -310,6 +380,7 @@ article strong {
   transform-origin: center center;
   will-change: transform, opacity;
 }
+
 .tag3d:hover {
   color: #60a5fa;
   transform: scale(1.2) !important;
@@ -332,10 +403,12 @@ article strong {
   opacity: 0;
   transform: translateY(20px);
 }
+
 #auth-container.visible {
   opacity: 1;
   transform: translateY(0);
 }
+
 .auth-input {
   width: 100%;
   background: rgba(255, 255, 255, 0.1);
@@ -348,10 +421,12 @@ article strong {
   outline: none;
   transition: all 0.3s;
 }
+
 .auth-input:focus {
   background: rgba(255, 255, 255, 0.2);
   border-color: #00a9e0;
 }
+
 .auth-btn {
   width: 100%;
   background: #00a9e0;
@@ -365,10 +440,12 @@ article strong {
   transition: all 0.3s;
   box-shadow: 0 4px 12px rgba(0, 169, 224, 0.3);
 }
+
 .auth-btn:hover {
   background: #0088b6;
   transform: translateY(-2px);
 }
+
 .auth-switch {
   color: rgba(255, 255, 255, 0.6);
   font-size: 11px;
@@ -376,6 +453,7 @@ article strong {
   margin-top: 16px;
   cursor: pointer;
 }
+
 .auth-switch span {
   color: #00a9e0;
   text-decoration: underline;
@@ -394,17 +472,21 @@ article strong {
   border-radius: 100px;
   border: 1px solid #e2e8f0;
 }
+
 .dark .engagement-tag {
   background: #1e293b;
   border-color: #334155;
 }
+
 .like-btn-active {
   color: #ef4444 !important;
 }
+
 .like-btn-active i {
   fill: #ef4444;
   color: #ef4444 !important;
 }
+
 .like-btn-active span {
   color: #ef4444;
 }
@@ -416,38 +498,46 @@ article strong {
   padding-top: 20px;
   display: none;
 }
+
 .news-item.expanded .comments-section {
   display: block;
 }
+
 .comment-item {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px dashed #f1f5f9;
 }
+
 .comment-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 4px;
 }
+
 .comment-author {
   font-weight: 700;
   font-size: 12px;
   color: #1e293b;
 }
+
 .comment-date {
   font-size: 10px;
   color: #94a3b8;
 }
+
 .comment-body {
   font-size: 12px;
   color: #475569;
   line-height: 1.5;
 }
+
 .comment-form {
   margin-top: 20px;
   display: flex;
   gap: 10px;
 }
+
 .comment-input {
   flex: 1;
   background: #f8fafc;
@@ -457,6 +547,7 @@ article strong {
   font-size: 12px;
   outline: none;
 }
+
 .comment-submit {
   background: #1428a0;
   color: white;
@@ -473,26 +564,33 @@ article strong {
   width: 3px;
   height: 3px;
 }
+
 .subtle-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .subtle-scroll::-webkit-scrollbar-thumb {
   background: rgba(20, 40, 160, 0.2);
   border-radius: 10px;
 }
+
 .subtle-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(20, 40, 160, 0.4);
 }
+
 .subtle-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(20, 40, 160, 0.2) transparent;
 }
+
 .dark .subtle-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
 }
+
 .dark .subtle-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
 .dark .subtle-scroll {
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
@@ -506,6 +604,7 @@ article strong {
   position: relative;
   overflow: hidden;
 }
+
 .country-marker {
   position: absolute;
   width: 10px;
@@ -517,10 +616,12 @@ article strong {
   transition: all 0.3s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
 .country-marker:hover {
   transform: scale(1.5);
   z-index: 10;
 }
+
 .country-marker::after {
   content: attr(data-country);
   position: absolute;
@@ -538,17 +639,20 @@ article strong {
   transition: opacity 0.3s;
   margin-bottom: 4px;
 }
+
 .country-marker:hover::after {
   opacity: 1;
 }
 
 /* 펄스 애니메이션 */
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.3);
     opacity: 0.7;
@@ -565,10 +669,12 @@ article strong {
   overflow: hidden;
   height: 80px;
 }
+
 .market-carousel {
   display: flex;
   transition: transform 0.5s ease-in-out;
 }
+
 .market-slide {
   min-width: 100%;
   display: flex;
@@ -576,16 +682,19 @@ article strong {
   align-items: center;
   padding: 8px 0;
 }
+
 .market-label {
   font-weight: 600;
   color: #64748b;
   font-size: 10px;
 }
+
 .market-value {
   font-weight: 700;
   color: #1428a0;
   font-size: 12px;
 }
+
 .market-change {
   font-size: 9px;
   padding: 2px 6px;
@@ -593,20 +702,24 @@ article strong {
   margin-top: 4px;
   display: inline-block;
 }
+
 .market-up {
   color: #dc2626;
   background: #fee2e2;
 }
+
 .market-down {
   color: #2563eb;
   background: #dbeafe;
 }
+
 .carousel-dots {
   display: flex;
   justify-content: center;
   gap: 4px;
   margin-top: 8px;
 }
+
 .carousel-dot {
   width: 6px;
   height: 6px;
@@ -615,6 +728,7 @@ article strong {
   cursor: pointer;
   transition: all 0.3s;
 }
+
 .carousel-dot.active {
   background: #1428a0;
   width: 12px;
@@ -628,6 +742,7 @@ article strong {
   gap: 8px;
   margin-top: 8px;
 }
+
 .source-link {
   display: inline-flex;
   align-items: center;
@@ -641,6 +756,7 @@ article strong {
   text-decoration: none;
   transition: all 0.2s;
 }
+
 .source-link:hover {
   background: #1428a0;
   color: white;
@@ -652,6 +768,7 @@ article strong {
   background-color: #1a1c1e;
   color: #e2e8f0;
 }
+
 .dark .header,
 .dark .sidebar,
 .dark .news-item {
@@ -671,24 +788,29 @@ article strong {
   right: 16px;
   z-index: 20;
 }
+
 .bot-icon {
   font-size: 24px;
   cursor: pointer;
   transition: transform 0.2s;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
+
 .bot-icon:hover {
   transform: scale(1.2) rotate(-10deg);
 }
+
 .news-body-grid {
   display: flex;
   gap: 24px;
   align-items: flex-start;
 }
+
 .news-content-col {
   flex: 1;
   min-width: 0;
 }
+
 .news-bot-col {
   width: 260px;
   flex-shrink: 0;
@@ -698,11 +820,13 @@ article strong {
   transform: translateX(10px);
   transition: all 0.4s ease 0.1s;
 }
+
 .news-item.expanded .news-bot-col {
   display: block;
   opacity: 1;
   transform: translateX(0);
 }
+
 .bot-inner-bubble {
   background: #fff0f5;
   border: 2px solid #ffb6c1;
@@ -720,10 +844,12 @@ article strong {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .news-item.expanded .bot-inner-bubble {
   -webkit-line-clamp: initial;
   line-clamp: initial;
 }
+
 .bot-inner-bubble::before {
   content: "🤖";
   position: absolute;
@@ -745,6 +871,7 @@ article strong {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .board-btn:hover {
   background: rgba(255, 255, 255, 0.2);
 }
@@ -836,9 +963,11 @@ article strong {
   z-index: 200;
   backdrop-filter: blur(2px);
 }
+
 #mobile-drawer-overlay.open {
   display: block;
 }
+
 #mobile-drawer {
   position: fixed;
   top: 0;
@@ -852,12 +981,15 @@ article strong {
   padding: 16px;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
+
 .dark #mobile-drawer {
   background: #25282c;
 }
+
 #mobile-drawer.open {
   left: 0;
 }
+
 #mobile-drawer .drawer-header {
   display: flex;
   justify-content: space-between;
@@ -866,9 +998,11 @@ article strong {
   padding-bottom: 16px;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .dark #mobile-drawer .drawer-header {
   border-color: #3f444a;
 }
+
 #mobile-drawer .drawer-nav a {
   display: block;
   padding: 10px 12px;
@@ -882,14 +1016,17 @@ article strong {
   letter-spacing: 0.05em;
   transition: background 0.2s;
 }
+
 .dark #mobile-drawer .drawer-nav a {
   color: #e2e8f0;
 }
+
 #mobile-drawer .drawer-nav a:hover,
 #mobile-drawer .drawer-nav a.active-nav {
   background: #eff6ff;
   color: #1428a0;
 }
+
 .dark #mobile-drawer .drawer-nav a:hover,
 .dark #mobile-drawer .drawer-nav a.active-nav {
   background: #1e293b;
@@ -906,6 +1043,7 @@ article strong {
   padding: 0 4px;
   margin-bottom: 6px;
 }
+
 .dark .drawer-section-label {
   color: #4b5563;
 }
@@ -916,6 +1054,7 @@ article strong {
   flex-direction: column;
   gap: 2px;
 }
+
 .gnav-item {
   display: flex;
   align-items: center;
@@ -929,25 +1068,31 @@ article strong {
   transition: background 0.18s, color 0.18s;
   position: relative;
 }
+
 .dark .gnav-item {
   color: #e2e8f0;
 }
+
 .gnav-item:hover {
   background: #eff6ff;
   color: #0033A0;
 }
+
 .dark .gnav-item:hover {
   background: #1e293b;
   color: #93c5fd;
 }
+
 .gnav-active {
   background: #eff6ff;
   color: #0033A0 !important;
 }
+
 .dark .gnav-active {
   background: #1e3a5f;
   color: #93c5fd !important;
 }
+
 .gnav-icon {
   width: 28px;
   height: 28px;
@@ -958,16 +1103,20 @@ article strong {
   border-radius: 7px;
   flex-shrink: 0;
 }
+
 .dark .gnav-icon {
   background: #2d3748;
 }
+
 .gnav-active .gnav-icon {
   background: #dbeafe;
   color: #0033A0;
 }
+
 .gnav-text {
   flex: 1;
 }
+
 .gnav-badge {
   font-size: 9px;
   font-weight: 900;
@@ -977,6 +1126,7 @@ article strong {
   background: #e2e8f0;
   color: #64748b;
 }
+
 .gnav-badge-new {
   background: #fef3c7;
   color: #d97706;
@@ -992,9 +1142,11 @@ article strong {
   flex-direction: column;
   gap: 8px;
 }
+
 .dark .drawer-footer {
   border-color: #3f444a;
 }
+
 .gnav-logout-btn {
   display: flex;
   align-items: center;
@@ -1011,9 +1163,11 @@ article strong {
   transition: background 0.2s;
   text-align: left;
 }
+
 .gnav-logout-btn:hover {
   background: #fee2e2;
 }
+
 .gnav-login-btn {
   display: flex;
   align-items: center;
@@ -1030,12 +1184,14 @@ article strong {
   transition: background 0.2s;
   text-align: left;
 }
+
 .gnav-login-btn:hover {
   background: #dcfce7;
 }
 
 /* ===== 반응형 미디어 쿼리 ===== */
 @media (max-width: 768px) {
+
   /* 햄버거 버튼 표시 */
   #mobile-menu-btn {
     display: flex;
@@ -1095,6 +1251,7 @@ article strong {
 }
 
 @media (max-width: 480px) {
+
   /* 헤더 타이틀 텍스트 크기 조정 */
   header h1 {
     font-size: 11px !important;
@@ -1110,4 +1267,3 @@ article strong {
     display: none;
   }
 }
-

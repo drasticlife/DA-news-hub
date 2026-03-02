@@ -576,6 +576,7 @@ function updateNewsImages() {
           var options = {
             muteHttpExceptions: true,
             followRedirects: true,
+            deadline: 10,
             headers: {
               "User-Agent":
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -608,7 +609,11 @@ function updateNewsImages() {
               break;
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          // 타임아웃 또는 접속 오류 → 즉시 기본 이미지로 확정
+          imageUrl = DEFAULT_IMAGE_URL;
+          break;
+        }
       }
       sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
       count++;
