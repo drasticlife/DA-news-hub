@@ -1007,7 +1007,7 @@
             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
             status: 'pending'
           });
-        } catch(upsertErr) {
+        } catch (upsertErr) {
           console.warn("[onAuthStateChange] pending upsert 실패:", upsertErr);
         }
         await supabaseClient.auth.signOut();
@@ -2235,6 +2235,8 @@
         tag: "all",
       };
 
+      currentPage = 1; // [fix] 필터 초기화 시 1페이지로 복구
+
       document.getElementById("searchScope").value = "all";
 
       // 달력 UI 초기화
@@ -2327,7 +2329,7 @@
           );
         });
         breadcrumbs.push(
-          `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(start).padStart(2,"0")}~${String(end).padStart(2,"0")}`,
+          `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(start).padStart(2, "0")}~${String(end).padStart(2, "0")}`,
         );
       } else if (filterState.dateType === "week") {
         // 구버전 호환 (ISO 주차 번호 방식)
@@ -2489,29 +2491,40 @@
     }
 
     function focusNews(id) {
-      // [수정] 기사가 필터링되어 안 보일 수 있으므로 필터 초기화 후 진행
-      resetFilters();
+      // 1. 현재 필터링된 결과(currentFilteredNews)에 해당 기사가 있는지 먼저 확인
+      const currentIndex = currentFilteredNews.findIndex((n) => n._uId === id);
 
-      // 필터 초기화 후 렌더링 시간이 필요할 수 있으므로 약간의 지연
+      if (currentIndex !== -1) {
+        // [맥락 유지 케이스] 현재 선택된 날짜나 필터 내에 기사가 이미 있음
+        // 필터를 초기화하지 않고 바로 페이지 계산 및 이동
+        currentPage = Math.floor(currentIndex / itemsPerPage) + 1;
+        applyFilters();
+        executeScrollAndHighlight(id);
+      } else {
+        // [필터 초기화 케이스] 검색어나 다른 필터 때문에 기사가 안 보임
+        resetFilters();
+        setTimeout(() => {
+          const targetIndex = currentFilteredNews.findIndex((n) => n._uId === id);
+          if (targetIndex !== -1) {
+            currentPage = Math.floor(targetIndex / itemsPerPage) + 1;
+            applyFilters();
+            executeScrollAndHighlight(id);
+          }
+        }, 50);
+      }
+    }
+
+    // 공통 스크롤 및 강조 로직 분리
+    function executeScrollAndHighlight(id) {
       setTimeout(() => {
         const el = document.getElementById(id);
         if (el) {
-          // 부드럽게 스크롤 이동
           el.scrollIntoView({ behavior: "smooth", block: "center" });
-
-          // 카드 강조 효과 (반짝임)
           el.classList.add("ring-4", "ring-[#1428a0]", "ring-offset-4");
-          setTimeout(
-            () =>
-              el.classList.remove("ring-4", "ring-[#1428a0]", "ring-offset-4"),
-            3000,
-          );
+          setTimeout(() => el.classList.remove("ring-4", "ring-[#1428a0]", "ring-offset-4"), 3000);
 
-          // 내용 펼치기
           if (!el.classList.contains("expanded")) {
             el.classList.add("expanded");
-
-            // [추가] 대시보드에서 넘어온 경우에도 조회수 추적 실행
             const article = allNews.find((n) => n._uId === id);
             if (article && article.Title) {
               trackArticleView({
