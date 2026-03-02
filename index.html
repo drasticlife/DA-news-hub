@@ -112,90 +112,7 @@
   </div>
 
   <script>
-    // [Global State] Consolidated from all script tags
     let isDashboardActive = false;
-    let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
-    let allNews = [];
-    let currentFilteredNews = [];
-    let currentLang = "ko";
-    let filterState = {
-      category: "all",
-      risk: "all",
-      sort: "latest",
-      search: "",
-      scope: "all",
-      dateType: null,
-      dateValue: null,
-      country: "all",
-      tag: "all",
-    };
-    const itemsPerPage = 8;
-    let currentPage = 1;
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let authMode = 'login'; // 'login' or 'register'
-
-    let translations = {
-      ko: {
-        nav_strategy: "전략 시황",
-        nav_material: "원자재",
-        nav_macro: "거시/정책",
-        nav_region: "생산지역",
-        nav_competitor: "경쟁사",
-        nav_tech: "신기술동향",
-        nav_index: "INDEX",
-        search_scope_all: "제목+본문",
-        search_scope_title: "제목",
-        search_scope_content: "본문",
-        search_placeholder: "뉴스 키워드 검색...",
-        today: "TODAY",
-        global_map: "Global Map",
-        cloud_title: "Intelligence Cloud",
-        feed_title: "Strategic Feed",
-        risk_all: "ALL",
-        sort_latest: "Latest",
-        sort_oldest: "Oldest",
-        syncing: "SYNCING DATA...",
-        modal_title: "전략 요약 보고서",
-        country_news_suffix: " 관련 뉴스",
-        data_error: "데이터 없음",
-        tag_data_error: "태그 데이터 없음",
-        region_data_error: "지역 데이터 없음",
-        briefing_suffix: " 전략 브리핑",
-      },
-      en: {
-        nav_strategy: "Strategy",
-        nav_material: "Material",
-        nav_macro: "Macro",
-        nav_region: "Region",
-        nav_competitor: "Competitors",
-        nav_tech: "New Tech",
-        nav_index: "Index",
-        search_scope_all: "Title+Content",
-        search_scope_title: "Title",
-        search_scope_content: "Content",
-        search_placeholder: "Search keywords...",
-        today: "TODAY",
-        global_map: "Global Map",
-        cloud_title: "Intelligence Cloud",
-        feed_title: "Strategic Feed",
-        risk_all: "ALL",
-        sort_latest: "Latest",
-        sort_oldest: "Oldest",
-        syncing: "SYNCING DATA...",
-        modal_title: "Strategy Summary Report",
-        country_news_suffix: " News",
-        data_error: "No Data",
-        tag_data_error: "No Tag Data",
-        region_data_error: "No Regional Data",
-        briefing_suffix: " Briefing",
-      },
-    };
-
-    const todayDate = new Date();
-    let curYear = todayDate.getFullYear(),
-      curMonth = todayDate.getMonth();
-    let tagCloudInstance = null;
 
     function initLandingGlobe() {
       const places = [
@@ -273,30 +190,16 @@
       }, { passive: false });
     }
 
+
     // DOM 로드 시 초기화
-    document.addEventListener("DOMContentLoaded", async () => {
+    document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);
       const hasTarget = urlParams.get("targetId") || urlParams.get("view") === "hub";
+      const user = JSON.parse(localStorage.getItem("da_user"));
 
-      // [버그 수정] Supabase 실제 세션 확인 (localStorage 캐시만 믿지 않음)
-      const { data: { session } } = await supabaseClient.auth.getSession();
-
-      if (!session) {
-        // Supabase 세션이 없으면 localStorage 캐시도 삭제
-        if (currentUser) {
-          console.log("[Auth] localStorage 캐시 있지만 Supabase 세션 없음 → 캐시 삭제");
-          localStorage.removeItem("da_user");
-          currentUser = null;
-        }
-        // 비로그인 상태 → 랜딩(로그인) 화면 표시
-        initLandingGlobe();
-        return;
-      }
-
-      // Supabase 세션이 있음 → 이미 로그인된 상태
-      // onAuthStateChange의 INITIAL_SESSION이 곧 발화되어 처리할 것이므로
-      // 여기서는 UI만 준비 (fetchNews는 onAuthStateChange에서 호출)
-      if (currentUser) {
+      if (user) {
+        // 이미 로그인된 상태로 직접 접근
+        // 랜딩/로그인 화면 스킵, 바로 뉴스허브 진입
         isDashboardActive = true;
         document.body.classList.remove("landing-active");
         const lp = document.getElementById("landing-page");
@@ -305,9 +208,10 @@
           lp.classList.add("hidden");
         }
         updateUserInfoUI();
-        fetchNews(); // [CRITICAL] 실제 세션 확인 후 뉴스 로드
+        // [fix] 이미 로그인 상태면 여기서 currentUser를 먼저 설정 (window.onload보다 빠를 수 있음)
+        currentUser = user;
       } else {
-        // 세션은 있지만 currentUser 캐시가 없는 경우 → onAuthStateChange에서 처리
+        // 비로그인 상태 → 무조건 랜딩(로그인) 화면 표시
         initLandingGlobe();
       }
     });
@@ -778,47 +682,42 @@
       const overlay = document.getElementById('mobile-drawer-overlay');
       const isOpen = drawer.classList.contains('open');
       if (isOpen) {
-        drawer.classList.remove("open");
-        overlay.classList.remove("open");
-        document.body.style.overflow = "";
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+        document.body.style.overflow = '';
       } else {
         // 드로어 열 때 유저 정보 업데이트
-        const user = currentUser; // Use consolidated currentUser
-        const el = document.getElementById("drawer-user-info");
-        if (el)
-          el.textContent = user
-            ? user.userName + "님 로그인 중"
-            : "로그인되지 않음";
+        const user = JSON.parse(localStorage.getItem('da_user'));
+        const el = document.getElementById('drawer-user-info');
+        if (el) el.textContent = user ? user.userName + '님 로그인 중' : '로그인되지 않음';
         // 로그아웃/로그인 버튼 표시 조건
-        const logoutBtn = document.querySelector(".gnav-logout-btn");
-        const loginBtn = document.querySelector(".gnav-login-btn");
-        if (logoutBtn) logoutBtn.style.display = user ? "flex" : "none";
-        if (loginBtn) loginBtn.style.display = user ? "none" : "flex";
-        drawer.classList.add("open");
-        overlay.classList.add("open");
-        document.body.style.overflow = "hidden";
+        const logoutBtn = document.querySelector('.gnav-logout-btn');
+        const loginBtn = document.querySelector('.gnav-login-btn');
+        if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
+        if (loginBtn) loginBtn.style.display = user ? 'none' : 'flex';
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
         lucide.createIcons();
       }
     }
     function closeMobileDrawer() {
-      document.getElementById("mobile-drawer").classList.remove("open");
-      document
-        .getElementById("mobile-drawer-overlay")
-        .classList.remove("open");
-      document.body.style.overflow = "";
+      document.getElementById('mobile-drawer').classList.remove('open');
+      document.getElementById('mobile-drawer-overlay').classList.remove('open');
+      document.body.style.overflow = '';
     }
     function goToLogin() {
       closeMobileDrawer();
       isDashboardActive = false;
-      const lp = document.getElementById("landing-page");
+      const lp = document.getElementById('landing-page');
       if (lp) {
-        lp.style.display = "block";
-        lp.classList.remove("hidden");
-        lp.style.opacity = "1";
-        document.body.classList.add("landing-active");
+        lp.style.display = 'block';
+        lp.classList.remove('hidden');
+        lp.style.opacity = '1';
+        document.body.classList.add('landing-active');
         // 지구본이 없으면 다시 초기화
-        const globeEl = document.getElementById("globeViz");
-        if (globeEl && globeEl.innerHTML.trim() === "") initLandingGlobe();
+        const globeEl = document.getElementById('globeViz');
+        if (globeEl && globeEl.innerHTML.trim() === '') initLandingGlobe();
         updateUserInfoUI();
       } else {
         window.location.replace(window.location.pathname);
@@ -910,7 +809,7 @@
     }
 
     // [인증 관련] 전역 상태 및 유틸리티
-    // currentUser is now declared at top of script
+    let currentUser = JSON.parse(localStorage.getItem("da_user")) || null;
 
     function updateUserInfoUI() {
       const userInfoBar = document.getElementById("user-info-bar");
@@ -950,7 +849,8 @@
       updateUserInfoUI();
     });
 
-    // supabaseClient and authMode are now declared at top of script
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let authMode = 'login'; // 'login' or 'register'
 
     function showToast(msg, isError = true) {
       const cont = document.getElementById('toast-container');
@@ -1021,7 +921,6 @@
             }
           });
           if (error) throw error;
-          sessionStorage.setItem('da_just_signed_up', '1');
           showToast("가입 완료! 관리자의 승인을 기다려주세요.", false);
           setTimeout(() => toggleAuthMode(), 2000);
         } else {
@@ -1041,104 +940,57 @@
     }
 
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      // [버그 수정] SIGNED_OUT 처리
-      if (!session) {
-        currentUser = null;
-        localStorage.removeItem("da_user");
-        updateUserInfoUI();
-        return;
-      }
-
-      // [버그 수정] INITIAL_SESSION 이벤트 시:
-      // DOMContentLoaded에서 이미 currentUser가 있고 대시보드에 진입했다면 중복 처리 방지
-      if (event === 'INITIAL_SESSION' && isDashboardActive) {
-        return;
-      }
-
-      // SIGNED_IN 또는 TOKEN_REFRESHED 등만 계속 처리
-      if (event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION' && event !== 'TOKEN_REFRESHED') {
-        return;
-      }
-
-      // --- 관리자 승인 로직 (Supabase profiles.status 기반) ---
-      try {
-        // maybeSingle(): row가 없어도 error를 덜 유발 (supabase-js v2 지원)
+      if (session) {
+        // --- 관리자 승인 로직 ---
         const { data: profile, error } = await supabaseClient
           .from('profiles')
           .select('status')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
 
         if (error) {
-          console.warn('프로필 조회 오류:', error);
-          await supabaseClient.auth.signOut();
-          showToast('프로필 조회에 실패했습니다. 잠시 후 다시 시도해주세요.');
-          return;
-        }
-
-        // 프로필 row가 없는 경우
-        if (!profile) {
-          const justSignedUp = sessionStorage.getItem('da_just_signed_up') === '1';
-
-          if (justSignedUp) {
-            // 신규 가입자: pending 프로필 자동 생성 후 강제 로그아웃
-            const { error: upsertErr } = await supabaseClient.from('profiles').upsert({
+          // PGRST116 = 행 없음 → 신규 가입자이므로 pending으로 자동 생성
+          if (error.code === 'PGRST116') {
+            await supabaseClient.from('profiles').upsert({
               id: session.user.id,
               full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
               status: 'pending'
             });
-
-            sessionStorage.removeItem('da_just_signed_up');
-
-            if (upsertErr) {
-              console.warn('프로필 생성 실패:', upsertErr);
-              await supabaseClient.auth.signOut();
-              showToast('가입 처리 중 오류가 발생했습니다. 관리자에게 문의해주세요.');
-              return;
-            }
-
             await supabaseClient.auth.signOut();
-            showToast('가입 완료! 관리자 승인 후 접속 가능합니다.');
-            return;
+            showToast("가입 완료! 관리자 승인 후 접속 가능합니다.");
+          } else {
+            console.warn("프로필 테이블 오류:", error);
+            await supabaseClient.auth.signOut();
+            showToast("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
           }
-
-          // 로그인 사용자인데 프로필이 없다면: 메시지 명확히
-          await supabaseClient.auth.signOut();
-          showToast('계정 프로필이 등록되어 있지 않습니다. 관리자에게 승인/등록을 요청해주세요.');
           return;
         }
 
-        const status = String(profile.status || '').trim().toLowerCase();
-
-        if (status === 'pending') {
+        if (profile.status === 'pending') {
           await supabaseClient.auth.signOut();
-          showToast('승인 대기 중입니다. 관리자 승인 후 접속 가능합니다.');
+          showToast("승인 대기 중입니다. 관리자 승인 후 접속 가능합니다.");
           return;
         }
 
-        if (status === 'rejected') {
+        if (profile.status === 'rejected') {
           await supabaseClient.auth.signOut();
-          showToast('승인이 거절된 계정입니다.');
+          showToast("승인이 거절된 계정입니다.");
           return;
         }
+        // ------------------------
 
-        // approved/active 등은 허용
-      } catch (e) {
-        console.warn('승인 로직 예외:', e);
-        try { await supabaseClient.auth.signOut(); } catch (_) { }
-        showToast('로그인 처리 중 오류가 발생했습니다.');
-        return;
+        const userObj = {
+          userId: session.user.id,
+          userName: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+          email: session.user.email
+        };
+        currentUser = userObj;
+        localStorage.setItem("da_user", JSON.stringify(currentUser));
+        doEnterHubUI();
+      } else {
+        currentUser = null;
+        localStorage.removeItem("da_user");
       }
-      // ------------------------
-
-      const userObj = {
-        userId: session.user.id,
-        userName: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-        email: session.user.email
-      };
-      currentUser = userObj;
-      localStorage.setItem("da_user", JSON.stringify(currentUser));
-      doEnterHubUI();
     });
 
     function doEnterHubUI() {
@@ -1153,7 +1005,7 @@
         document.body.classList.remove('landing-active');
         if (lp) { lp.style.display = 'none'; lp.classList.add('hidden'); }
         updateUserInfoUI();
-        fetchNews(); // [CRITICAL] 로그인 성공 시 뉴스 로드
+        fetchNews(); // [fix] 로그인 성공 후 뉴스 로드
       }, 1200);
     }
 
@@ -1304,7 +1156,85 @@
         .catch((err) => console.error("Tracking error:", err));
     }
 
-    // allNews, filterState, translations are now declared at top of script
+    let allNews = [],
+      currentFilteredNews = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+
+    // 통합 필터 상태 관리
+    let filterState = {
+      category: "all",
+      risk: "all",
+      sort: "latest",
+      search: "",
+      scope: "all",
+      dateType: null, // null | 'week' | 'day'
+      dateValue: null,
+      country: "all",
+      tag: "all",
+    };
+
+    // isDashboardActive는 상단 스크립트에서 이미 선언됨
+
+    // 언어 상태 및 번역 사전
+    let currentLang = "ko"; // 'ko' | 'en'
+    const translations = {
+      ko: {
+        nav_strategy: "전략 시황",
+        nav_material: "원자재",
+        nav_macro: "거시/정책",
+        nav_region: "생산지역",
+        nav_competitor: "경쟁사",
+        nav_tech: "신기술동향",
+        nav_index: "INDEX",
+        search_scope_all: "제목+본문",
+        search_scope_title: "제목",
+        search_scope_content: "본문",
+        search_placeholder: "뉴스 키워드 검색...",
+        today: "TODAY",
+        global_map: "Global Map",
+        cloud_title: "Intelligence Cloud",
+        feed_title: "Strategic Feed",
+        risk_all: "ALL",
+        sort_latest: "Latest",
+        sort_oldest: "Oldest",
+        syncing: "SYNCING DATA...",
+        modal_title: "전략 요약 보고서",
+        country_news_suffix: " 관련 뉴스",
+        data_error: "데이터 없음",
+        tag_data_error: "태그 데이터 없음",
+        region_data_error: "지역 데이터 없음",
+        briefing_suffix: " 전략 브리핑",
+      },
+      en: {
+        nav_strategy: "Strategy",
+        nav_material: "Material",
+        nav_macro: "Macro",
+        nav_region: "Region",
+        nav_competitor: "Competitors",
+        nav_tech: "New Tech",
+        nav_index: "Index",
+        search_scope_all: "Title+Content",
+        search_scope_title: "Title",
+        search_scope_content: "Content",
+        search_placeholder: "Search keywords...",
+        today: "TODAY",
+        global_map: "Global Map",
+        cloud_title: "Intelligence Cloud",
+        feed_title: "Strategic Feed",
+        risk_all: "ALL",
+        sort_latest: "Latest",
+        sort_oldest: "Oldest",
+        syncing: "SYNCING DATA...",
+        modal_title: "Strategy Summary Report",
+        country_news_suffix: " News",
+        data_error: "No Data",
+        tag_data_error: "No Tag Data",
+        region_data_error: "No Regional Data",
+        briefing_suffix: " Briefing",
+      },
+    };
 
     function toggleLanguage() {
       currentLang = currentLang === "ko" ? "en" : "ko";
@@ -1367,7 +1297,10 @@
       renderAll(currentFilteredNews); // Re-use the existing renderAll logic but with current data
     }
 
-    // todayDate, curYear, curMonth, tagCloudInstance are now declared at top of script
+    const todayDate = new Date();
+    let curYear = todayDate.getFullYear(),
+      curMonth = todayDate.getMonth();
+    let tagCloudInstance = null;
 
     // 국가 좌표 맵핑 (실제 세계 지도 이미지 기준, %)
     // 표준 메르카토르 투영법 - 정확한 실제 위치
@@ -2189,6 +2122,18 @@
       }
     }
 
+    function goToday() {
+      const today = new Date();
+      curYear = today.getFullYear();
+      curMonth = today.getMonth();
+
+      document.getElementById("calHeader").innerText =
+        `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+
+      renderCalendar(allNews);
+      filterByDate(today.getDate());
+    }
+
     function filterNews(cat) {
       filterState.category = cat;
       // 카테고리 선택 시 달력 상태는 유지 (중첩 필터)
@@ -2511,12 +2456,19 @@
       lucide.createIcons();
 
       // 초기 캘린더 헤더 설정 (JS 로드 시점에 즉시 반영)
-      const calHeader = document.getElementById("calHeader");
-      if (calHeader) calHeader.innerText = `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+      document.getElementById("calHeader").innerText =
+        `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
 
-      // [버그 수정] window.onload에서 fetchNews() 무조건 호출 제거
-      // fetchNews()는 DOMContentLoaded + onAuthStateChange에서만 호출
-      // (비로그인 상태에서 랜딩 페이지에 "SYNCING DATA..." 무한 로딩 방지)
+      // [fix] 로그인된 사용자일 때만 뉴스 로드 (비로그인 시 무한 로딩 방지)
+      if (currentUser) fetchNews();
+      // renderFXRates();
+      // renderMaterialPrices();
+
+      // 1분마다 환율/원자재 데이터 업데이트
+      // setInterval(() => {
+      //   renderFXRates();
+      //   renderMaterialPrices();
+      // }, 60000);
     };
   </script>
 
