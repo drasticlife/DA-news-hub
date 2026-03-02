@@ -1010,14 +1010,16 @@
     }
 
     async function logout() {
+      // localStorage 먼저 삭제 (getSession 타이밍 오류 방지)
+      currentUser = null;
+      localStorage.removeItem("da_user");
       try {
         await supabaseClient.auth.signOut();
       } catch (err) {
         console.warn("Supabase signout error:", err);
-      } finally {
-        localStorage.removeItem("da_user");
-        window.location.replace(window.location.pathname);
       }
+      // signOut 완료 후 이동
+      window.location.replace(window.location.pathname);
     }
     window.logout = logout;
 
@@ -1529,8 +1531,9 @@
       let weekDisplayNum = currentWeek;
       let dayCount = 0;
 
-      // 첫 주
-      html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${weekDisplayNum}</span>`;
+      // 첫 주 시작일: 1일 - 빈칸 수 (음수면 1로 클램프)
+      const firstWeekStart = 1;
+      html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeekRange(${firstWeekStart}, ${Math.min(7 - firstDay, lastDate)})">W${weekDisplayNum}</span>`;
 
       // 첫 주의 빈 칸
       for (let i = 0; i < firstDay; i++) {
@@ -1544,7 +1547,8 @@
         if (dayCount > 0 && dayCount % 7 === 0) {
           currentWeek++;
           const weekIsoNum = getISOWeek(new Date(curYear, curMonth, d));
-          html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeek(${currentWeek})">W${weekIsoNum}</span>`;
+          const weekEnd = Math.min(d + 6, lastDate);
+          html += `<span class="week-label" id="week-${currentWeek}" onclick="filterByWeekRange(${d}, ${weekEnd})">W${weekIsoNum}</span>`;
         }
 
         const count = dateCounts[d] || 0;
@@ -1572,6 +1576,11 @@
     }
 
     function filterByWeek(weekNum) {
+      // 하위 호환성 유지 (구버전 호출용)
+      filterByWeekRange(null, null, weekNum);
+    }
+
+    function filterByWeekRange(startDay, endDay, legacyWeekNum) {
       // 모든 선택 해제
       document
         .querySelectorAll(".calendar-grid .week-label")
@@ -1579,20 +1588,22 @@
           el.classList.remove("week-selected");
         });
 
-      // 주차 라벨 선택 표시
-      const weekLabel = document.getElementById(`week-${weekNum}`);
-      if (weekLabel) weekLabel.classList.add("week-selected");
-
-      // 날짜 선택 상태면 해제 (주차와 일자는 상충)
+      // 날짜 선택 상태도 해제
       document
         .querySelectorAll(".calendar-grid span:not(.week-label)")
         .forEach((el) => {
           el.classList.remove("calendar-selected");
         });
 
-      // 상태 업데이트
-      filterState.dateType = "week";
-      filterState.dateValue = weekNum;
+      if (startDay !== null && endDay !== null) {
+        // 실제 날짜 범위로 필터 (새 방식)
+        filterState.dateType = "weekRange";
+        filterState.dateValue = { start: startDay, end: endDay };
+      } else {
+        // 구버전 ISO 주차 번호 방식 (하위 호환)
+        filterState.dateType = "week";
+        filterState.dateValue = legacyWeekNum;
+      }
       applyFilters();
     }
 
@@ -2250,7 +2261,23 @@
       }
 
       // 2. 날짜 필터 (Calendar)
-      if (filterState.dateType === "week") {
+      if (filterState.dateType === "weekRange") {
+        // 새 방식: 실제 날짜 범위로 직접 필터
+        const { start, end } = filterState.dateValue;
+        result = result.filter((n) => {
+          const d = parseDate(n.Date);
+          return (
+            d.getFullYear() === curYear &&
+            d.getMonth() === curMonth &&
+            d.getDate() >= start &&
+            d.getDate() <= end
+          );
+        });
+        breadcrumbs.push(
+          `${curYear}.${String(curMonth + 1).padStart(2, "0")}.${String(start).padStart(2,"0")}~${String(end).padStart(2,"0")}`,
+        );
+      } else if (filterState.dateType === "week") {
+        // 구버전 호환 (ISO 주차 번호 방식)
         const range = getDateRangeForWeek(
           curYear,
           curMonth,
