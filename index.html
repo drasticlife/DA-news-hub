@@ -947,9 +947,20 @@
           .single();
 
         if (error) {
-          console.warn("프로필 테이블 오류:", error);
-          await supabaseClient.auth.signOut();
-          showToast("서버 승인 설정이 진행 중입니다. 잠시 후 다시 시도해주세요.");
+          // PGRST116 = 행 없음 → 신규 가입자이므로 pending으로 자동 생성
+          if (error.code === 'PGRST116') {
+            await supabaseClient.from('profiles').upsert({
+              id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+              status: 'pending'
+            });
+            await supabaseClient.auth.signOut();
+            showToast("가입 완료! 관리자 승인 후 접속 가능합니다.");
+          } else {
+            console.warn("프로필 테이블 오류:", error);
+            await supabaseClient.auth.signOut();
+            showToast("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+          }
           return;
         }
 
