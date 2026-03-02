@@ -9,11 +9,13 @@
   <meta name="description" content="삼성전자 DA사업부 구매 전략 인텔리전스 허브 — 원자재, 거시경제, 생산지역, 경쟁사 동향을 실시간으로 모니터링합니다." />
   <meta name="robots" content="noindex, nofollow" />
   <!-- favicon: 파비콘 대신 SVG 인라인 사용 (외부 파일 불필요) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/globe.gl"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
   <script>
     tailwind.config = { darkMode: "class" };
@@ -39,29 +41,70 @@
       </div>
     </div>
 
-    <!-- Auth Container (Right Bottom) -->
-    <div id="auth-container" onclick="event.stopPropagation()">
-      <!-- Login Form -->
-      <div id="login-form">
-        <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Welcome Back</h2>
-        <form onsubmit="handleLoginSubmit(); return false;" autocomplete="on">
-          <input type="text" id="login-id" name="username" autocomplete="username" class="auth-input" placeholder="User ID">
-          <input type="password" id="login-pw" name="current-password" autocomplete="current-password" class="auth-input" placeholder="Password">
-          <button type="submit" class="auth-btn">Sign In</button>
-        </form>
-        <p class="auth-switch">Don't have an account? <span onclick="toggleAuthForm('register')">Register</span></p>
+    <!-- Auth Container -->
+    <div id="auth-container" onclick="event.stopPropagation()"
+      class="absolute right-[5%] bottom-[10%] w-[380px] z-[100] transition-all duration-700">
+      <div
+        class="bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 p-8 rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] text-white relative overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute -top-16 -right-16 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none">
+        </div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none">
+        </div>
+
+        <div class="relative z-10 font-sans">
+          <div class="mb-8 flex justify-between items-start">
+            <div>
+              <h2 id="auth-title" class="text-[26px] font-black tracking-tight drop-shadow-md leading-tight">
+                Welcome</h2>
+            </div>
+          </div>
+
+          <!-- Email/Password Form -->
+          <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+            <div id="name-field-wrapper" class="hidden mb-3">
+              <label class="block text-[10px] text-white/50 font-bold mb-1 ml-1 uppercase tracking-widest">Name</label>
+              <input type="text" id="auth-name"
+                class="w-full bg-black/30 border border-white/10 text-white placeholder-white/30 px-4 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
+                placeholder="이름 (사내 ID)">
+            </div>
+            <div class="mb-3">
+              <label class="block text-[10px] text-white/50 font-bold mb-1 ml-1 uppercase tracking-widest">Email</label>
+              <input type="email" id="auth-email" required
+                class="w-full bg-black/30 border border-white/10 text-white placeholder-white/30 px-4 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
+                placeholder="Email Address">
+            </div>
+            <div class="mb-6 relative">
+              <label
+                class="block text-[10px] text-white/50 font-bold mb-1 ml-1 uppercase tracking-widest">Password</label>
+              <input type="password" id="auth-pw" required
+                class="w-full bg-black/30 border border-white/10 text-white placeholder-white/30 px-4 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all font-medium"
+                placeholder="••••••••">
+            </div>
+
+            <button type="submit" id="auth-submit-btn"
+              class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] transform hover:-translate-y-0.5 mt-2 flex items-center justify-center gap-2">
+              <span>SIGN IN</span>
+            </button>
+          </form>
+
+          <p class="text-center text-[11px] text-white/50 mt-8 font-medium">
+            <span id="auth-switch-text">Don't have an account?</span>
+            <button onclick="toggleAuthMode()"
+              class="text-blue-400 hover:text-blue-300 font-bold ml-1 transition-colors hover:underline underline-offset-2">Register</button>
+          </p>
+        </div>
       </div>
 
-      <!-- Register Form -->
-      <div id="register-form" style="display: none;">
-        <h2 style="color: white; font-size: 18px; font-weight: 700; margin-bottom: 20px;">Join Community</h2>
-        <form onsubmit="handleRegisterSubmit(); return false;" autocomplete="on">
-          <input type="text" id="reg-id" name="username" autocomplete="username" class="auth-input" placeholder="Choose User ID">
-          <input type="text" id="reg-name" name="name" autocomplete="name" class="auth-input" placeholder="Your Name">
-          <input type="password" id="reg-pw" name="new-password" autocomplete="new-password" class="auth-input" placeholder="Password">
-          <button type="submit" class="auth-btn">Register</button>
-        </form>
-        <p class="auth-switch">Already have an account? <span onclick="toggleAuthForm('login')">Sign In</span></p>
+      <!-- Toast Container -->
+      <div id="toast-container"
+        class="absolute -top-16 right-0 p-4 w-full transition-all duration-500 pointer-events-none z-[60]"
+        style="opacity: 0; transform: translateY(-20px);">
+        <div id="toast-msg"
+          class="bg-red-500/90 backdrop-blur-md text-white text-[11px] font-bold py-3 px-4 rounded-xl shadow-2xl border border-red-400/50 flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4"></i>
+          <span id="toast-text">Error message</span>
+        </div>
       </div>
     </div>
 
@@ -154,10 +197,9 @@
       const hasTarget = urlParams.get("targetId") || urlParams.get("view") === "hub";
       const user = JSON.parse(localStorage.getItem("da_user"));
 
-      if (hasTarget || user) {
-        // ① ?view=hub 파라미터로 진입 (다른 페이지에서 링크)
-        // ② 이미 로그인된 상태로 index.html 직접 접근
-        // → 두 경우 모두 랜딩/로그인 화면 스킵, 바로 뉴스허브 진입
+      if (user) {
+        // 이미 로그인된 상태로 직접 접근
+        // 랜딩/로그인 화면 스킵, 바로 뉴스허브 진입
         isDashboardActive = true;
         document.body.classList.remove("landing-active");
         const lp = document.getElementById("landing-page");
@@ -165,10 +207,9 @@
           lp.style.display = "none";
           lp.classList.add("hidden");
         }
-        // 유저 정보 UI 업데이트 (헤더 이름 표시 등)
-        if (user) updateUserInfoUI();
+        updateUserInfoUI();
       } else {
-        // 비로그인 상태 → 랜딩(로그인) 화면 표시
+        // 비로그인 상태 → 무조건 랜딩(로그인) 화면 표시
         initLandingGlobe();
       }
     });
@@ -265,48 +306,74 @@
   <div id="mobile-drawer">
 
     <!-- 헤더 -->
-    <div class="drawer-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
+    <div class="drawer-header"
+      style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <div style="background:#0033A0;color:white;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900;text-transform:uppercase;">DA</div>
-        <span style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;">Purchase Intelligence</span>
+        <div
+          style="background:#0033A0;color:white;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900;text-transform:uppercase;">
+          DA</div>
+        <span style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;">Purchase
+          Intelligence</span>
       </div>
-      <button onclick="closeMobileDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;" aria-label="메뉴 닫기">
+      <button onclick="closeMobileDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;"
+        aria-label="메뉴 닫기">
         ✕
       </button>
     </div>
 
     <!-- ── 섹션 1: 페이지 이동 ── -->
-    <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;">NAVIGATE</div>
+    <div
+      style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;">
+      NAVIGATE</div>
     <nav style="display:flex;flex-direction:column;gap:2px;">
-      <a href="index.html?view=hub" id="gnav-newshub" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#0033A0;text-decoration:none;background:#eff6ff;">
-        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#dbeafe;border-radius:7px;flex-shrink:0;">📰</span>
+      <a href="index.html?view=hub" id="gnav-newshub"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#0033A0;text-decoration:none;background:#eff6ff;">
+        <span
+          style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#dbeafe;border-radius:7px;flex-shrink:0;">📰</span>
         <span style="flex:1;color:#0033A0;">News Hub</span>
-        <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;">현재</span>
+        <span
+          style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;">현재</span>
       </a>
-      <a href="dashboard_mod.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
-        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📊</span>
+      <a href="dashboard_mod.html"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span
+          style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📊</span>
         <span style="flex:1;color:#1e293b;">Dashboard</span>
       </a>
-      <a href="dashboard_3d.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
-        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">🌐</span>
+      <a href="dashboard_3d.html"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span
+          style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">🌐</span>
         <span style="flex:1;color:#1e293b;">3D Globe Briefing</span>
       </a>
-      <a href="wiki/index.html" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
-        <span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📖</span>
+      <a href="wiki/index.html"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#1e293b;text-decoration:none;">
+        <span
+          style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;border-radius:7px;flex-shrink:0;">📖</span>
         <span style="flex:1;color:#1e293b;">Product Wiki</span>
-        <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;">NEW</span>
+        <span
+          style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;">NEW</span>
       </a>
     </nav>
 
     <!-- ── 섹션 2: 뉴스 필터 (뉴스허브 전용) ── -->
-    <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;margin-top:16px;">NEWS FILTER</div>
+    <div
+      style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;margin-top:16px;">
+      NEWS FILTER</div>
     <nav class="drawer-nav">
-      <a href="#" onclick="resetFilters(); closeMobileDrawer();" id="drawer-nav-all" class="active-nav" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">전략 시황</a>
-      <a href="#" onclick="filterNews('원자재'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">원자재</a>
-      <a href="#" onclick="filterNews('거시경제'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">거시/정책</a>
-      <a href="#" onclick="filterNews('생산지역'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">생산지역</a>
-      <a href="#" onclick="filterNews('경쟁사'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">경쟁사</a>
-      <a href="#" onclick="filterNews('신기술동향'); closeMobileDrawer();" style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">신기술동향</a>
+      <a href="#" onclick="resetFilters(); closeMobileDrawer();" id="drawer-nav-all" class="active-nav"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">전략
+        시황</a>
+      <a href="#" onclick="filterNews('원자재'); closeMobileDrawer();"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">원자재</a>
+      <a href="#" onclick="filterNews('거시경제'); closeMobileDrawer();"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">거시/정책</a>
+      <a href="#" onclick="filterNews('생산지역'); closeMobileDrawer();"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">생산지역</a>
+      <a href="#" onclick="filterNews('경쟁사'); closeMobileDrawer();"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">경쟁사</a>
+      <a href="#" onclick="filterNews('신기술동향'); closeMobileDrawer();"
+        style="display:block;padding:10px 12px;font-size:13px;font-weight:700;color:#1e293b;border-radius:8px;text-decoration:none;text-transform:uppercase;letter-spacing:0.05em;">신기술동향</a>
     </nav>
 
     <!-- ── 섹션 3: 검색 ── -->
@@ -319,12 +386,15 @@
     </div>
 
     <!-- ── 푸터: 로그아웃 ── -->
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;flex-direction:column;gap:8px;">
+    <div
+      style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;flex-direction:column;gap:8px;">
       <div id="drawer-user-info" style="font-size:11px;color:#94a3b8;font-weight:600;"></div>
-      <button onclick="logout()" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#fef2f2;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+      <button onclick="logout()"
+        style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#fef2f2;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
         🚪 로그아웃
       </button>
-      <button onclick="goToLogin()" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
+      <button onclick="goToLogin()"
+        style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer;text-align:left;">
         🔑 로그인 화면
       </button>
     </div>
@@ -620,9 +690,9 @@
         if (el) el.textContent = user ? user.userName + '님 로그인 중' : '로그인되지 않음';
         // 로그아웃/로그인 버튼 표시 조건
         const logoutBtn = document.querySelector('.gnav-logout-btn');
-        const loginBtn  = document.querySelector('.gnav-login-btn');
+        const loginBtn = document.querySelector('.gnav-login-btn');
         if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
-        if (loginBtn)  loginBtn.style.display  = user ? 'none'  : 'flex';
+        if (loginBtn) loginBtn.style.display = user ? 'none' : 'flex';
         drawer.classList.add('open');
         overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -636,7 +706,6 @@
     }
     function goToLogin() {
       closeMobileDrawer();
-      // 랜딩(로그인) 화면으로 이동 — localStorage 유지 (로그아웃 아님)
       isDashboardActive = false;
       const lp = document.getElementById('landing-page');
       if (lp) {
@@ -644,9 +713,12 @@
         lp.classList.remove('hidden');
         lp.style.opacity = '1';
         document.body.classList.add('landing-active');
+        // 지구본이 없으면 다시 초기화
+        const globeEl = document.getElementById('globeViz');
+        if (globeEl && globeEl.innerHTML.trim() === '') initLandingGlobe();
         updateUserInfoUI();
       } else {
-        window.location.href = 'index.html';
+        window.location.replace(window.location.pathname);
       }
     }
 
@@ -775,97 +847,165 @@
       updateUserInfoUI();
     });
 
-    function toggleAuthForm(mode) {
-      const loginForm = document.getElementById("login-form");
-      const regForm = document.getElementById("register-form");
-      if (mode === "register") {
-        loginForm.style.display = "none";
-        regForm.style.display = "block";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let authMode = 'login'; // 'login' or 'register'
+
+    function showToast(msg, isError = true) {
+      const cont = document.getElementById('toast-container');
+      const tb = document.getElementById('toast-msg');
+      const tt = document.getElementById('toast-text');
+      tt.innerText = msg;
+      if (isError) {
+        tb.className = "bg-red-500/95 backdrop-blur-md text-white text-[11px] font-bold py-3 px-4 rounded-xl shadow-2xl border border-red-400/50 flex items-center gap-2";
       } else {
-        loginForm.style.display = "block";
-        regForm.style.display = "none";
+        tb.className = "bg-green-500/95 backdrop-blur-md text-white text-[11px] font-bold py-3 px-4 rounded-xl shadow-2xl border border-green-400/50 flex items-center gap-2";
+      }
+
+      cont.style.opacity = '1';
+      cont.style.transform = 'translateY(0)';
+
+      setTimeout(() => {
+        cont.style.opacity = '0';
+        cont.style.transform = 'translateY(-20px)';
+      }, 4000);
+    }
+
+    function toggleAuthMode() {
+      authMode = authMode === 'login' ? 'register' : 'login';
+      const title = document.getElementById('auth-title');
+      const submitBtn = document.querySelector('#auth-submit-btn span');
+      const switchTxt = document.getElementById('auth-switch-text');
+      const switchBtn = switchTxt.nextElementSibling;
+      const nameWrapper = document.getElementById('name-field-wrapper');
+
+      if (authMode === 'register') {
+        title.innerHTML = 'Join Community';
+        submitBtn.innerText = 'REGISTER';
+        switchTxt.innerText = 'Already have an account?';
+        switchBtn.innerText = 'Sign In';
+        nameWrapper.classList.remove('hidden');
+      } else {
+        title.innerHTML = 'Welcome';
+        submitBtn.innerText = 'SIGN IN';
+        switchTxt.innerText = "Don't have an account?";
+        switchBtn.innerText = 'Register';
+        nameWrapper.classList.add('hidden');
       }
     }
 
-    async function handleLoginSubmit() {
-      const userId = document.getElementById("login-id").value;
-      const password = document.getElementById("login-pw").value;
-      if (!userId || !password) return alert("Please enter ID and Password");
 
-      function doEnterHub(user) {
-        currentUser = user;
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const pw = document.getElementById('auth-pw').value;
+      const name = document.getElementById('auth-name').value;
+      const btn = document.getElementById('auth-submit-btn');
+      const originalText = btn.innerHTML;
+
+      btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+      btn.disabled = true;
+
+      try {
+        if (authMode === 'register') {
+          if (!name) throw new Error("이름 (사내 ID)를 입력해주세요.");
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password: pw,
+            options: {
+              data: {
+                full_name: name
+              }
+            }
+          });
+          if (error) throw error;
+          showToast("가입 완료! 관리자의 승인을 기다려주세요.", false);
+          setTimeout(() => toggleAuthMode(), 2000);
+        } else {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password: pw,
+          });
+          if (error) throw error;
+          // onAuthStateChange will handle transition
+        }
+      } catch (err) {
+        showToast(err.message || '인증 실패하였습니다.');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        // --- 관리자 승인 로직 ---
+        const { data: profile, error } = await supabaseClient
+          .from('profiles')
+          .select('status')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.warn("프로필 테이블 오류:", error);
+          await supabaseClient.auth.signOut();
+          showToast("서버 승인 설정이 진행 중입니다. 잠시 후 다시 시도해주세요.");
+          return;
+        }
+
+        if (profile.status === 'pending') {
+          await supabaseClient.auth.signOut();
+          showToast("승인 대기 중입니다. 관리자 승인 후 접속 가능합니다.");
+          return;
+        }
+
+        if (profile.status === 'rejected') {
+          await supabaseClient.auth.signOut();
+          showToast("승인이 거절된 계정입니다.");
+          return;
+        }
+        // ------------------------
+
+        const userObj = {
+          userId: session.user.id,
+          userName: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+          email: session.user.email
+        };
+        currentUser = userObj;
         localStorage.setItem("da_user", JSON.stringify(currentUser));
-        const intro = document.getElementById('intro-title');
-        const ct    = document.getElementById('center-title');
-        const lp    = document.getElementById('landing-page');
-        if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
-        if (ct)    { ct.style.transition = 'opacity 0.8s ease-in';  ct.style.opacity = '1'; }
-        if (lp)    { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
-        setTimeout(() => {
-          isDashboardActive = true;
-          document.body.classList.remove('landing-active');
-          if (lp) { lp.style.display = 'none'; lp.classList.add('hidden'); }
-          updateUserInfoUI();
-        }, 1200);
+        doEnterHubUI();
+      } else {
+        currentUser = null;
+        localStorage.removeItem("da_user");
       }
+    });
 
-      // ── 1차: GAS 인증 시도 ──
+    function doEnterHubUI() {
+      const intro = document.getElementById('intro-title');
+      const ct = document.getElementById('center-title');
+      const lp = document.getElementById('landing-page');
+      if (intro) { intro.style.transition = 'opacity 0.8s ease-out'; intro.style.opacity = '0'; }
+      if (ct) { ct.style.transition = 'opacity 0.8s ease-in'; ct.style.opacity = '1'; }
+      if (lp) { setTimeout(() => { lp.style.transition = 'opacity 0.6s'; lp.style.opacity = '0'; }, 600); }
+      setTimeout(() => {
+        isDashboardActive = true;
+        document.body.classList.remove('landing-active');
+        if (lp) { lp.style.display = 'none'; lp.classList.add('hidden'); }
+        updateUserInfoUI();
+      }, 1200);
+    }
+
+    async function logout() {
       try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "login", userId, password }),
-        });
-        const result = await res.json();
-        if (result.success) {
-          // GAS 성공 → 캐시에도 저장 (다음번 오프라인 대비)
-          const cache = JSON.parse(localStorage.getItem("da_auth_cache") || "{}");
-          cache[userId] = { userName: result.userName, password };
-          localStorage.setItem("da_auth_cache", JSON.stringify(cache));
-          doEnterHub({ userId: result.userId, userName: result.userName });
-          return;
-        } else {
-          return alert(result.message || "Invalid credentials");
-        }
-      } catch (e) {
-        // ── 2차: GAS 연결 실패(file://, 오프라인 등) → 캐시로 fallback ──
-        console.warn("GAS unreachable, trying local cache...", e);
-        const cache = JSON.parse(localStorage.getItem("da_auth_cache") || "{}");
-        const cached = cache[userId];
-        if (cached && cached.password === password) {
-          doEnterHub({ userId, userName: cached.userName });
-          return;
-        }
-        alert("로그인 서버에 연결할 수 없습니다.\n한 번이라도 온라인으로 로그인했다면 자동으로 진입됩니다.\n(최초 1회는 인터넷 연결이 필요합니다)");
+        await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.warn("Supabase signout error:", err);
+      } finally {
+        localStorage.removeItem("da_user");
+        window.location.replace(window.location.pathname);
       }
     }
-    async function handleRegisterSubmit() {
-      const userId = document.getElementById("reg-id").value;
-      const userName = document.getElementById("reg-name").value;
-      const password = document.getElementById("reg-pw").value;
-      if (!userId || !userName || !password) return alert("Fill all fields");
-
-      try {
-        const res = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: "register", userId, userName, password }),
-        });
-        const result = await res.json();
-        if (result.success) {
-          alert(result.message);
-          toggleAuthForm("login");
-        } else {
-          alert(result.message || "Registration failed");
-        }
-      } catch (e) {
-        console.error("Reg error:", e);
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem("da_user");
-      // 로그아웃 시 무조건 본래의 랜딩 페이지로 리다이렉트
-      window.location.href = "index.html";
-    }
+    window.logout = logout;
 
     // [기존 enterDashboard 수정] 로그인 연동 로직 분리
     function enterDashboard() {

@@ -9,6 +9,8 @@
     <!-- 1. Tailwind CSS (디자인) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="assets/css/index.css" />
+    <script src="assets/js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- 2. Import Map (리액트 및 라이브러리 모듈 설정) -->
     <script type="importmap">
@@ -1322,7 +1324,11 @@
             document.getElementById('dashmod-drawer-overlay').style.display = 'none';
             document.body.style.overflow = '';
         }
-        function dashmodLogout() {
+        async function dashmodLogout() {
+            try {
+                const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                await supabaseClient.auth.signOut();
+            } catch (e) { console.error("Logout error", e); }
             localStorage.removeItem('da_user');
             window.location.href = 'index.html';
         }
