@@ -19675,5 +19675,26 @@
     "BOT(eng)": "",
     "ViewCount": "",
     "LikeCount": ""
+  },
+  {
+    "Date": "2026-03-02T15:00:00.000Z",
+    "Title": "AI진단에어컨4항목",
+    "Category": "신기술:에어컨",
+    "Summary": "이번 기사에서는 <b>스마트싱스 기반 AI 인공지능 진단</b>으로 에어컨의 <b>냉매 봉입량·모터 동작·센서 상태·열교환기 온도 4가지 항목</b>을 원격으로 점검하는 ‘에어컨 사전점검’ 서비스를 3월 한 달간 운영한다는 내용을 올렸어요. 여름철이 <b>평균 98일→최근 130일</b>로 한 달 이상 길어진 만큼, 본격적인 냉방 시즌 전에 AI로 상태를 선제 진단해 고장·효율 저하를 줄이겠다는 전략이에요.",
+    "URL": "https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%EC%97%90%EC%96%B4%EC%BB%A8-%EC%82%AC%EC%A0%84%EC%A0%90%EA%B2%80%EC%9C%BC%EB%A1%9C-%EC%97%AC%EB%A6%84%EC%9D%84-%EC%BE%8C%EC%A0%81%ED%95%98%EA%B2%8C\nhttps://www.mk.co.kr/news/business/11977250\nhttps://www.donga.com/news/Economy/article/all/20260303/133454632/1",
+    "Risk": "Low",
+    "Impact": "C(서비스차별화기회)",
+    "Image": "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg",
+    "Region": "South Korea,SE Asia,China",
+    "Tag": "에어컨,AI진단,스마트싱스,냉매봉입량,모터센서,사전점검",
+    "BOT": "",
+    "Title_en": "AI Diagnostic Air Conditioner 4 Items",
+    "Summary_en": "This article posted about the ‘Air Conditioner Pre-Inspection’ service that will be operated for one month in March to remotely check the <b>four items</b> of the air conditioner - refrigerant charge, motor operation, sensor status, and heat exchanger temperature - using <b>SmartThings-based AI artificial intelligence diagnosis</b>. As the summer season has become longer by more than a month - from <b>an average of 98 days to the recent 130 days</b> - the strategy is to preemptively diagnose the status with AI before the full-fledged cooling season to reduce breakdowns and efficiency decline.",
+    "Category_en": "New technology: air conditioning",
+    "Tag_en": "Air conditioner, AI diagnosis, SmartThings, refrigerant charge, motor sensor, pre-inspection",
+    "Region_en": "South Korea, SE Asia, China",
+    "BOT(eng)": "",
+    "ViewCount": "",
+    "LikeCount": ""
   }
 ]
