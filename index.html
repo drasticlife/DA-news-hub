@@ -752,6 +752,7 @@
       try {
         const res = await fetch(GAS_URL, {
           method: "POST",
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({
             action: "board_post",
             userId: currentUser.userId,
@@ -1151,6 +1152,7 @@
       try {
         const res = await fetch(GAS_URL, {
           method: "POST",
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "like", title: n.Title }),
         });
         const result = await res.json();
@@ -1190,7 +1192,7 @@
 
       fetch(GAS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
           action: "view",
           title: title,
@@ -1203,9 +1205,13 @@
       })
         .then(res => res.json())
         .then((result) => {
-          if (result.success) {
+          if (result && result.success) {
             sessionStorage.setItem(storageKey, "true");
-            // View tracked successfully
+            // [추가] 서버에서 받아온 '진짜' 최신 합계를 화면에 즉시 반영
+            const viewCountEl = document.querySelector(`#${articleData._uId} .engagement-tag:first-child span`);
+            if (viewCountEl && result.count !== undefined) {
+              viewCountEl.innerText = result.count;
+            }
           }
         })
         .catch((err) => console.error("Tracking error:", err));
@@ -1455,8 +1461,8 @@
 
     async function fetchNews() {
       const sources = [
-        { name: "GitHub JSON", url: GITHUB_DATA_URL },
         { name: "Google Sheets (GAS)", url: GAS_URL },
+        { name: "GitHub JSON", url: GITHUB_DATA_URL },
         { name: "Local JSON", url: "data.json" },
       ];
 
@@ -2129,13 +2135,17 @@
     function sendDataToMap() {
       const frame = document.getElementById("mapFrame");
       if (frame && frame.contentWindow && lastCalculatedCountryMap) {
-        frame.contentWindow.postMessage(
-          {
-            type: "updateData",
-            data: lastCalculatedCountryMap,
-          },
-          "*",
-        );
+        try {
+          frame.contentWindow.postMessage(
+            {
+              type: "updateData",
+              data: lastCalculatedCountryMap,
+            },
+            "*",
+          );
+        } catch (e) {
+          console.warn("Map postMessage failed:", e);
+        }
       }
     }
 

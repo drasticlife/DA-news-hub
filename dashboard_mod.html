@@ -661,27 +661,26 @@
                         } catch (e) { console.error("Monthly cache parse error", e); }
                     }
 
-                    // 3. 메인 데이터 페칭 (Plan B: 캐시가 없거나 실패한 경우)
-                    if (!mainDataReady) {
-                        const sources = [
-                            { name: 'Google Sheets (Real-time)', url: GAS_URL },
-                            { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
-                        ];
+                    // [최적화] 3. 실시간 데이터 페칭 우선 (조회수 정합성 확보)
+                    const sources = [
+                        { name: 'Google Sheets (Real-time)', url: `${GAS_URL}` }, // 기본 GAS 페치
+                        { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
+                    ];
 
-                        for (const source of sources) {
-                            try {
-                                const response = await fetch(source.url);
-                                if (response.ok) {
-                                    const json = await response.json();
-                                    processData(json);
-                                    // 네트워크로 새로 받았으면 캐시 업데이트
-                                    sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
-                                    mainDataReady = true;
-                                    break;
-                                }
-                            } catch (e) {
-                                console.warn(`Failed to fetch main data from ${source.name}`, e);
+                    for (const source of sources) {
+                        try {
+                            const response = await fetch(source.url);
+                            if (response.ok) {
+                                const json = await response.json();
+                                processData(json);
+                                // 네트워크로 새로 받았으면 캐시 업데이트
+                                sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
+                                mainDataReady = true;
+                                console.log(`Loaded from ${source.name}`);
+                                break;
                             }
+                        } catch (e) {
+                            console.warn(`Failed to fetch main data from ${source.name}`, e);
                         }
                     }
 
@@ -1208,33 +1207,27 @@
                                 </div>
 
                             </div>
-                            <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '인기 카테고리' : 'Popular Categories'}</h2>
-                                <div className="flex-1 h-[140px] mb-6">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={popularCategoryData} layout="vertical" margin={{ left: 5, right: 30, top: 0, bottom: 0 }}>
-                                            <XAxis type="number" hide />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 900, fill: '#64748b' }} width={70} />
-                                            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                                                {popularCategoryData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[entry.name] || COLORS.activeBlue} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-
-                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-4 text-slate-400"><Target size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '본 주간 최다 조회 기사' : 'Weekly Most Viewed'}</h2>
-                                <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
+                            <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col transition-all hover:shadow-md ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-6 text-slate-400">
+                                    <Target size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
+                                    {language === 'KO' ? '본 주간 최다 조회 기사' : 'Weekly Most Viewed'}
+                                </h2>
+                                <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
                                     {topArticles.map((article, i) => (
-                                        <div key={i} onClick={() => handleLink(article._uId)} className={`p-3 rounded-sm border transition-all cursor-pointer hover:border-blue-400 group ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                                            <div className="flex justify-between items-start gap-2 mb-1">
-                                                <span className="text-[8px] font-black uppercase text-blue-500">{article.category}</span>
-                                                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1"><Clock size={10} /> {article.viewCount} views</span>
+                                        <div key={i} onClick={() => handleLink(article._uId)} className={`p-4 rounded-sm border transition-all cursor-pointer hover:border-blue-400 group ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
+                                            <div className="flex justify-between items-start gap-2 mb-2">
+                                                <span className={`text-[8.5px] font-black uppercase ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{article.category}</span>
+                                                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1.5"><Eye size={10} /> {article.viewCount}</span>
                                             </div>
-                                            <h5 className={`text-[11px] font-bold leading-tight line-clamp-2 group-hover:text-blue-500 transition-colors ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{article.title}</h5>
+                                            <h5 className={`text-[12.5px] font-bold leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{article.title}</h5>
+                                            <div className="mt-2 text-[10px] text-slate-400 font-medium">{article.date}</div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        <TrendingUp size={12} /> Insight Statistics Active
+                                    </div>
                                 </div>
                             </div>
                         </div>

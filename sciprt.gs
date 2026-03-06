@@ -1,6 +1,8 @@
-// DA News Hub 통합 스크립트 (v15.3 - Strong Sync Version)
+// DA News Hub 통합 스크립트 (v15.7 - V15.3 Speed + URL Text Cleaning + Strict Timeout Safe)
 // -----------------------------------------------------------------
 // [주요 변경] data.json과 data_new.json을 확실하게 순차적으로 업로드합니다.
+// [이미지 개선] V15.3의 빠른 단일 패스 구조 유지 + URL 찌꺼기([1] 등) 자동 정제
+// [안전장치 강화] 타임아웃 240초로 축소, 청크 사이즈 20으로 축소, 사전 기본 이미지 할당
 // -----------------------------------------------------------------
 
 var GITHUB_OWNER = "drasticlife";
@@ -9,7 +11,7 @@ var GITHUB_BRANCH = "main";
 
 // 설정값
 var FOLDER_ID = "11OsMn-4WoNhg9QfxgraLQSJtkmG7PXTj";
-var MAX_RUNTIME = 210000;
+var SAFE_TIME_LIMIT = 240000; // 4분 (최대 6분 제한을 피하기 위한 매우 안전한 마지노선)
 var DEFAULT_IMAGE_URL =
   "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg";
 var SKIP_EXTENSIONS = [
@@ -23,28 +25,13 @@ var SKIP_EXTENSIONS = [
   ".ppt",
   ".pptx",
 ];
+
 var SKIP_DOMAINS = [
   "cmegroup.com",
   "tradingeconomics.com",
   "lme.com",
-  "bloomberg.com",
   "metal.com",
-  "sunsirs.com",
-  "ptonline.com",
-  "reuters.com",
-  "wsj.com",
-  "investing.com",
-  "marketwatch.com",
-  "cnbc.com",
-  "ft.com",
-  "chosun.com",
-  "yna.co.kr",
-  "donga.com",
-  "hani.co.kr",
-  "mk.co.kr",
-  "hankyung.com",
-  "joins.com",
-  "khan.co.kr",
+  "sunsirs.com"
 ];
 
 var CATEGORY_MAP_EN = {
@@ -94,9 +81,8 @@ function doGet(e) {
 function doPost(e) {
   try {
     var params = JSON.parse(e.postData.contents);
-    var action = params.action; // view, register, login, like, comment, board_post, board
+    var action = params.action;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-
     if (action === "register") {
       return handleRegister(ss, params);
     } else if (action === "login") {
@@ -108,7 +94,6 @@ function doPost(e) {
     } else if (action === "get_board_posts") {
       return handleGetBoardPosts(ss);
     } else {
-      // Default behavior: view tracking (title check inside)
       if (params.title) {
         return handleView(ss, params);
       }
@@ -134,7 +119,6 @@ function handleRegister(ss, params) {
 
   if (!userId || !userName || !password)
     throw new Error("Missing registration fields");
-
   var data = userSheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === userId) throw new Error("UserID already exists");
@@ -152,11 +136,9 @@ function handleRegister(ss, params) {
 function handleLogin(ss, params) {
   var userSheet = ss.getSheetByName("Users");
   if (!userSheet) throw new Error("No users registered yet");
-
   var data = userSheet.getDataRange().getValues();
   var userId = params.userId;
   var password = params.password;
-
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === userId && String(data[i][2]) === String(password)) {
       if (data[i][3] !== "Approved") {
@@ -188,26 +170,21 @@ function handleView(ss, params) {
   var sessionId = params.sessionId || "unknown";
   var category = params.category || "MISC";
   var risk = params.risk || "Low";
-
   if (!targetTitle) throw new Error("Title is required");
 
-  var sheet = ss.getSheets()[0];
+  var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
-
   var idxTitle = headers.indexOf("Title");
   var idxDate = headers.indexOf("Date");
   var idxUrl = headers.indexOf("URL");
   var idxView = headers.indexOf("ViewCount");
-
   if (idxTitle === -1) throw new Error("Title column not found");
-
   if (idxView === -1) {
     idxView = headers.length;
     sheet.getRange(1, idxView + 1).setValue("ViewCount");
   }
 
-  // 1. 누적 조회 업데이트
   var foundIndex = -1;
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
@@ -240,7 +217,6 @@ function handleView(ss, params) {
     var currentView =
       Number(sheet.getRange(foundIndex, idxView + 1).getValue()) || 0;
     sheet.getRange(foundIndex, idxView + 1).setValue(currentView + 1);
-    // 2. 월간 통계 업데이트
     updateMonthlyStats(targetTitle, category, risk, sessionId);
     return ContentService.createTextOutput(
       JSON.stringify({ success: true, count: currentView + 1 }),
@@ -261,7 +237,6 @@ function handleLike(ss, params) {
   var headers = data[0];
   var idxTitle = headers.indexOf("Title");
   var idxLike = headers.indexOf("LikeCount");
-
   if (idxLike === -1) {
     idxLike = headers.length;
     sheet.getRange(1, idxLike + 1).setValue("LikeCount");
@@ -286,7 +261,6 @@ function handleBoard(ss, params) {
   var userName = params.userName;
   var content = params.content;
   var type = params.type || "General";
-
   if (!userId || !content) throw new Error("Missing board fields");
 
   boardSheet.appendRow([userId, userName, content, type, new Date()]);
@@ -347,13 +321,11 @@ function pushToGitHub() {
 }
 
 function runManualInsightPush() {
-  // 앵커 브리핑 생성을 건너뛰고(false), 시트의 내용을 intel_report.json으로 전송
   runAnchorBotAutomation(false);
 }
 
 function getSpecificSheetDataAsJson(sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  // 시트 이름으로 찾기 (공백 제거 후 비교)
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     var allSheets = ss.getSheets();
@@ -366,7 +338,6 @@ function getSpecificSheetDataAsJson(sheetName) {
   }
 
   if (!sheet) {
-    // 만약 sheetName이 "뉴스"인데 못 찾으면 첫 번째 시트 사용
     if (sheetName === "뉴스") {
       sheet = ss.getSheets()[0];
     } else {
@@ -446,7 +417,6 @@ function translateEmptyEnglishFields() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
-  var lastCol = sheet.getLastColumn();
   var required = [
     "Title_en",
     "Summary_en",
@@ -458,14 +428,12 @@ function translateEmptyEnglishFields() {
   headers.forEach(function (h, i) {
     colMap[h] = i;
   });
-
   required.forEach(function (c) {
     if (colMap[c] === undefined) {
       sheet.getRange(1, sheet.getLastColumn() + 1).setValue(c);
       colMap[c] = sheet.getLastColumn() - 1;
     }
   });
-
   var idxT = colMap["Title"],
     idxS = colMap["Summary"],
     idxC = colMap["Category"],
@@ -479,7 +447,7 @@ function translateEmptyEnglishFields() {
   var count = 0;
 
   for (var i = 1; i < data.length; i++) {
-    if (new Date().getTime() - startTime > 330000) break;
+    if (new Date().getTime() - startTime > SAFE_TIME_LIMIT) break;
     var rowNum = i + 1;
     if (idxT !== undefined && data[i][idxT] && !data[i][idxTe]) {
       sheet
@@ -524,26 +492,47 @@ function updateNewsImages() {
   var idxU = headers.indexOf("URL"),
     idxI = headers.indexOf("Image"),
     idxC = headers.indexOf("Category");
-
+  
   if (idxU === -1 || idxI === -1) return;
   var count = 0;
 
+  var requests = [];
+  var rowMappings = [];
+
+  // 전체 데이터의 Image 열 데이터를 복사
+  var imageColumnData = [];
   for (var i = 1; i < data.length; i++) {
-    if (new Date().getTime() - startTime > 330000) break;
+    imageColumnData.push([data[i][idxI]]);
+  }
+
+  // 데이터 파싱 및 요청 리스트 생성 (시간 부족 대비 사전 디폴트값 세팅)
+  for (var i = 1; i < data.length; i++) {
+    var currentTime = new Date().getTime();
+    
+    // 만약 URL을 파싱하는 단계에서 시간이 부족하다면, 남은 빈칸들을 모조리 디폴트 이미지로 설정
+    if (currentTime - startTime > SAFE_TIME_LIMIT) {
+      if (!data[i][idxI] && data[i][idxU]) {
+        imageColumnData[i - 1][0] = DEFAULT_IMAGE_URL;
+      }
+      continue;
+    }
 
     if (!data[i][idxI] && data[i][idxU]) {
       var rawUrl = String(data[i][idxU]);
-      var urls = rawUrl
-        .split(/[\n,]/)
-        .map(function (u) {
-          return u.trim();
-        })
-        .filter(Boolean);
+      var spacedUrl = rawUrl.replace(/https?:\/\//g, ' $&');
+      var urlRegex = /(https?:\/\/[a-zA-Z0-9\-\.\_~:\/\?\#\%\=\&\+]+)/g;
+      var matches = spacedUrl.match(urlRegex) || [];
+      
+      var urls = [];
+      for (var m = 0; m < matches.length; m++) {
+        var cleanU = matches[m].split('[')[0].trim();
+        cleanU = cleanU.replace(/[\.\,\'\"\;]+$/, '');
+        if (cleanU) urls.push(cleanU);
+      }
+
       var category = idxC !== -1 ? String(data[i][idxC]).trim() : "";
-
-      var imageFound = false;
-      var imageUrl = DEFAULT_IMAGE_URL;
-
+      var targetUrl = null;
+      
       for (var j = 0; j < urls.length; j++) {
         var url = urls[j];
         var shouldSkip = false;
@@ -563,63 +552,116 @@ function updateNewsImages() {
           }
         }
 
-        if (
-          category === "원자재" &&
-          url.toLowerCase().indexOf("tradingeconomics.com") !== -1
-        ) {
+        if (category === "원자재" && url.toLowerCase().indexOf("tradingeconomics.com") !== -1) {
           shouldSkip = true;
         }
 
-        if (shouldSkip) continue;
-
-        try {
-          var options = {
-            muteHttpExceptions: true,
-            followRedirects: true,
-            deadline: 10,
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            },
-          };
-          var response = UrlFetchApp.fetch(url, options);
-          if (response.getResponseCode() === 200) {
-            var html = response.getContentText();
-            var match =
-              html.match(
-                /<meta\s+(?:name|property)=["'](?:og:image|twitter:image)["']\s+content=["']([^"']+)["']/i,
-              ) ||
-              html.match(
-                /<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:image|twitter:image)["']/i,
-              );
-
-            if (match && match[1]) {
-              imageUrl = match[1];
-              if (imageUrl.indexOf("http") !== 0) {
-                var baseUrlMatch = url.match(/^https?:\/\/[^/]+/);
-                if (baseUrlMatch) {
-                  var baseUrl = baseUrlMatch[0];
-                  imageUrl =
-                    baseUrl +
-                    (imageUrl.indexOf("/") === 0 ? "" : "/") +
-                    imageUrl;
-                }
-              }
-              imageFound = true;
-              break;
-            }
-          }
-        } catch (e) {
-          // 타임아웃 또는 접속 오류 → 즉시 기본 이미지로 확정
-          imageUrl = DEFAULT_IMAGE_URL;
-          break;
+        if (!shouldSkip) {
+          targetUrl = url;
+          break; // 첫 번째 유효 URL 찾으면 멈춤
         }
       }
-      sheet.getRange(i + 1, idxI + 1).setValue(imageUrl);
-      count++;
+
+      if (targetUrl) {
+        // [안전장치] 일단 디폴트 이미지로 덮어씌움. 만약 fetch 과정에서 에러가 나거나 시간이 부족해 못 돌더라도 빈칸 방지.
+        imageColumnData[i - 1][0] = DEFAULT_IMAGE_URL;
+        
+        requests.push({
+          url: targetUrl,
+          muteHttpExceptions: true,
+          followRedirects: true,
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
+        });
+        rowMappings.push({
+          index: i - 1,
+          url: targetUrl,
+        });
+      } else {
+        imageColumnData[i - 1][0] = DEFAULT_IMAGE_URL;
+        count++;
+      }
     }
   }
-  SpreadsheetApp.getUi().alert("이미지 작업 완료: " + count + "건");
+
+  // 병렬 요청 처리 (안전장치 포함)
+  if (requests.length > 0) {
+    var CHUNK_SIZE = 20; // [개선] 50개 -> 20개로 축소하여 자주 시간 체크
+    for (var k = 0; k < requests.length; k += CHUNK_SIZE) {
+      
+      // 실행 시간이 4분을 넘어가면 남은 처리를 과감히 포기. (이미지는 이미 위에서 디폴트로 세팅됨)
+      if (new Date().getTime() - startTime > SAFE_TIME_LIMIT) {
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          "실행 시간 보호를 위해 이미지 수집을 안전 종료합니다.", "알림"
+        );
+        break; 
+      }
+      
+      var chunkReqs = requests.slice(k, k + CHUNK_SIZE);
+      var chunkMaps = rowMappings.slice(k, k + CHUNK_SIZE);
+      
+      try {
+        var responses = UrlFetchApp.fetchAll(chunkReqs);
+        for (var r = 0; r < responses.length; r++) {
+          var response = responses[r];
+          var mapping = chunkMaps[r];
+          var imageUrl = null;
+
+          if (response.getResponseCode() === 200) {
+            var html = response.getContentText();
+            var metaMatch =
+              html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i) ||
+              html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i);
+            
+            if (metaMatch && metaMatch[1]) {
+              imageUrl = metaMatch[1];
+            } else {
+              var ldMatch = html.match(/<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+              if (ldMatch && ldMatch[1]) {
+                try {
+                  var ldData = JSON.parse(ldMatch[1]);
+                  if (ldData.image) {
+                    if (typeof ldData.image === 'string') {
+                      imageUrl = ldData.image;
+                    } else if (Array.isArray(ldData.image) && ldData.image.length > 0) {
+                      imageUrl = typeof ldData.image[0] === 'string' ? ldData.image[0] : (ldData.image[0].url);
+                    } else if (ldData.image.url) {
+                      imageUrl = ldData.image.url;
+                    }
+                  } else if (ldData.thumbnailUrl) {
+                    imageUrl = ldData.thumbnailUrl;
+                  }
+                } catch(e) {}
+              }
+            }
+
+            if (imageUrl) {
+              if (imageUrl.indexOf("http") !== 0) {
+                var baseUrlMatch = mapping.url.match(/^https?:\/\/[^/]+/);
+                if (baseUrlMatch) {
+                  imageUrl = baseUrlMatch[0] + (imageUrl.indexOf("/") === 0 ? "" : "/") + imageUrl;
+                }
+              }
+              // 이미지를 성공적으로 찾았으면 미리 세팅된 디폴트를 진짜 이미지로 변경!
+              imageColumnData[mapping.index][0] = imageUrl;
+              count++;
+            }
+          }
+        }
+      } catch (e) {
+        // 특정 묶음에서 통신 에러가 나도 스크립트가 멈추지 않고 계속 넘어가도록 예외 처리
+      }
+    }
+  }
+
+  // 모인 데이터를 한 번에 시트에 덮어쓰기 (가장 시간이 절약되는 방식)
+  if (data.length > 1) {
+    sheet.getRange(2, idxI + 1, imageColumnData.length, 1).setValues(imageColumnData);
+  }
+
+  SpreadsheetApp.getUi().alert("이미지 작업 안전 완료: " + count + "건 반영");
 }
 
 function fixExistingImagePermissions() {
@@ -655,11 +697,9 @@ function updateMonthlyStats(title, category, risk, sessionId) {
     statsSheet.appendRow([monthKey, title, category, risk, 1, 1]);
     logSheet.appendRow([monthKey, title, sessionId]);
   } else {
-    // Views 증가
     var currentViews = Number(statsData[foundRow - 1][4]) || 0;
     statsSheet.getRange(foundRow, 5).setValue(currentViews + 1);
 
-    // Sessions 증가 여부 확인
     var logData = logSheet.getDataRange().getValues();
     var isNewSession = true;
     for (var j = 1; j < logData.length; j++) {
@@ -713,7 +753,6 @@ function setupUserValidation(sheet) {
     return;
   }
 
-  // D열 (Status) 2행부터 끝까지 드롭다운 설정
   var range = targetSheet.getRange("D2:D");
   var rule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["Pending", "Approved", "Rejected"], true)
@@ -770,7 +809,6 @@ function runAllProcesses(includeAnchor) {
       "GitHub 전송이 순차적으로 실행됩니다.",
     ui.ButtonSet.YES_NO,
   );
-
   if (response !== ui.Button.YES) return;
 
   try {
@@ -781,7 +819,6 @@ function runAllProcesses(includeAnchor) {
       "진행 중",
       3,
     );
-
     translateEmptyEnglishFields();
     SpreadsheetApp.flush();
     SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -789,7 +826,6 @@ function runAllProcesses(includeAnchor) {
       "진행 중",
       3,
     );
-
     updateNewsImages();
     SpreadsheetApp.flush();
     SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -797,7 +833,6 @@ function runAllProcesses(includeAnchor) {
       "진행 중",
       3,
     );
-
     runAnchorBotAutomation(includeAnchor);
     SpreadsheetApp.flush();
     SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -807,7 +842,6 @@ function runAllProcesses(includeAnchor) {
       "진행 중",
       3,
     );
-
     pushToGitHub();
     SpreadsheetApp.getActiveSpreadsheet().toast(
       "모든 프로세스가 성공적으로 완료되었습니다.",
@@ -826,18 +860,14 @@ function cleanPastedData() {
   var idxD = headers.indexOf("Date");
 
   if (idxD === -1) {
-    // 만약 Date 컬럼이 없으면 (잘못된 시트 등) 중단
     return;
   }
 
-  // 역순으로 돌면서 중복 헤더 제거 (1행 제외)
   for (var i = data.length - 1; i >= 1; i--) {
     var rowValue = String(data[i][idxD]);
-    // Date 컬럼 값이 "Date"인 경우 (헤더 붙여넣기 됨)
     if (rowValue === "Date") {
       sheet.deleteRow(i + 1);
     } else {
-      // 헤더가 아닌 일반 행인 경우, Image 열이 "-"이면 삭제
       if (idxI !== -1 && String(data[i][idxI]).trim() === "-") {
         sheet.getRange(i + 1, idxI + 1).clearContent();
       }
@@ -850,11 +880,9 @@ function handleGetBoardPosts(ss) {
     return ContentService.createTextOutput(
       JSON.stringify({ success: true, posts: [] }),
     ).setMimeType(ContentService.MimeType.JSON);
-
   var data = boardSheet.getDataRange().getValues();
   var headers = data[0];
   var rows = data.slice(1);
-
   var posts = rows
     .map(function (row) {
       return {
@@ -865,18 +893,15 @@ function handleGetBoardPosts(ss) {
         timestamp: row[4],
       };
     })
-    .reverse(); // Latest first
+    .reverse();
 
   return ContentService.createTextOutput(
     JSON.stringify({ success: true, posts: posts }),
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
-// 앵커 봇 브리핑 자동화 (카테고리x기간 확장 버전)
 function runAnchorBotAutomation(includeAnchor) {
-  // includeAnchor가 undefined이면 true로 간주 (개별 실행 시)
   if (includeAnchor === undefined) includeAnchor = true;
-
   var data = getSheetDataAsJson();
   if (!data || data.length === 0) {
     SpreadsheetApp.getUi().alert("데이터가 없습니다.");
@@ -888,17 +913,14 @@ function runAnchorBotAutomation(includeAnchor) {
 
   var scripts;
   if (includeAnchor) {
-    // 1단계: 카테고리/기간별 Perplexity 대본 생성
     SpreadsheetApp.getActiveSpreadsheet().toast(
       "AI 대본 생성 중 (기간별/카테고리별 확장)... 약 1~2분 소요",
       "진행중",
       120,
     );
     scripts = generateMultiPeriodScripts(categorizedData, today);
-    // 2단계: Insight 시트에 저장
     saveMultiPeriodScriptsToSheet(scripts, today, categorizedData);
   } else {
-    // 신규 생성 생략 시 시트에서 마지막 대본 로드
     SpreadsheetApp.getActiveSpreadsheet().toast(
       "Insight 시트에서 최신 대본을 불러옵니다...",
       "진행중",
@@ -907,18 +929,17 @@ function runAnchorBotAutomation(includeAnchor) {
     scripts = getLatestScriptsFromSheet();
   }
 
-  // 3단계: intel_report.json 생성 및 GitHub 배포
   var intelReport = {
     last_updated: Utilities.formatDate(today, "GMT+9", "yyyy-MM-dd HH:mm:ss"),
     dailyBriefing: {
       anchor_name: "Strategic-Bot",
-      script: (scripts.thisWeek && scripts.thisWeek.all) || "데이터 로드 중...",
+      script: (scripts.thisWeek && scripts.thisWeek.all) ||
+        "데이터 로드 중...",
     },
     scripts: scripts,
-    categoryScripts: scripts.thisWeek, // [하위 호환성] 기존의 categoryScripts 구조도 유지
+    categoryScripts: scripts.thisWeek, 
     categorized_issues: categorizedData,
   };
-
   var token =
     PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
   if (!token) {
@@ -932,7 +953,6 @@ function runAnchorBotAutomation(includeAnchor) {
   var encodedContent = Utilities.base64Encode(
     Utilities.newBlob(content).getBytes(),
   );
-
   var res = uploadSingleFile("intel_report.json", encodedContent, token);
   if (res.success) {
     SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -944,7 +964,6 @@ function runAnchorBotAutomation(includeAnchor) {
   }
 }
 
-// Insight 시트에 대본 저장 (카테고리별 확장 버전)
 function saveScriptToInsightSheet(
   globalScript,
   categoryScripts,
@@ -954,7 +973,6 @@ function saveScriptToInsightSheet(
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Insight");
   var CATS = ["원자재", "거시경제", "생산지역", "경쟁사", "신기술동향"];
-
   if (!sheet) {
     sheet = ss.insertSheet("Insight");
     var headers = ["날짜", "종합 대본"];
@@ -1002,19 +1020,16 @@ function saveScriptToInsightSheet(
       return d.Title;
     })
     .join("\n");
-
   var row = [dateStr, globalScript];
   CATS.forEach(function (c) {
     row.push(categoryScripts[c] || "");
   });
   row.push(thisWeekTitles, lastWeekTitles, thisMonthTitles, lastMonthTitles);
-
   sheet.insertRowBefore(2);
   sheet.getRange(2, 1, 1, row.length).setValues([row]);
   for (var j = 0; j <= CATS.length; j++) sheet.getRange(2, 2 + j).setWrap(true);
 }
 
-// 오늘 날짜 기준 데이터 분류 (기간별 + 카테고리별 중첩)
 function categorizeAndFilterData(data, baseDate) {
   var CATS = ["원자재", "거시경제", "생산지역", "경쟁사", "신기술동향"];
   var PERIODS = ["thisWeek", "lastWeek", "thisMonth", "lastMonth"];
@@ -1023,7 +1038,6 @@ function categorizeAndFilterData(data, baseDate) {
 
   var baseDate = baseDate || new Date();
   var dayOfWeek = baseDate.getDay();
-  // 주의 시작(일요일 00:00:00) 계산
   var startOfThisWeek = new Date(baseDate.getTime() - dayOfWeek * oneDay);
   startOfThisWeek.setHours(0, 0, 0, 0);
   var startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * oneDay);
@@ -1040,7 +1054,6 @@ function categorizeAndFilterData(data, baseDate) {
   );
   var endOfLastMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 0);
 
-  // 결과 구조 초기화
   var result = { byCategory: {} };
   PERIODS.forEach(function (p) {
     result[p] = [];
@@ -1051,7 +1064,6 @@ function categorizeAndFilterData(data, baseDate) {
       result.byCategory[c][p] = [];
     });
   });
-
   data.forEach(function (item) {
     var dateVal = item.Date || item.date;
     if (!dateVal) return;
@@ -1059,7 +1071,6 @@ function categorizeAndFilterData(data, baseDate) {
     var itemDate = new Date(cleanDate);
     if (isNaN(itemDate.getTime())) return;
 
-    // 기간 판별
     var periods = [];
     if (itemDate >= startOfThisWeek) periods.push("thisWeek");
     else if (itemDate >= startOfLastWeek && itemDate <= endOfLastWeek)
@@ -1069,7 +1080,6 @@ function categorizeAndFilterData(data, baseDate) {
       periods.push("lastMonth");
     if (periods.length === 0) return;
 
-    // 카테고리 매핑 - 가능한 모든 필드명에서 카테고리 추출
     var rawCatVal =
       item.Category ||
       item.category ||
@@ -1084,13 +1094,9 @@ function categorizeAndFilterData(data, baseDate) {
     var rawCatLower = rawCat.toLowerCase();
 
     var matchedCat = null;
-
-    // 1) 정확한 카테고리명 포함 여부
     CATS.forEach(function (c) {
       if (rawCat.indexOf(c) !== -1) matchedCat = c;
     });
-
-    // AI기술 -> 신기술동향 예외 처리 (더 포괄적으로 변경)
     if (!matchedCat) {
       if (
         rawCatLower.indexOf("ai") !== -1 ||
@@ -1102,20 +1108,6 @@ function categorizeAndFilterData(data, baseDate) {
       }
     }
 
-    // 디버깅: 2월 18일 기사 중 매핑 안 된 것 확인
-    if (!matchedCat && cleanDate.indexOf("02-18") !== -1) {
-      Logger.log(
-        "[DEBUG-SKIP] Unmapped item on 02-18: Title='" +
-          item.Title +
-          "', rawCat='" +
-          rawCat +
-          "' (Keys: " +
-          Object.keys(item).join(",") +
-          ")",
-      );
-    }
-
-    // 2) 별칭·변형 처리 (대소문자 구분 없이)
     if (!matchedCat) {
       var rawCatLower = rawCat.toLowerCase();
       if (
@@ -1125,23 +1117,20 @@ function categorizeAndFilterData(data, baseDate) {
       ) {
         matchedCat = "거시경제";
       } else if (
-        rawCat.indexOf("신기술") !== -1 || // "신기술"이 포함된 모든 경우
-        rawCatLower.indexOf("ai기술") !== -1 || // "AI기술", "ai기술" 대소문자 무관
-        rawCatLower.indexOf("ai ") === 0 || // "AI "로 시작
-        rawCatLower === "ai기술" // 정확히 "AI기술"
+        rawCat.indexOf("신기술") !== -1 || 
+        rawCatLower.indexOf("ai기술") !== -1 || 
+        rawCatLower.indexOf("ai ") === 0 || 
+        rawCatLower === "ai기술" 
       ) {
         matchedCat = "신기술동향";
       }
     }
-    Logger.log("[CAT] rawCat='" + rawCat + "' → " + (matchedCat || "(미분류)"));
-
     periods.forEach(function (p) {
       result[p].push(item);
       if (matchedCat) result.byCategory[matchedCat][p].push(item);
     });
   });
 
-  // 기간별 전체 TOP5, 카테고리별 TOP5 정렬
   PERIODS.forEach(function (p) {
     result[p] = result[p]
       .sort(function (a, b) {
@@ -1156,11 +1145,9 @@ function categorizeAndFilterData(data, baseDate) {
         .slice(0, 5);
     });
   });
-
   return result;
 }
 
-// [신규] 모든 기간(4종) x 카테고리(6종) 대본 일괄 생성
 function generateMultiPeriodScripts(categorizedData, today) {
   var PERIODS = ["thisWeek", "lastWeek", "thisMonth", "lastMonth"];
   var CATS = ["all", "원자재", "거시경제", "생산지역", "경쟁사", "신기술동향"];
@@ -1187,9 +1174,7 @@ function generateMultiPeriodScripts(categorizedData, today) {
           [];
       }
 
-      // 데이터가 있거나 신기술동향인 경우에만 생성 (API 호출 최적화)
       if (targetData.length > 0 || cat === "신기술동향") {
-        Logger.log("[AI-GEN] " + p + " / " + cat + " 생성 중...");
         scripts[p][cat] = callPerplexityForSpecificPeriod(
           p,
           cat,
@@ -1197,17 +1182,15 @@ function generateMultiPeriodScripts(categorizedData, today) {
           targetData,
           today,
         );
-        Utilities.sleep(1100); // Rate limit 방지
+        Utilities.sleep(1100); 
       } else {
         scripts[p][cat] = null;
       }
     });
   });
-
   return scripts;
 }
 
-// [신규] 기간 맞춤형 Perplexity 호출
 function callPerplexityForSpecificPeriod(
   periodKey,
   catKey,
@@ -1237,7 +1220,6 @@ function callPerplexityForSpecificPeriod(
       : catKey === "신기술동향"
         ? "최신 AI 및 신기술 트렌드 정보 활용"
         : "데이터 없음";
-
   var userPrompt = [
     "오늘 날짜: " +
       dateStr +
@@ -1259,9 +1241,8 @@ function callPerplexityForSpecificPeriod(
     "5. 단순 나열이 아닌, " +
       periodLabel[periodKey] +
       " 전체를 관통하는 전략적 통찰을 담으세요.",
-    "6. [중요] 출처 인용번호([1], [2] 등) 및 마크다운 기호(*, #)를 절대 포함하지 마세요.",
+    "6. [중요] 출처 인용번호([1], [2] 등) 및 마크다운 기호(*, 시트)를 절대 포함하지 마세요.",
   ].join("\n");
-
   var payload = {
     model: "sonar",
     messages: [
@@ -1273,7 +1254,6 @@ function callPerplexityForSpecificPeriod(
     ],
     temperature: 0.6,
   };
-
   try {
     var response = UrlFetchApp.fetch(
       "https://api.perplexity.ai/chat/completions",
@@ -1290,14 +1270,10 @@ function callPerplexityForSpecificPeriod(
     var json = JSON.parse(response.getContentText());
     if (json.choices && json.choices.length > 0)
       return json.choices[0].message.content;
-
-    // API 응답 오류 시 백업 대본 가져오기
     var fallback = getLatestValidScriptFromSheet(periodKey, catKey);
     if (fallback) return fallback;
-
     return "대본 생성 중 구조적 오류가 발생했습니다. (기존 대본 없음)";
   } catch (e) {
-    // 예외 발생 시 백업 대본 가져오기
     var fallback = getLatestValidScriptFromSheet(periodKey, catKey);
     if (fallback) return fallback;
 
@@ -1305,7 +1281,6 @@ function callPerplexityForSpecificPeriod(
   }
 }
 
-// [신규] 기간별 대본을 Insight 시트에 저장 (누적 방식)
 function saveMultiPeriodScriptsToSheet(scripts, today, categorizedData) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Insight") || ss.insertSheet("Insight");
@@ -1313,7 +1288,6 @@ function saveMultiPeriodScriptsToSheet(scripts, today, categorizedData) {
   var CATS = ["all", "원자재", "거시경제", "생산지역", "경쟁사", "신기술동향"];
   var PERIODS = ["thisWeek", "lastWeek", "thisMonth", "lastMonth"];
 
-  // 헤더 설정 (시트가 비어있을 때만)
   if (sheet.getLastRow() === 0) {
     var headers = [
       "기간",
@@ -1333,7 +1307,6 @@ function saveMultiPeriodScriptsToSheet(scripts, today, categorizedData) {
 
   var rows = [];
   var nowStr = Utilities.formatDate(today, "GMT+9", "yyyy-MM-dd HH:mm");
-
   PERIODS.forEach(function (p) {
     CATS.forEach(function (cat) {
       var script = (scripts[p] && scripts[p][cat]) || "";
@@ -1352,26 +1325,21 @@ function saveMultiPeriodScriptsToSheet(scripts, today, categorizedData) {
       rows.push([p, cat, nowStr, script, titles]);
     });
   });
-
   if (rows.length > 0) {
-    // 2행 앞에 삽입하여 최신 데이터가 위로 오게 함 (누적)
     sheet.insertRowsBefore(2, rows.length);
     sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
     sheet.getRange(2, 4, rows.length, 2).setWrap(true);
   }
 }
 
-// [신규] Insight 시트에서 특정 기간/카테고리의 최신 유효 대본 가져오기
 function getLatestValidScriptFromSheet(period, category) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Insight");
   if (!sheet) return null;
 
   var data = sheet.getDataRange().getValues();
-  // 2행부터 돌면서 (최신 데이터부터)
   for (var i = 1; i < data.length; i++) {
     if (data[i][0] === period && data[i][1] === category) {
       var script = data[i][3];
-      // 에러 메시지가 포함되지 않은 경우만 반환
       if (
         script &&
         script.indexOf("API 호출 오류") === -1 &&
@@ -1384,12 +1352,10 @@ function getLatestValidScriptFromSheet(period, category) {
   return null;
 }
 
-// [신규] 시트에서 전체 최신 대본 세트 로드 (includeAnchor=false 시 사용)
 function getLatestScriptsFromSheet() {
   var PERIODS = ["thisWeek", "lastWeek", "thisMonth", "lastMonth"];
   var CATS = ["all", "원자재", "거시경제", "생산지역", "경쟁사", "신기술동향"];
   var scripts = {};
-
   PERIODS.forEach(function (p) {
     scripts[p] = {};
     CATS.forEach(function (cat) {
@@ -1401,7 +1367,6 @@ function getLatestScriptsFromSheet() {
   return scripts;
 }
 
-// [신규] Insight 시트 정제 (중복 헤더 삭제 및 대본 내 파일명 제거)
 function cleanInsightSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("Insight");
@@ -1418,12 +1383,8 @@ function cleanInsightSheet() {
 
   var cleanedCount = 0;
   var deletedCount = 0;
-
-  // 역순으로 처리 (행 삭제 시 인덱스 꼬임 방지)
   for (var i = data.length - 1; i >= 1; i--) {
     var row = data[i];
-
-    // 1. 중복 헤더 확인 및 삭제 (2행부터 적용)
     var isHeader =
       String(row[0]).trim() === "기간" && String(row[1]).trim() === "카테고리";
     if (isHeader) {
@@ -1432,15 +1393,12 @@ function cleanInsightSheet() {
       continue;
     }
 
-    // 2. D열(index 3) 대본 정제 (data.json, data-1.json 등 제거)
     var script = String(row[3]);
     if (script) {
-      // "data"로 시작하고 ".json"으로 끝나는 패턴 제거 (공백, 하이픈, 숫자 포함)
       var newScript = script
         .replace(/data[a-zA-Z0-9\-_]*\.json/g, "")
         .replace(/\s\s+/g, " ")
         .trim();
-
       if (script !== newScript) {
         sheet.getRange(i + 1, 4).setValue(newScript);
         cleanedCount++;
