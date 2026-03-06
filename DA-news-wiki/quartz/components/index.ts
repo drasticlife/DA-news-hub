@@ -25,6 +25,7 @@ import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
 import DAWikiHeader from "./DAWikiHeader"
 import DAWikiSidebar from "./DAWikiSidebar"
+import HomeGraph from "./HomeGraph"
 
 export {
   ArticleTitle,
@@ -54,4 +55,5 @@ export {
   ConditionalRender,
   DAWikiHeader,
   DAWikiSidebar,
+  HomeGraph,
 }

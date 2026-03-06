@@ -1,0 +1,32 @@
+@use "../../styles/variables.scss" as *;
+
+.home-graph {
+  width: 100%;
+  margin: 2rem 0;
+  
+  & > .graph-container {
+    border-radius: 12px;
+    border: 1px solid var(--lightgray);
+    box-sizing: border-box;
+    height: 500px; // Larger height for home page
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--light);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+    canvas {
+      cursor: grab;
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+}
+
+// Ensure it looks good on mobile
+@media all and not ($desktop) {
+  .home-graph > .graph-container {
+    height: 350px;
+  }
+}
