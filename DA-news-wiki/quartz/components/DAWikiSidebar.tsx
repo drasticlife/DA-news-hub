@@ -28,7 +28,6 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       label: "냉장·냉동",
       items: [
         { name: "냉장고", fileName: "냉장고", icon: "🌡" },
-        { name: "냉매", fileName: "냉매", icon: "⚗" },
       ],
     },
     {
@@ -58,7 +57,12 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       items: [
         { name: "압축기(Compressor)", fileName: "압축기", icon: "⚙" },
         { name: "모터·인버터", fileName: "모터·인버터", icon: "🔄" },
+        { name: "냉매", fileName: "냉매", icon: "⚗" },
+        { name: "밸브(Valve)", fileName: "밸브(Valve)", icon: "🚰" },
+        { name: "PCB 및 PBA", fileName: "PCB 및 PBA", icon: "🧠" },
         { name: "PCM·강판 소재", fileName: "PCM·강판 소재", icon: "◈" },
+        { name: "LME/원자재 단가", fileName: "LME 및 원자재 단가", icon: "📉" },
+        { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
       ],
     },
   ]
