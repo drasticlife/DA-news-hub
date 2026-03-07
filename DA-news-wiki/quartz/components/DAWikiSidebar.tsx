@@ -11,14 +11,14 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
 
   // 파일명으로 실제 slug 탐색 헬퍼 (띄어쓰기/특수문자 매칭을 위해 정규화)
   const findSlug = (fileName: string): string => {
-    const normalize = (s: string) => s.toLowerCase().replace(/[\s-]/g, "")
+    // 괄호(), 점, 하이픈, 공백 등 모든 특수문자를 제거하고 소문자로 정규화하여 비교
+    const normalize = (s: string) =>
+      s.toLowerCase().replace(/[\s\-().·/]/g, "")
     const target = normalize(fileName)
-    const found = allFiles.find(
-      (f) => {
-        const slugName = f.slug?.split("/").pop() || ""
-        return normalize(slugName) === target
-      }
-    )
+    const found = allFiles.find((f) => {
+      const slugName = f.slug?.split("/").pop() || ""
+      return normalize(slugName) === target
+    })
     return found?.slug ?? ""
   }
 

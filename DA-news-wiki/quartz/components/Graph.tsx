@@ -19,6 +19,7 @@ export interface D3Config {
   showTags: boolean
   focusOnHover?: boolean
   enableRadial?: boolean
+  excludeNodes?: string[]
 }
 
 interface GraphOptions {

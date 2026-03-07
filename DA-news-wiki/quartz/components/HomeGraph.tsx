@@ -20,6 +20,7 @@ export default (() => {
             removeTags: [],
             focusOnHover: true,
             enableRadial: false,
+            excludeNodes: ["/"],
         }
 
         return (

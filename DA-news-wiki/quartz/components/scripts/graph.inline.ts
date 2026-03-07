@@ -87,6 +87,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     showTags,
     focusOnHover,
     enableRadial,
+    excludeNodes,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
   const data: Map<SimpleSlug, ContentDetails> = new Map(
@@ -141,6 +142,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   } else {
     validLinks.forEach((id) => neighbourhood.add(id))
     if (showTags) tags.forEach((tag) => neighbourhood.add(tag))
+  }
+
+  // excludeNodes 옵션: 특정 노드를 그래프에서 제외
+  if (excludeNodes && excludeNodes.length > 0) {
+    excludeNodes.forEach((nodeId) => neighbourhood.delete(nodeId as SimpleSlug))
   }
 
   const nodes = [...neighbourhood].map((url) => {
