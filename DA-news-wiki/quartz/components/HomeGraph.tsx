@@ -13,7 +13,7 @@ export default (() => {
             scale: 1.1,
             repelForce: 0.5,
             centerForce: 0.3,
-            linkDistance: 50,
+            linkDistance: 70,
             fontSize: 0.6,
             opacityScale: 1,
             showTags: true,
@@ -21,6 +21,7 @@ export default (() => {
             focusOnHover: true,
             enableRadial: false,
             excludeNodes: ["/"],
+            initialZoom: 1.6,
         }
 
         return (

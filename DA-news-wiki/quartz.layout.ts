@@ -21,10 +21,16 @@ export const defaultContentPageLayout: PageLayout = {
       component: Component.Breadcrumbs(),
       condition: (page) => page.fileData.slug !== "index",
     }),
+    // 홈 페이지: 타이틀 먼저, 그래프 아래
+    Component.ConditionalRender({
+      component: Component.ArticleTitle(),
+      condition: (page) => page.fileData.slug === "index",
+    }),
     Component.ConditionalRender({
       component: Component.HomeGraph(),
       condition: (page) => page.fileData.slug === "index",
     }),
+    // 일반 페이지: 타이틀 + 메타
     Component.ConditionalRender({
       component: Component.ArticleTitle(),
       condition: (page) => page.fileData.slug !== "index",

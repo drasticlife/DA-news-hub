@@ -88,6 +88,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     focusOnHover,
     enableRadial,
     excludeNodes,
+    initialZoom,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
   const data: Map<SimpleSlug, ContentDetails> = new Map(
@@ -527,6 +528,22 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           }
         }),
     )
+  }
+
+  // initialZoom: 초기 zoom level 설정 (홈 그래프 등에서 시작 시 확대)
+  if (initialZoom && initialZoom !== 1) {
+    const initK = initialZoom
+    const initX = (width * (1 - initK)) / 2
+    const initY = (height * (1 - initK)) / 2
+    currentTransform = zoomIdentity.translate(initX, initY).scale(initK)
+    stage.scale.set(initK, initK)
+    stage.position.set(initX, initY)
+
+    // 초기 줌 레벨에서 라벨 opacity 반영
+    const initOpacity = Math.max((initK * opacityScale - 1) / 3.75, 0)
+    for (const label of labelsContainer.children) {
+      label.alpha = initOpacity
+    }
   }
 
   let stopAnimation = false
