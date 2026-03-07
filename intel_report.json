@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-07 16:37:29",
+  "last_updated": "2026-03-07 16:47:29",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
     "script": "이번 주에는 신규 기사는 없지만, 1월~초2월에 확인된 <b>원화 약세·원자재 고점·베트남/한국 인건비·전기료 인상·경쟁사 원가부담·AI 가전 가속</b>이라는 큰 축이 그대로 유지되는 “숨 고르기” 국면입니다.​ 환율은 여전히 1,460~1,480원대, HRC·구리·알루미늄·냉매는 전년 대비 높은 수준, 베트남과 한국의 임금·전기료 인상은 이미 공장·협력사 원가에 고정비로 반영된 상태입니다.​ <mark>따라서 이번 주 통합 관점의 핵심 인사이트는 “리스크는 이미 가격에 상당 부분 반영되었고, 지금은 추가 쇼크를 기다리기보다 환율·원자재·임금·전기료·AI 투자까지 모두 반영한 ‘2026년 표준 원가·FX·헤지 플랜’을 고정할 타이밍”이라는 점입니다</mark>​ 액션 측면에서는 ① 환율 1,440/1,460/1,480원 3단계 BOM 재계산, ② HRC·구리·냉매 헤지 비율 50~80% 재설정, ③ 베트남·폴란드·광주 공장의 임금/전기료 인상분을 반영한 신규 표준 원가선 정의, ④ AI SoC·LLM 도입에 따른 HW BOM 증액분을 2H 수익성 목표와 함께 재설계하는 것이 필요합니다.​"
@@ -1771,6 +1771,27 @@
       "신기술동향": {
         "thisWeek": [
           {
+            "Date": "2026.03.06",
+            "Title": "Matter 1.4 배터리·에너지 기기 지원",
+            "Category": "AI기술:IoT·5G",
+            "Summary": "Matter 1.4가 <b>배터리, 태양광, 히트펌프, 로봇청소기</b> 등 가전 확장 지원을 발표했어요. 2026 하반기부터 EU 스마트홈 규제 강화로 모든 DA 제품 Matter 인증 필수화 전망입니다. <mark>SmartThings 펌웨어 업데이트 지연 시 유럽 수출 20% 타격 우려돼요.</mark> 시사점: 냉장고·세탁기 등 5대 품목 칩셋 교체 검토. 액션: ① Matter 1.4 인증 테스트 (상, 2026-04-30) ② Thread 네트워크 최적화 (상, 2026-05-15). 참고: Datawire+1, Threadgroup+1 datawiresolutions+2",
+            "URL": "https://datawiresolutions.com/blog/matter-thread-explained-2026\nhttps://matter-smarthome.de/en/development/the-matter-standard-in-2026-a-status-review/\nhttps://www.threadgroup.org/Newsroom/Blog/thread-130-brings-unprecedented-matter-enablement-new-levels-of-robustness-to-iot-for-...",
+            "Risk": "Very High",
+            "Impact": "B(로드맵조정필요)",
+            "Image": "https://datawiresolutions.com/images/hero-images/blog/blog-matter-thread-explained-2026.jpeg",
+            "Region": "Global, EU",
+            "Tag": "Matter1.4,IoT표준,스마트홈,로봇청소기,인증필수,Global",
+            "BOT": "",
+            "Title_en": "Matter 1.4 Battery and Energy Device Support",
+            "Summary_en": "Matter 1.4 announced expanded support for home appliances, including batteries, solar power, heat pumps, and robot vacuum cleaners. Starting in the second half of 2026, Matter certification is expected to become mandatory for all DA products due to strengthened EU smart home regulations. There are concerns that delays in SmartThings firmware updates could hit European exports by 20%. Implications: Considering replacing chipsets for five major products, including refrigerators and washing machines. Actions: ① Matter 1.4 certification testing (Part 1, 2026-04-30) ② Thread network optimization (Part 1, 2026-05-15). References: Datawire+1, Threadgroup+1 datawiresolutions+2",
+            "Category_en": "AI Technology: IoT and 5G",
+            "Tag_en": "Matter 1.4, IoT standard, smart home, robot vacuum cleaner, certification required, global",
+            "Region_en": "Global, EU",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026-02-29",
             "Title": "AI냉장고에너지15%",
             "Category": "신기술:냉장고",
@@ -1850,27 +1871,6 @@
             "Category_en": "New Technology: Cooking Appliances",
             "Tag_en": "Oven, AI Camera, CookCam, Smart Recipe, Wall-mounted Oven, Precision Cooking",
             "Region_en": "USA, EU, Global",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026-02-29",
-            "Title": "로봇청소기35000Pa",
-            "Category": "신기술:청소기",
-            "Summary": "Dreame의 <b>X60 Max Ultra</b>가 새 <b>HyperStream DuoBrush 2.0</b>과 <b>35,000Pa</b>급 흡입력, 가변 압력 플레이트로 카펫·경질 바닥 모두에서 강한 청소력을 구현하면서도 슬림한 높이를 유지하는 구조를 선보였어요.vacuumwars​ 동시에 Narwal의 <b>Flow 2</b>는 듀얼 RGB 카메라와 로컬·클라우드 혼합 <b>NarMind™ Autonomous System 2.0</b>으로 사실상 “무제한 객체 인식”을 표방하며, 장애물 종류에 따라 청소 전략을 바꾸는 AI 동선 최적화를 강조합니다.vacuumwars​ <mark>흡입력·맵핑·자동 관리 도크까지 한 번에 끌어올린 차세대 로봇청소기들이 빠르게 상용화되는 만큼, 삼성 <b>AI Jet Bot</b> 라인도 흡입력·AI 비전·액체오염 대응을 동시 업그레이드하지 않으면 프리미엄 시장에서 존재감이 약해질 수 있어요.</mark>vacuumwars​ 제품개발팀에서는 30kPa급 이상 흡입 성능과 저소음 설계를 양립할 수 있는 모터·공기역학 구조 검토와 함께, 카메라+LiDAR 하이브리드 맵핑·액체/케이블 인식 같은 비전 AI 기능을 중장기 플랫폼 로드맵에 넣어 보시는 게 좋겠습니다. 액션: ① 차세대 로봇청소기 공용 플랫폼(모터·배기·센서 구성) 컨셉 리뷰 (우선도: 상, 기한: 2026-05-31) ② AI 장애물 인식·액체 감지 모델 PoC 및 Jet Bot 적용 시나리오 정의 (우선도: 상, 기한: 2026-08-31) ③ 자동 세척·건조·직배수 도크 옵션화 여부 검토 (우선도: 중, 기한: 2026-09-30). 출처: VacuumWars+1,Narwal공식+1,Engadget+1",
-            "URL": "https://vacuumwars.com/dreame-x60-first-look/\nhttps://vacuumwars.com/narwal-ces-2026/\nhttps://www.engadget.com/home/smart-home/dreames-robot-vacuum-with-an-arm-is-back-at-ces-2026-and-it-can-do-more-than-pick-up-shoes-160013762.html",
-            "Risk": "High",
-            "Impact": "A(청소기경쟁력위협)",
-            "Image": "https://vacuumwars.com/wp-content/uploads/2026/02/First-Look-Dreame-X60-Max-Ultra-Complete-thumbnail.png",
-            "Region": "China,SE Asia,Global",
-            "Tag": "청소기,로봇청소기,35000Pa,맵핑AI,하이브리드브러시,자동도크",
-            "BOT": "",
-            "Title_en": "Robot vacuum cleaner 35000Pa",
-            "Summary_en": "Dreame's <b>X60 Max Ultra</b> features the new <b>HyperStream DuoBrush 2.0</b> and its <b>35,000Pa</b> suction power, variable pressure plate, and a slim design that delivers powerful cleaning power on both carpets and hard floors. vacuumwars​ At the same time, Narwal's <b>Flow 2</b> boasts virtually “unlimited object recognition” with dual RGB cameras and the local/cloud hybrid <b>NarMind™ Autonomous System 2.0</b>, and emphasizes AI path optimization that changes cleaning strategies depending on the type of obstacle. vacuumwars​ <mark>As next-generation robot vacuums with improved suction power, mapping, and automatic management docks are rapidly being commercialized, Samsung's <b>AI Jet Bot</b> line could weaken its presence in the premium market if it does not simultaneously upgrade its suction power, AI vision, and liquid contamination response.</mark>vacuumwars​ The product development team In addition to reviewing the motor and aerodynamic structure that can achieve both a suction performance of 30kPa or higher and a low-noise design, it would be a good idea to incorporate vision AI functions such as camera + LiDAR hybrid mapping and liquid/cable recognition into the mid- to long-term platform roadmap. Actions: ① Review the concept of a next-generation robot vacuum cleaner common platform (motor, exhaust, and sensor configuration) (Priority: High, Deadline: 2026-05-31) ② Define AI obstacle recognition/liquid detection model PoC and Jet Bot application scenario (Priority: High, Deadline: 2026-08-31) ③ Review whether to make an automatic washing/drying/direct drainage dock optional (Priority: Medium, Deadline: 2026-09-30). Source: VacuumWars+1, Narwal Official+1, Engadget+1",
-            "Category_en": "New technology: vacuum cleaner",
-            "Tag_en": "Vacuum cleaner, robot vacuum cleaner, 35,000Pa, mapping AI, hybrid brush, automatic dock",
-            "Region_en": "China, SE Asia, Global",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
@@ -1879,6 +1879,27 @@
         "lastWeek": [],
         "thisMonth": [
           {
+            "Date": "2026.03.06",
+            "Title": "Matter 1.4 배터리·에너지 기기 지원",
+            "Category": "AI기술:IoT·5G",
+            "Summary": "Matter 1.4가 <b>배터리, 태양광, 히트펌프, 로봇청소기</b> 등 가전 확장 지원을 발표했어요. 2026 하반기부터 EU 스마트홈 규제 강화로 모든 DA 제품 Matter 인증 필수화 전망입니다. <mark>SmartThings 펌웨어 업데이트 지연 시 유럽 수출 20% 타격 우려돼요.</mark> 시사점: 냉장고·세탁기 등 5대 품목 칩셋 교체 검토. 액션: ① Matter 1.4 인증 테스트 (상, 2026-04-30) ② Thread 네트워크 최적화 (상, 2026-05-15). 참고: Datawire+1, Threadgroup+1 datawiresolutions+2",
+            "URL": "https://datawiresolutions.com/blog/matter-thread-explained-2026\nhttps://matter-smarthome.de/en/development/the-matter-standard-in-2026-a-status-review/\nhttps://www.threadgroup.org/Newsroom/Blog/thread-130-brings-unprecedented-matter-enablement-new-levels-of-robustness-to-iot-for-...",
+            "Risk": "Very High",
+            "Impact": "B(로드맵조정필요)",
+            "Image": "https://datawiresolutions.com/images/hero-images/blog/blog-matter-thread-explained-2026.jpeg",
+            "Region": "Global, EU",
+            "Tag": "Matter1.4,IoT표준,스마트홈,로봇청소기,인증필수,Global",
+            "BOT": "",
+            "Title_en": "Matter 1.4 Battery and Energy Device Support",
+            "Summary_en": "Matter 1.4 announced expanded support for home appliances, including batteries, solar power, heat pumps, and robot vacuum cleaners. Starting in the second half of 2026, Matter certification is expected to become mandatory for all DA products due to strengthened EU smart home regulations. There are concerns that delays in SmartThings firmware updates could hit European exports by 20%. Implications: Considering replacing chipsets for five major products, including refrigerators and washing machines. Actions: ① Matter 1.4 certification testing (Part 1, 2026-04-30) ② Thread network optimization (Part 1, 2026-05-15). References: Datawire+1, Threadgroup+1 datawiresolutions+2",
+            "Category_en": "AI Technology: IoT and 5G",
+            "Tag_en": "Matter 1.4, IoT standard, smart home, robot vacuum cleaner, certification required, global",
+            "Region_en": "Global, EU",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026-02-29",
             "Title": "AI냉장고에너지15%",
             "Category": "신기술:냉장고",
@@ -1958,27 +1979,6 @@
             "Category_en": "New Technology: Cooking Appliances",
             "Tag_en": "Oven, AI Camera, CookCam, Smart Recipe, Wall-mounted Oven, Precision Cooking",
             "Region_en": "USA, EU, Global",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026-02-29",
-            "Title": "로봇청소기35000Pa",
-            "Category": "신기술:청소기",
-            "Summary": "Dreame의 <b>X60 Max Ultra</b>가 새 <b>HyperStream DuoBrush 2.0</b>과 <b>35,000Pa</b>급 흡입력, 가변 압력 플레이트로 카펫·경질 바닥 모두에서 강한 청소력을 구현하면서도 슬림한 높이를 유지하는 구조를 선보였어요.vacuumwars​ 동시에 Narwal의 <b>Flow 2</b>는 듀얼 RGB 카메라와 로컬·클라우드 혼합 <b>NarMind™ Autonomous System 2.0</b>으로 사실상 “무제한 객체 인식”을 표방하며, 장애물 종류에 따라 청소 전략을 바꾸는 AI 동선 최적화를 강조합니다.vacuumwars​ <mark>흡입력·맵핑·자동 관리 도크까지 한 번에 끌어올린 차세대 로봇청소기들이 빠르게 상용화되는 만큼, 삼성 <b>AI Jet Bot</b> 라인도 흡입력·AI 비전·액체오염 대응을 동시 업그레이드하지 않으면 프리미엄 시장에서 존재감이 약해질 수 있어요.</mark>vacuumwars​ 제품개발팀에서는 30kPa급 이상 흡입 성능과 저소음 설계를 양립할 수 있는 모터·공기역학 구조 검토와 함께, 카메라+LiDAR 하이브리드 맵핑·액체/케이블 인식 같은 비전 AI 기능을 중장기 플랫폼 로드맵에 넣어 보시는 게 좋겠습니다. 액션: ① 차세대 로봇청소기 공용 플랫폼(모터·배기·센서 구성) 컨셉 리뷰 (우선도: 상, 기한: 2026-05-31) ② AI 장애물 인식·액체 감지 모델 PoC 및 Jet Bot 적용 시나리오 정의 (우선도: 상, 기한: 2026-08-31) ③ 자동 세척·건조·직배수 도크 옵션화 여부 검토 (우선도: 중, 기한: 2026-09-30). 출처: VacuumWars+1,Narwal공식+1,Engadget+1",
-            "URL": "https://vacuumwars.com/dreame-x60-first-look/\nhttps://vacuumwars.com/narwal-ces-2026/\nhttps://www.engadget.com/home/smart-home/dreames-robot-vacuum-with-an-arm-is-back-at-ces-2026-and-it-can-do-more-than-pick-up-shoes-160013762.html",
-            "Risk": "High",
-            "Impact": "A(청소기경쟁력위협)",
-            "Image": "https://vacuumwars.com/wp-content/uploads/2026/02/First-Look-Dreame-X60-Max-Ultra-Complete-thumbnail.png",
-            "Region": "China,SE Asia,Global",
-            "Tag": "청소기,로봇청소기,35000Pa,맵핑AI,하이브리드브러시,자동도크",
-            "BOT": "",
-            "Title_en": "Robot vacuum cleaner 35000Pa",
-            "Summary_en": "Dreame's <b>X60 Max Ultra</b> features the new <b>HyperStream DuoBrush 2.0</b> and its <b>35,000Pa</b> suction power, variable pressure plate, and a slim design that delivers powerful cleaning power on both carpets and hard floors. vacuumwars​ At the same time, Narwal's <b>Flow 2</b> boasts virtually “unlimited object recognition” with dual RGB cameras and the local/cloud hybrid <b>NarMind™ Autonomous System 2.0</b>, and emphasizes AI path optimization that changes cleaning strategies depending on the type of obstacle. vacuumwars​ <mark>As next-generation robot vacuums with improved suction power, mapping, and automatic management docks are rapidly being commercialized, Samsung's <b>AI Jet Bot</b> line could weaken its presence in the premium market if it does not simultaneously upgrade its suction power, AI vision, and liquid contamination response.</mark>vacuumwars​ The product development team In addition to reviewing the motor and aerodynamic structure that can achieve both a suction performance of 30kPa or higher and a low-noise design, it would be a good idea to incorporate vision AI functions such as camera + LiDAR hybrid mapping and liquid/cable recognition into the mid- to long-term platform roadmap. Actions: ① Review the concept of a next-generation robot vacuum cleaner common platform (motor, exhaust, and sensor configuration) (Priority: High, Deadline: 2026-05-31) ② Define AI obstacle recognition/liquid detection model PoC and Jet Bot application scenario (Priority: High, Deadline: 2026-08-31) ③ Review whether to make an automatic washing/drying/direct drainage dock optional (Priority: Medium, Deadline: 2026-09-30). Source: VacuumWars+1, Narwal Official+1, Engadget+1",
-            "Category_en": "New technology: vacuum cleaner",
-            "Tag_en": "Vacuum cleaner, robot vacuum cleaner, 35,000Pa, mapping AI, hybrid brush, automatic dock",
-            "Region_en": "China, SE Asia, Global",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
