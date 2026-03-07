@@ -20387,7 +20387,7 @@
     "Tag_en": "USD/KRW, exchange rate, 1,468.84 won, won strengthening, -0.9%, import costs",
     "Region_en": "USA, South Korea, Global",
     "BOT(eng)": "",
-    "ViewCount": "",
+    "ViewCount": 1,
     "LikeCount": ""
   },
   {
@@ -20671,7 +20671,7 @@
     "URL": "https://www.electroluxgroup.com/en/meet-camcook-and-ai-tasteassist-for-smarter-and-more-sustainable-cooking-45815/\nhttps://www.cnet.com/home/kitchen-and-household/smart-ovens-simpler-apecoo-aiso-ces-2026/\nhttps://techbuzz.ai/articles/samsung-unveils-ai-kitchen-tech-at-kbis-2026",
     "Risk": "High",
     "Impact": "A(기술위협)",
-    "Image": "https://www.electroluxgroup.com/...camcook.png",
+    "Image": "https://www.electroluxgroup.com/wp-content/uploads/sites/2/2026/02/elux-case-b2.jpg",
     "Region": "EU, Global",
     "Tag": "오븐,CamCook,AI인식,레시피자동화,프리미엄,EU",
     "BOT": "",
@@ -20734,7 +20734,7 @@
     "URL": "https://www.cnet.com/home/kitchen-and-household/10-best-large-appliance-innovations-in-2026/\nhttps://www.whirlpool.com/blog/washers-and-dryers/washer-dryer-features.html\nhttps://www.whirlpool.com/uv-cleaning-washers.html",
     "Risk": "High",
     "Impact": "A(기술위협)",
-    "Image": "https://www.whirlpool.com/...uv-washer.jpg",
+    "Image": "https://www.cnet.com/a/img/resize/fef9c0811ff7e4dce1cb041b9bce2e97687322d9/hub/2026/02/19/7ccc1e29-18da-4076-a9b9-304dc3f7e8c8/img-0865.jpg?auto=webp&amp;fit=crop&amp;height=675&amp;width=1200",
     "Region": "USA",
     "Tag": "세탁기,UV살균,세균제거,에너지효율,섬세직물,USA",
     "BOT": "",
@@ -20744,7 +20744,7 @@
     "Tag_en": "Washing machine, UV sterilization, germ removal, energy efficiency, delicate fabrics, USA",
     "Region_en": "USA",
     "BOT(eng)": "",
-    "ViewCount": "",
+    "ViewCount": 1,
     "LikeCount": ""
   },
   {
@@ -20755,7 +20755,7 @@
     "URL": "https://www.alibaba.com/product-insights/robot-vacuum-with-ai-mapping-vs-traditional-model-when-does-smarter-navigation-save-rea...\nhttps://www.ecovacs.com/us/robot-vacuums/robot-vacuums-with-obstacle-avoidance\nhttps://www.roborock.com/ai-mapping-vacuum",
     "Risk": "Med",
     "Impact": "C(향후기회)",
-    "Image": "https://www.alibaba.com/...ai-mapping-vacuum.png",
+    "Image": "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg",
     "Region": "China, Global",
     "Tag": "청소기,AImapping,LiDAR,VSLAM,청소시간,최적화,China",
     "BOT": "",
