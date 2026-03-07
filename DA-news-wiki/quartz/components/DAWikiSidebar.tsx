@@ -60,6 +60,8 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
         { name: "냉매", fileName: "냉매", icon: "⚗" },
         { name: "밸브(Valve)", fileName: "밸브(Valve)", icon: "🚰" },
         { name: "PCB 및 PBA", fileName: "PCB 및 PBA", icon: "🧠" },
+        { name: "사출(Injection)", fileName: "사출(Injection)", icon: "🏗️" },
+        { name: "프레스(Press)", fileName: "프레스(Press)", icon: "⚒️" },
         { name: "PCM·강판 소재", fileName: "PCM·강판 소재", icon: "◈" },
         { name: "LME/원자재 단가", fileName: "LME 및 원자재 단가", icon: "📉" },
         { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
