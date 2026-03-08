@@ -1721,6 +1721,21 @@
       applyFilters();
     }
 
+    // Summary 텍스트 → HTML 포맷 변환
+    function formatSummary(text) {
+      if (!text) return '';
+      let s = text;
+      // **굵게** → <strong>
+      s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // ==하이라이트== → <mark>
+      s = s.replace(/==(.+?)==/g, '<mark>$1</mark>');
+      // 액션: / 시사점: 키워드 자체를 강조
+      s = s.replace(/(액션\s*:|시사점\s*:)/g, '<strong class="summary-keyword">$1</strong>');
+      // \n → <br>
+      s = s.replace(/\n/g, '<br>');
+      return s;
+    }
+
     // 다중 URL 파싱 함수
     function parseUrls(urlString) {
       if (!urlString) return [];
@@ -1801,7 +1816,7 @@
           const rawBot = n.BOT || n.Bot || n.bot || "";
           const botContent = (currentLang === "en" ? (n.BOT_en || n["BOT(eng)"] || rawBot) : rawBot).trim();
 
-          const displaySummaryFull = displaySummary || "";
+          const displaySummaryFull = formatSummary(displaySummary || '');
 
           return `
                   <article id="${n._uId}" 

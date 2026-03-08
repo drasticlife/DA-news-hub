@@ -58,6 +58,7 @@ function onOpen() {
     .addItem("2. 영문 번역 실행", "translateEmptyEnglishFields")
     .addItem("3. 🎤 앵커 브리핑 생성 및 배포", "runAnchorBotAutomation")
     .addItem("4. Insight 시트 정비 (중복 제거 및 정제)", "cleanInsightSheet")
+    .addItem("5. 🧹 Summary 텍스트 정제 (출처·찌꺼기 제거)", "cleanSummaryColumn")
     .addSeparator()
     .addItem("파일 권한 수정", "fixExistingImagePermissions")
     .addSeparator()
@@ -858,6 +859,7 @@ function cleanPastedData() {
   var headers = data[0];
   var idxI = headers.indexOf("Image");
   var idxD = headers.indexOf("Date");
+  var idxS = headers.indexOf("Summary");
 
   if (idxD === -1) {
     return;
@@ -871,8 +873,84 @@ function cleanPastedData() {
       if (idxI !== -1 && String(data[i][idxI]).trim() === "-") {
         sheet.getRange(i + 1, idxI + 1).clearContent();
       }
+      // Summary 자동 정제
+      if (idxS !== -1 && data[i][idxS]) {
+        var cleaned = cleanSummaryText(String(data[i][idxS]));
+        if (cleaned !== String(data[i][idxS])) {
+          sheet.getRange(i + 1, idxS + 1).setValue(cleaned);
+        }
+      }
     }
   }
+}
+
+/**
+ * Summary 텍스트 하나를 받아 정제된 텍스트를 반환합니다.
+ * 처리 내용:
+ *   1. 출처 찌꺼기 제거  (예: abcnews+1, finance.yahoo+2, reuters, 참고: Reuters+2 등)
+ *   2. 하이라이트 마커(== ==) 앞뒤 공백 정리
+ *   3. 액션 항목(①②③) 줄바꿈 분리
+ */
+function cleanSummaryText(text) {
+  if (!text) return text;
+
+  // 1. 문장 끝 '참고: ...' 각주 블록 제거 (줄 전체 또는 문장 끝)
+  text = text.replace(/\s*참고:\s*[^\n]+/g, '');
+
+  // 2. 인라인 출처 찌꺼기 제거
+  //    패턴: 단어 바로 뒤에 붙는 sitename+숫자  (예: abcnews+1, finance.yahoo+2)
+  text = text.replace(/\s*[a-zA-Z][a-zA-Z0-9\.\-]*\+\d+/g, '');
+  //    패턴: 단어 경계 뒤 단독 도메인 약어  (예: reuters, bloomberg — 소문자 영문만)
+  //    단, **굵게** 안에 있는 경우는 제외하기 위해 ** 바깥의 소문자 영문 단어만 대상
+  text = text.replace(/(?<![\*=\[\(])\b(reuters|bloomberg|apnews|yonhap|wsj|nikkei|ft|cnn|bbc|apnews|cnbc|techcrunch|theverge|wired|engadget)\b(?![\*=\]\)])/gi, '');
+
+  // 3. 하이라이트 마커 ==...== 앞뒤 공백 정리 (띄어쓰기 없이 붙어있으면 공백 추가)
+  text = text.replace(/([^\s])==/g, '$1 ==');
+  text = text.replace(/==([^\s=])/g, '== $1');
+
+  // 4. 액션: / 시사점: 이후 내용을 줄바꿈으로 분리, ①②③ 항목은 들여쓰기
+  text = text.replace(/\s*(액션\s*:)\s*/g, '\n\n액션: \n');
+  text = text.replace(/\s*(시사점\s*:)\s*/g, '\n\n시사점: \n');
+  text = text.replace(/\s*([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n  $1');
+
+  // 5. 연속된 공백 정리 (줄바꿈 제외)
+  text = text.replace(/[ \t]{2,}/g, ' ');
+
+  // 6. 3개 이상 연속 줄바꿈 → 2개로
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  return text.trim();
+}
+
+/**
+ * 현재 시트의 Summary 컬럼(D열) 전체를 정제합니다.
+ * 메뉴 "5. 🧹 Summary 텍스트 정제" 에서 수동 실행 가능.
+ */
+function cleanSummaryColumn() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idxS = headers.indexOf("Summary");
+
+  if (idxS === -1) {
+    SpreadsheetApp.getUi().alert("'Summary' 컬럼을 찾을 수 없습니다.");
+    return;
+  }
+
+  var count = 0;
+  for (var i = 1; i < data.length; i++) {
+    var original = String(data[i][idxS]);
+    if (!original || original === "") continue;
+    var cleaned = cleanSummaryText(original);
+    if (cleaned !== original) {
+      sheet.getRange(i + 1, idxS + 1).setValue(cleaned);
+      count++;
+    }
+  }
+
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    count + "건의 Summary를 정제했습니다.", "✅ 완료", 4
+  );
 }
 function handleGetBoardPosts(ss) {
   var boardSheet = ss.getSheetByName("Board");
