@@ -1499,25 +1499,10 @@
     }
 
     async function fetchNews() {
-      // [월별 분할] 1순위: GAS (실시간), 2순위: 월별 JSON, 3순위: 기존 data.json (fallback)
+      // [월별 분할] 1순위: 월별 JSON (현재 달), 2순위: GAS (fallback), 3순위: 기존 data.json (fallback)
       const loadingEl = document.getElementById("loading");
 
-      // 1순위: GAS
-      try {
-        const res = await fetch(GAS_URL);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            allNews = data;
-            _onFetchSuccess();
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn("GAS fetch 실패, 월별 JSON으로 전환", e);
-      }
-
-      // 2순위: 월별 JSON (현재 달 먼저 → 나머지 백그라운드 로드)
+      // 1순위: 월별 JSON (현재 달 먼저 → 나머지 백그라운드 로드)
       const nowKey = _curMonthKey;
       const curMonthData = await fetchMonthData(nowKey);
       if (curMonthData && curMonthData.length > 0) {
@@ -1540,6 +1525,21 @@
           }
         });
         return;
+      }
+
+      // 2순위: GAS (월별 JSON 실패 시 fallback)
+      try {
+        const res = await fetch(GAS_URL);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allNews = data;
+            _onFetchSuccess();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("GAS fetch 실패, data.json으로 전환", e);
       }
 
       // 3순위: fallback (기존 data.json — 하위 호환)

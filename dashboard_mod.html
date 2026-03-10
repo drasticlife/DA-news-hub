@@ -727,34 +727,34 @@
                         } catch (e) { console.error("Monthly cache parse error", e); }
                     }
 
-                    // [최적화] 3. 실시간 데이터 페칭 우선 (조회수 정합성 확보)
-                    // 1순위: GAS (실시간 전체 데이터)
+                    // [최적화] 3. 데이터 페칭
+                    // 1순위: 월별 JSON 전체 병합 (빠른 로드)
                     let mainFetchSuccess = false;
-                    try {
-                        const response = await fetch(GAS_URL);
-                        if (response.ok) {
-                            const json = await response.json();
-                            if (Array.isArray(json) && json.length > 0) {
-                                processData(json);
-                                sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
-                                mainDataReady = true;
-                                mainFetchSuccess = true;
-                                console.log("Loaded from Google Sheets (Real-time)");
-                            }
-                        }
-                    } catch (e) {
-                        console.warn("GAS fetch 실패, 월별 JSON으로 전환", e);
+                    const allMonthlyData = await fetchAllNewsData();
+                    if (allMonthlyData && allMonthlyData.length > 0) {
+                        processData(allMonthlyData);
+                        sessionStorage.setItem('cachedNewsData', JSON.stringify(allMonthlyData));
+                        mainDataReady = true;
+                        mainFetchSuccess = true;
+                        console.log("Loaded from monthly JSON files");
                     }
 
-                    // 2순위: 월별 JSON 전체 병합 (GAS 실패 시)
+                    // 2순위: GAS (월별 JSON 실패 시 fallback)
                     if (!mainFetchSuccess) {
-                        const allMonthlyData = await fetchAllNewsData();
-                        if (allMonthlyData && allMonthlyData.length > 0) {
-                            processData(allMonthlyData);
-                            sessionStorage.setItem('cachedNewsData', JSON.stringify(allMonthlyData));
-                            mainDataReady = true;
-                            mainFetchSuccess = true;
-                            console.log("Loaded from monthly JSON files");
+                        try {
+                            const response = await fetch(GAS_URL);
+                            if (response.ok) {
+                                const json = await response.json();
+                                if (Array.isArray(json) && json.length > 0) {
+                                    processData(json);
+                                    sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
+                                    mainDataReady = true;
+                                    mainFetchSuccess = true;
+                                    console.log("Loaded from Google Sheets (fallback)");
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("GAS fetch 실패", e);
                         }
                     }
 
