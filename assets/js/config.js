@@ -6,8 +6,24 @@
 // ===== API Endpoints =====
 const GAS_URL =
   "https://script.google.com/macros/s/AKfycbz3JPX-l0el2AeczemnklBAlLVlZ4aINMm5hKsWgiElXoBojUz7a88_XfZtAQWpafEjlA/exec";
-const GITHUB_DATA_URL =
-  "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+
+// [월별 분할] 뉴스 데이터 base URL
+const GITHUB_NEWS_BASE =
+  "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/news";
+
+// 월별 파일 URL 생성 헬퍼
+function getNewsUrl(yearMonth) {
+  // yearMonth: "2026-M03" 형태
+  return `${GITHUB_NEWS_BASE}/${yearMonth}.json`;
+}
+
+// news/index.json URL (월 목록)
+const GITHUB_NEWS_INDEX_URL = `${GITHUB_NEWS_BASE}/index.json`;
+
+// [하위 호환] 기존 변수명 유지 → 현재 달 파일로 자동 연결
+const _now = new Date();
+const _curMonthKey = `${_now.getFullYear()}-M${String(_now.getMonth() + 1).padStart(2, "0")}`;
+const GITHUB_DATA_URL = getNewsUrl(_curMonthKey);
 
 // ===== Supabase Configuration =====
 const SUPABASE_URL = "https://plgvkrczrwxowyqrktyk.supabase.co";

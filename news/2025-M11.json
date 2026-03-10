@@ -1,0 +1,23 @@
+[
+  {
+    "Date": "2025.11.20",
+    "Title": "냉매 R454B 규제 → 압축기 설계 변경",
+    "Category": "경쟁사:공급망리스크",
+    "Summary": "냉매 R454B 규제 강화(EU F-gas, 몬트리올의정서) → 기존 R410A/R32를 R454C 등으로 대체 필수. 삼성 연구 결과: R454C 적용 시 압축기 체적 60~70% 증대 필요 + 열교환기 성능 향상 10~20% 필요. 결과적으로 부품 Size 증가와 이에 따른 원가 증가는 '불가피'. 해외 경쟁사(Carrier, Trane 등)는 이미 R454B 전환 진행 중. 삼성 관점: 냉매 규제는 '전체 산업의 원가 증가 이벤트' → 동시에 모두 압박받으므로 상대적 경쟁력은 '기술 개발 속도'로 결정. 조기 개발→ 부품사 협력→ 원가 최소화 경주 필수. 한국도 2024년 소비 동결, 2040년까지 15~20% 감축 의무.\n\n액션:\n ① R454C/R455A 압축기 설계 변경 기술 로드맵 수립(Q2 내)\n ② SEDAM/SEHA 부품사와 '공동 개발 협약' 체결 및 비용 분담 구조 협의\n ③ 열교환기 성능 개선(10%+) 협력사 발굴 및 설비 투자 조율 (우선순위: 상, 기한: 2026-03-31)",
+    "URL": "https://www.kharn.kr/news/article.html?no=26522\nhttps://www.kharn.kr/news/article.html?no=21655\nhttps://www.dbpia.co.kr/journal/articleDetail?nodeId=NODE11116653",
+    "Risk": "High",
+    "Impact": "B(+3~5%)",
+    "Image": "https://www.kharn.kr/data/photos/20241249/art_17332734926987_468a05.jpg",
+    "Region": "Global",
+    "Tag": "냉매,R454B,규제,압축기,원가증가,기술전환",
+    "BOT": "",
+    "Title_en": "Refrigerant R454B regulation → Compressor design change",
+    "Summary_en": "Refrigerant R454B regulations are tightened (EU F-gas, Montreal Protocol). Existing R410A/R32 must be replaced with R454C or similar. Samsung's research results show that applying R454C requires a 60-70% increase in compressor volume and a 10-20% improvement in heat exchanger performance. Consequently, increased component size and resulting cost increases are inevitable. Overseas competitors (Carrier, Trane, etc.) are already transitioning to R454B. Samsung's perspective: Refrigerant regulations are a \"cost-increasing event for the entire industry.\" Since everyone is under pressure simultaneously, relative competitiveness is determined by the speed of technological development. Early development, cooperation with parts manufacturers, and a race to minimize costs are essential. Korea is also required to freeze consumption by 2024 and reduce it by 15-20% by 2040. Action: ① Establish a technology roadmap for changing the design of R454C/R455A compressors (within Q2) ② Sign a 'joint development agreement' with SEDAM/SEHA component suppliers and discuss the cost-sharing structure ③ Identify partners for heat exchanger performance improvement (10%+) and coordinate facility investment (Priority: High, Deadline: 2026-03-31) Reference: Samsung Electronics Home Appliances Division +1, KHARN +1",
+    "Category_en": "Competitor: Supply Chain Risk",
+    "Tag_en": "refrigerant, R454B, regulation, compressor, Increase in cost, technological transition",
+    "Region_en": "Global",
+    "BOT(eng)": "",
+    "ViewCount": "",
+    "LikeCount": ""
+  }
+]

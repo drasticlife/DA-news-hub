@@ -197,12 +197,70 @@ function getSpecificSheetDataAsJson(sheetName) {
 function pushToGitHub() {
   var token = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
   if (!token) { SpreadsheetApp.getUi().alert("GITHUB_TOKEN이 필요합니다. [프로젝트 설정]에서 추가해주세요."); return; }
-  var encodedContent = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(getSpecificSheetDataAsJson("뉴스"), null, 2)).getBytes());
-  var res1 = uploadSingleFile("data.json", encodedContent, token);
-  Utilities.sleep(1000);
-  var res2 = uploadSingleFile("data_new.json", encodedContent, token);
-  if (res1.success && res2.success) SpreadsheetApp.getActiveSpreadsheet().toast("data.json & data_new.json 업데이트 성공", "성공");
-  else SpreadsheetApp.getUi().alert("전송 실패");
+
+  // [월별 분할] 현재 날짜 기준으로 파일명 자동 결정
+  var today = new Date();
+  var year = today.getFullYear();
+  var month = String(today.getMonth() + 1).padStart(2, "0");
+  var monthlyFileName = "news/" + year + "-M" + month + ".json";
+
+  // 전체 데이터 로드
+  var allData = getSpecificSheetDataAsJson("뉴스");
+
+  // 현재 달 데이터만 필터링
+  var monthPrefix1 = year + "." + month;   // 2026.03 형식
+  var monthPrefix2 = year + "-" + month;   // 2026-03 형식
+  var monthlyData = allData.filter(function(item) {
+    var dateVal = String(item["Date"] || "");
+    return dateVal.startsWith(monthPrefix1) || dateVal.startsWith(monthPrefix2);
+  });
+
+  var encodedMonthly = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(monthlyData, null, 2)).getBytes());
+
+  // [신규] 월별 파일에 저장 (news/2026-M03.json)
+  var res1 = uploadSingleFile(monthlyFileName, encodedMonthly, token);
+
+  // [신규] news/index.json 업데이트 (월 목록)
+  var updatedIndex = buildNewsIndex(token);
+  if (updatedIndex) {
+    var encodedIndex = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(updatedIndex, null, 2)).getBytes());
+    uploadSingleFile("news/index.json", encodedIndex, token);
+  }
+
+  // [레거시 유지, 주석처리] 기존 data.json 방식 — 하위 호환 필요 시 주석 해제
+  // var encodedAll = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(allData, null, 2)).getBytes());
+  // uploadSingleFile("data.json", encodedAll, token);
+
+  if (res1.success) {
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      monthlyFileName + " 업데이트 성공 (" + monthlyData.length + "건)",
+      "성공"
+    );
+  } else {
+    SpreadsheetApp.getUi().alert("전송 실패: " + (res1.message || ""));
+  }
+}
+
+// [월별 분할] news/index.json 내용 빌드 헬퍼
+function buildNewsIndex(token) {
+  try {
+    var url = "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/news?ref=" + GITHUB_BRANCH;
+    var res = UrlFetchApp.fetch(url, { method: "get", headers: { Authorization: "Bearer " + token }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return null;
+    var files = JSON.parse(res.getContentText());
+    var months = files
+      .map(function(f) { return f.name.replace(".json", ""); })
+      .filter(function(name) { return /^\d{4}-M\d{2}$/.test(name); })
+      .sort();
+    return {
+      months: months,
+      latest: months[months.length - 1] || null,
+      updated: new Date().toISOString()
+    };
+  } catch (e) {
+    console.warn("buildNewsIndex 실패", e);
+    return null;
+  }
 }
 
 function runManualInsightPush() { runAnchorBotAutomation(false); }

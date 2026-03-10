@@ -235,9 +235,44 @@
             BarChart3, FileText, Eye, LogOut, X, Cpu
         } from 'lucide-react';
 
-        const RAW_DATA_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data.json";
+        // [월별 분할] news/ 폴더 기반 URL
+        const GITHUB_NEWS_BASE = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/news";
+        const GITHUB_NEWS_INDEX_URL = `${GITHUB_NEWS_BASE}/index.json`;
+        const _dashNow = new Date();
+        const _dashMonthKey = `${_dashNow.getFullYear()}-M${String(_dashNow.getMonth() + 1).padStart(2, "0")}`;
+        // [하위 호환] 기존 RAW_DATA_URL → 현재 달 파일로 자동 연결
+        const RAW_DATA_URL = `${GITHUB_NEWS_BASE}/${_dashMonthKey}.json`;
         const GAS_URL = "https://script.google.com/macros/s/AKfycby6E7X1vODajQSkXLyWVjstXR7IF0LY7W8sHiCHVNbrp1cjEEQBttS7fWZxTYw9i0ie6Q/exec";
         const INTEL_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json";
+
+        // [월별 분할] 전체 데이터 로드 헬퍼 (index.json → 월별 파일 순차 fetch → 병합)
+        const _dashMonthCache = {};
+        async function fetchAllNewsData() {
+            try {
+                const idxRes = await fetch(GITHUB_NEWS_INDEX_URL);
+                if (!idxRes.ok) throw new Error("index.json fetch 실패");
+                const index = await idxRes.json();
+                const allData = [];
+                for (const monthKey of index.months) {
+                    if (_dashMonthCache[monthKey]) {
+                        allData.push(..._dashMonthCache[monthKey]);
+                        continue;
+                    }
+                    try {
+                        const res = await fetch(`${GITHUB_NEWS_BASE}/${monthKey}.json`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            _dashMonthCache[monthKey] = data;
+                            allData.push(...data);
+                        }
+                    } catch (e) { console.warn(`월별 fetch 실패: ${monthKey}`, e); }
+                }
+                return allData;
+            } catch (e) {
+                console.warn("fetchAllNewsData 실패", e);
+                return null;
+            }
+        }
 
         // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
         const COLORS = {
@@ -662,25 +697,33 @@
                     }
 
                     // [최적화] 3. 실시간 데이터 페칭 우선 (조회수 정합성 확보)
-                    const sources = [
-                        { name: 'Google Sheets (Real-time)', url: `${GAS_URL}` }, // 기본 GAS 페치
-                        { name: 'GitHub JSON (Static)', url: RAW_DATA_URL }
-                    ];
-
-                    for (const source of sources) {
-                        try {
-                            const response = await fetch(source.url);
-                            if (response.ok) {
-                                const json = await response.json();
+                    // 1순위: GAS (실시간 전체 데이터)
+                    let mainFetchSuccess = false;
+                    try {
+                        const response = await fetch(GAS_URL);
+                        if (response.ok) {
+                            const json = await response.json();
+                            if (Array.isArray(json) && json.length > 0) {
                                 processData(json);
-                                // 네트워크로 새로 받았으면 캐시 업데이트
                                 sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
                                 mainDataReady = true;
-                                console.log(`Loaded from ${source.name}`);
-                                break;
+                                mainFetchSuccess = true;
+                                console.log("Loaded from Google Sheets (Real-time)");
                             }
-                        } catch (e) {
-                            console.warn(`Failed to fetch main data from ${source.name}`, e);
+                        }
+                    } catch (e) {
+                        console.warn("GAS fetch 실패, 월별 JSON으로 전환", e);
+                    }
+
+                    // 2순위: 월별 JSON 전체 병합 (GAS 실패 시)
+                    if (!mainFetchSuccess) {
+                        const allMonthlyData = await fetchAllNewsData();
+                        if (allMonthlyData && allMonthlyData.length > 0) {
+                            processData(allMonthlyData);
+                            sessionStorage.setItem('cachedNewsData', JSON.stringify(allMonthlyData));
+                            mainDataReady = true;
+                            mainFetchSuccess = true;
+                            console.log("Loaded from monthly JSON files");
                         }
                     }
 
