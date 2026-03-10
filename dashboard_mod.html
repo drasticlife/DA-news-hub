@@ -78,6 +78,34 @@
             color: #1E40AF;
             font-weight: 900;
         }
+
+        /* [신규] 히트맵 셀 호버 효과 */
+        table td div:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* [신규] 브리핑 카드 숫자 강조 */
+        .briefing-number {
+            color: #F59E0B;
+            font-weight: 900;
+        }
+
+        /* [신규] 카테고리 바 애니메이션 */
+        @keyframes barSlideIn {
+            from { width: 0%; }
+            to { width: var(--target-width); }
+        }
+
+        /* [신규] Risk pulse animation */
+        @keyframes riskPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .risk-high-pulse {
+            animation: riskPulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 
@@ -225,14 +253,14 @@
         import { createRoot } from 'react-dom/client';
         import {
             LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-            BarChart, Bar, Cell, Legend, AreaChart, Area
+            BarChart, Bar, Cell, Legend, AreaChart, Area, ScatterChart, Scatter, ZAxis, RadarChart, PolarGrid, PolarAngleAxis, Radar
         } from 'recharts';
         import {
             Globe, Calendar, LayoutGrid, ArrowUpRight,
             Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
             Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
             ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target,
-            BarChart3, FileText, Eye, LogOut, X, Cpu
+            BarChart3, FileText, Eye, LogOut, X, Cpu, Activity, Radio, Layers, Mic
         } from 'lucide-react';
 
         // [월별 분할] news/ 폴더 기반 URL
@@ -638,6 +666,9 @@
             const [searchTarget, setSearchTarget] = useState('Both');
             const [selectedRegion, setSelectedRegion] = useState('All');
             const [searchKeyword, setSearchKeyword] = useState('');
+            const [briefingPeriod, setBriefingPeriod] = useState('thisWeek');
+            const [briefingCategory, setBriefingCategory] = useState('all');
+            const [heatmapMetric, setHeatmapMetric] = useState('count');
             const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
             const [currPage, setCurrPage] = useState(1);
             const itemsPerPage = 10;
@@ -980,6 +1011,74 @@
                     .slice(0, 5);
             }, [filteredData]);
 
+            // [신규] 리전×카테고리 히트맵 데이터
+            const heatmapData = useMemo(() => {
+                const REGIONS = ['China', 'USA', 'South Korea', 'Vietnam', 'Europe', 'Japan', 'India', 'Mexico', 'Global'];
+                const CATS = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
+                const matrix = {};
+                REGIONS.forEach(r => { matrix[r] = {}; CATS.forEach(c => { matrix[r][c] = { count: 0, high: 0 }; }); });
+                currentLocaleData.forEach(item => {
+                    const r = item.ko.region || 'Global';
+                    const c = item.ko.category;
+                    if (matrix[r] && matrix[r][c] !== undefined) {
+                        matrix[r][c].count++;
+                        if (item.risk === 'High') matrix[r][c].high++;
+                    }
+                });
+                return { matrix, regions: REGIONS, cats: CATS };
+            }, [currentLocaleData]);
+
+            // [신규] 카테고리 버블 데이터
+            const bubbleData = useMemo(() => {
+                const CATS = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
+                return CATS.map((cat, i) => {
+                    const catItems = currentLocaleData.filter(d => d.ko.category === cat);
+                    const highCount = catItems.filter(d => d.risk === 'High').length;
+                    const medCount = catItems.filter(d => d.risk === 'Med').length;
+                    return {
+                        name: cat,
+                        count: catItems.length,
+                        high: highCount,
+                        med: medCount,
+                        riskRatio: catItems.length > 0 ? highCount / catItems.length : 0
+                    };
+                }).sort((a, b) => b.count - a.count);
+            }, [currentLocaleData]);
+
+            // [신규] 브리핑 스크립트 파서 (텍스트 → 구조화)
+            const parseBriefingScript = (script) => {
+                if (!script) return { paragraphs: [], actions: [] };
+                const lines = script.split(/\n|(?<=\.) (?=[①-⑳])|(?<=\.) (?=\(\d+\))/).filter(l => l.trim());
+                const paragraphs = [];
+                const actions = [];
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (/^[①②③④⑤⑥⑦⑧⑨⑩]|^\([1-9]\)|^\d+\./.test(trimmed)) {
+                        actions.push(trimmed);
+                    } else if (trimmed.length > 10) {
+                        paragraphs.push(trimmed);
+                    }
+                });
+                return { paragraphs, actions };
+            };
+
+            // [신규] 현재 브리핑 스크립트 가져오기 (탭 상태 기반)
+            const currentBriefingScript = useMemo(() => {
+                if (!intelData) return null;
+                const catKeyMap = {
+                    'all': 'all', '원자재': '원자재', '거시/정책': '거시경제',
+                    '지역별 분석': '생산지역', '경쟁사': '경쟁사', '신기술동향': '신기술동향'
+                };
+                const catKey = catKeyMap[briefingCategory] || 'all';
+                if (intelData.scripts && intelData.scripts[briefingPeriod]) {
+                    const script = intelData.scripts[briefingPeriod][catKey] || intelData.scripts[briefingPeriod]['all'];
+                    if (script) return script;
+                }
+                if (intelData.categoryScripts && intelData.categoryScripts[catKey]) return intelData.categoryScripts[catKey];
+                if (intelData.dailyBriefing && intelData.dailyBriefing.script) return intelData.dailyBriefing.script;
+                return null;
+            }, [intelData, briefingPeriod, briefingCategory]);
+
             const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
             const goToIndex = () => window.location.href = 'index.html?view=hub';
             const logOut = () => {
@@ -1124,49 +1223,204 @@
                     <DateSlider selectedDate={selectedDate} onDateChange={setSelectedDate} availableDates={availableDates} hasArticlesMap={hasArticlesMap} darkMode={darkMode} lang={language} latestDateStr={latestDateStr} />
 
                     <main className="max-w-[1600px] mx-auto p-8 space-y-8 animate-in fade-in duration-700">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            {/* 기사 수 + 리스크 분포 */}
                             <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] group shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#0033A0]">{language === 'KO' ? '기사 분석 수' : 'Article Intensity'}</p>
                                 <h3 className={`text-4xl font-black tracking-tighter ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>{filteredData.length} <span className="text-[10px] font-normal text-slate-400 uppercase ml-1">Cases</span></h3>
+                                <div className={`mt-3 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                                    <div className="h-full flex">
+                                        <div className="h-full bg-red-500 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='High').length/filteredData.length)*100}%` : '0%' }}></div>
+                                        <div className="h-full bg-amber-400 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='Med').length/filteredData.length)*100}%` : '0%' }}></div>
+                                        <div className="h-full bg-sky-400 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='Low').length/filteredData.length)*100}%` : '0%' }}></div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 mt-1.5 text-[8px] font-bold">
+                                    <span className="text-red-500">H:{filteredData.filter(d=>d.risk==='High').length}</span>
+                                    <span className="text-amber-500">M:{filteredData.filter(d=>d.risk==='Med').length}</span>
+                                    <span className="text-sky-500">L:{filteredData.filter(d=>d.risk==='Low').length}</span>
+                                </div>
                             </div>
+                            {/* 집중 지역 */}
                             <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '집중 지역' : 'Impact Hotspot'}</p>
                                 <h3 className={`text-3xl font-black tracking-tighter flex items-center gap-3 uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}><MapPin size={24} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {cardStats.topRegion}</h3>
                             </div>
+                            {/* 최대 리스크 */}
                             <div onClick={() => setSelectedRisk(prev => prev === 'High' ? 'All' : 'High')} className={`p-6 rounded-sm border shadow-sm cursor-pointer transition-all hover:shadow-md ${selectedRisk === 'High' ? 'border-red-500 ring-2 ring-red-500/20' : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200')}`}>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '최대 리스크' : 'Max Risk Depth'}</p>
                                 <div className="flex items-center gap-3"><div className={`w-3.5 h-3.5 rounded-full ${selectedRisk === 'High' ? 'bg-red-500 animate-pulse' : (darkMode ? 'bg-blue-400' : 'bg-[#0033A0]')}`}></div><h3 className={`text-3xl font-black tracking-tighter uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{selectedRisk}</h3></div>
+                                <p className={`text-[8px] font-bold mt-2 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>Click to {selectedRisk === 'High' ? 'reset' : 'filter High'}</p>
+                            </div>
+                            {/* HOT 카테고리 */}
+                            <div className={`p-6 rounded-sm border shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? 'HOT 카테고리' : 'Hot Category'}</p>
+                                <div className="space-y-1.5 mt-2">
+                                    {bubbleData.slice(0, 3).map((item, i) => (
+                                        <div key={item.name} onClick={() => setSelectedFilter(prev => prev === item.name ? 'All' : item.name)}
+                                            className={`flex items-center justify-between cursor-pointer rounded-sm px-2 py-1.5 transition-all ${selectedFilter === item.name ? (darkMode ? 'bg-blue-900/30' : 'bg-blue-50') : (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
+                                            <span className={`text-[10px] font-bold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{translateCategory(item.name, language)}</span>
+                                            <span className={`text-[9px] font-black ${i === 0 ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')}`}>{item.count}건</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        <div className={`border-l-4 p-6 rounded-sm shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:shadow-md transition-shadow ${darkMode ? 'bg-slate-900 border-blue-500' : 'bg-white border-[#0033A0]'}`}>
-                            <div className="flex items-center gap-6 flex-1">
-                                <div className={`p-3 rounded-full shadow-sm ${darkMode ? 'bg-slate-800 text-blue-400' : 'bg-blue-50 text-[#0033A0]'}`}><Sparkles size={24} /></div>
-                                <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '전략적 맥락 분석' : 'Strategic Context Analysis'}</p><h2 className={`text-[15px] font-bold leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-800'}`} dangerouslySetInnerHTML={{ __html: strategicNarrative.replace(/\n/g, '<br/>') }} /></div>
-                            </div>
-                            {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
-                                <button onClick={resetFilters} className={`flex items-center gap-2 text-[10px] font-black border px-5 py-2.5 rounded-sm transition-all uppercase whitespace-nowrap shadow-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-blue-400 hover:bg-slate-700' : 'text-[#0033A0] border-[#0033A0] hover:bg-blue-50'}`}><Clock size={12} /> {language === 'KO' ? '필터 해제' : 'Reset Filter'}</button>
-                            )}
-                        </div>
+                        {/* ── AI STRATEGIC BRIEFING CARD (신규 디자인) ── */}
+                        {(() => {
+                            const parsed = parseBriefingScript(currentBriefingScript || strategicNarrative);
+                            const anchorName = intelData?.dailyBriefing?.anchor_name || 'Strategic-Bot';
+                            const lastUpdated = intelData?.last_updated;
+                            const periodTabs = [
+                                { key: 'thisWeek', label: language === 'KO' ? '이번 주' : 'This Week' },
+                                { key: 'lastWeek', label: language === 'KO' ? '저번 주' : 'Last Week' },
+                                { key: 'thisMonth', label: language === 'KO' ? '이번 달' : 'This Month' },
+                                { key: 'lastMonth', label: language === 'KO' ? '저번 달' : 'Last Month' },
+                            ];
+                            const catTabs = [
+                                { key: 'all', label: language === 'KO' ? '통합' : 'All' },
+                                { key: '원자재', label: language === 'KO' ? '원자재' : 'Material' },
+                                { key: '거시/정책', label: language === 'KO' ? '거시/정책' : 'Macro' },
+                                { key: '지역별 분석', label: language === 'KO' ? '생산지역' : 'Region' },
+                                { key: '경쟁사', label: language === 'KO' ? '경쟁사' : 'Competitors' },
+                                { key: '신기술동향', label: language === 'KO' ? '신기술' : 'New Tech' },
+                            ];
+                            const highlightNumbers = (text) => {
+                                return text
+                                    .replace(/(\d[\.\d,%원+~]+(KRW|억|조|\%|원|달러|배|건)?)/g, '<span style="color:#F59E0B;font-weight:900">$1</span>')
+                                    .replace(/(High|High Risk|High\s*리스크)/gi, '<span style="color:#EF4444;font-weight:900">$1</span>')
+                                    .replace(/(관세|tariff)/gi, '<span style="color:#8B5CF6;font-weight:700">$1</span>');
+                            };
+                            return (
+                                <div className={`rounded-sm shadow-lg overflow-hidden border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                                    {/* 헤더 */}
+                                    <div className={`px-6 py-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#0D1B3E] border-slate-700' : 'bg-[#0033A0] border-[#002280]'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <div className="w-9 h-9 rounded-full bg-blue-400/20 flex items-center justify-center border border-blue-300/30">
+                                                    <Radio size={16} className="text-blue-200 animate-pulse" />
+                                                </div>
+                                                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></div>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-blue-300 uppercase tracking-[0.2em]">AI Intelligence Anchor</p>
+                                                <p className="text-[13px] font-black text-white">{anchorName}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {lastUpdated && <span className="text-[9px] text-blue-300/70 font-bold">{lastUpdated}</span>}
+                                            {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
+                                                <button onClick={resetFilters} className="flex items-center gap-1.5 text-[9px] font-black bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-sm transition-all uppercase">
+                                                    <Clock size={10} /> {language === 'KO' ? '필터 해제' : 'Reset'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* 기간 탭 */}
+                                    <div className={`px-6 py-2 flex items-center gap-2 border-b overflow-x-auto no-scrollbar ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest mr-2 ${darkMode ? 'text-slate-500' : 'text-slate-300'}`}><CalendarRange size={10} className="inline mr-1" />PERIOD</span>
+                                        {periodTabs.map(tab => (
+                                            <button key={tab.key} onClick={() => setBriefingPeriod(tab.key)}
+                                                className={`px-3 py-1.5 rounded-sm text-[9px] font-black uppercase whitespace-nowrap transition-all ${briefingPeriod === tab.key ? 'bg-[#0033A0] text-white shadow-sm' : (darkMode ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                        <div className={`w-px h-4 mx-1 ${darkMode ? 'bg-slate-600' : 'bg-slate-200'}`}></div>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest mr-2 ${darkMode ? 'text-slate-500' : 'text-slate-300'}`}><Layers size={10} className="inline mr-1" />CATEGORY</span>
+                                        {catTabs.map(tab => (
+                                            <button key={tab.key} onClick={() => setBriefingCategory(tab.key)}
+                                                className={`px-3 py-1.5 rounded-sm text-[9px] font-black uppercase whitespace-nowrap transition-all ${briefingCategory === tab.key ? 'bg-blue-600 text-white shadow-sm' : (darkMode ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
+                                                {tab.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {/* 브리핑 본문 */}
+                                    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        {/* 메인 내러티브 */}
+                                        <div className="lg:col-span-2 space-y-3">
+                                            <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>
+                                                <Mic size={11} /> {language === 'KO' ? '브리핑 대본' : 'Briefing Script'}
+                                            </p>
+                                            {parsed.paragraphs.length > 0 ? (
+                                                parsed.paragraphs.map((para, i) => (
+                                                    <p key={i} className={`text-[13px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
+                                                        dangerouslySetInnerHTML={{ __html: highlightNumbers(para) }} />
+                                                ))
+                                            ) : (
+                                                <p className={`text-[13px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
+                                                    dangerouslySetInnerHTML={{ __html: highlightNumbers((currentBriefingScript || strategicNarrative).replace(/\n/g, ' ')) }} />
+                                            )}
+                                        </div>
+                                        {/* 권고 액션 */}
+                                        <div className={`p-4 rounded-sm border-l-4 ${darkMode ? 'bg-slate-800 border-blue-500' : 'bg-blue-50 border-[#0033A0]'}`}>
+                                            <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>
+                                                <Zap size={11} /> {language === 'KO' ? '권고 액션' : 'Action Items'}
+                                            </p>
+                                            {parsed.actions.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {parsed.actions.map((action, i) => (
+                                                        <div key={i} className={`flex gap-2 text-[12px] leading-snug ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                            <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${darkMode ? 'bg-blue-600 text-white' : 'bg-[#0033A0] text-white'}`}>{i + 1}</span>
+                                                            <span dangerouslySetInnerHTML={{ __html: highlightNumbers(action.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]|^\([1-9]\)|^\d+\.\s*/, '')) }} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className={`space-y-2`}>
+                                                    {/* 액션 아이템이 없으면 위험 지표 간략 표시 */}
+                                                    <div className={`text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                        <div className="flex justify-between mb-1"><span className="font-bold">High Risk</span><span className="text-red-500 font-black">{filteredData.filter(d=>d.risk==='High').length}</span></div>
+                                                        <div className="flex justify-between mb-1"><span className="font-bold">Med Risk</span><span className="text-amber-500 font-black">{filteredData.filter(d=>d.risk==='Med').length}</span></div>
+                                                        <div className="flex justify-between"><span className="font-bold">Low Risk</span><span className="text-sky-500 font-black">{filteredData.filter(d=>d.risk==='Low').length}</span></div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                             <div className={`lg:col-span-4 rounded-sm border shadow-sm p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '추세' : 'Trend'}</h2>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '리스크 추세' : 'Risk Trend'}</h2>
                                     <div className="flex bg-slate-100 p-0.5 rounded-sm dark:bg-slate-800">
                                         {['Weekly', 'Monthly'].map(v => (<button key={v} onClick={() => setTimeRange(v)} className={`px-3 py-1 text-[8px] font-black rounded-sm transition-all ${timeRange === v ? (darkMode ? 'bg-blue-600 text-white' : 'bg-white text-[#0033A0] shadow-sm') : 'text-slate-400'}`}>{v}</button>))}
                                     </div>
                                 </div>
-                                <div className="h-[220px]">
+                                {/* 리스크별 색상 범례 */}
+                                <div className="flex gap-3 mb-3">
+                                    {[['High', '#EF4444'], ['Med', '#F59E0B'], ['Low', '#38BDF8']].map(([label, color]) => (
+                                        <div key={label} className="flex items-center gap-1">
+                                            <div style={{ backgroundColor: color }} className="w-2.5 h-2.5 rounded-sm"></div>
+                                            <span className={`text-[8px] font-black ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="h-[195px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={timelineStats}>
-                                            <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0.15} /><stop offset="95%" stopColor={darkMode ? "#3B82F6" : "#0033A0"} stopOpacity={0} /></linearGradient></defs>
+                                        <BarChart data={(() => {
+                                            const riskMap = {};
+                                            currentLocaleData.forEach(item => {
+                                                const d = new Date(item.date); if (isNaN(d.getTime())) return;
+                                                let key = timeRange === 'Weekly' ? getFormattedWeek(item.date) : `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
+                                                if (!riskMap[key]) riskMap[key] = { date: key, High: 0, Med: 0, Low: 0 };
+                                                if (item.risk === 'High') riskMap[key].High++;
+                                                else if (item.risk === 'Med') riskMap[key].Med++;
+                                                else riskMap[key].Low++;
+                                            });
+                                            return Object.values(riskMap).sort((a,b) => a.date.localeCompare(b.date)).slice(-12);
+                                        })()}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#334155" : "#EDF2F7"} />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: '#8993A4', fontWeight: 700 }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: '#8993A4', fontWeight: 700 }} />
-                                            <RechartsTooltip contentStyle={darkMode ? { backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff' } : {}} />
-                                            <Area type="monotone" dataKey="count" stroke={darkMode ? "#60A5FA" : "#0033A0"} strokeWidth={2} fillOpacity={1} fill="url(#chartGrad)" />
-                                        </AreaChart>
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#8993A4', fontWeight: 700 }} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#8993A4', fontWeight: 700 }} />
+                                            <RechartsTooltip contentStyle={darkMode ? { backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff', fontSize: '10px' } : { fontSize: '10px' }} />
+                                            <Bar dataKey="High" stackId="a" fill="#EF4444" radius={[0,0,0,0]} />
+                                            <Bar dataKey="Med" stackId="a" fill="#F59E0B" radius={[0,0,0,0]} />
+                                            <Bar dataKey="Low" stackId="a" fill="#38BDF8" radius={[2,2,0,0]} />
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
@@ -1272,6 +1526,124 @@
                                         <TrendingUp size={12} /> Insight Statistics Active
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* ── 리전×카테고리 히트맵 + 카테고리 버블 차트 (신규) ── */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            {/* 리전×카테고리 히트맵 */}
+                            <div className={`lg:col-span-7 rounded-sm border shadow-sm p-6 overflow-hidden ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400">
+                                        <Layers size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
+                                        {language === 'KO' ? '지역 × 카테고리 리스크 히트맵' : 'Region × Category Risk Heatmap'}
+                                    </h2>
+                                    <div className="flex gap-1">
+                                        {['count', 'high'].map(m => (
+                                            <button key={m} onClick={() => setHeatmapMetric(m)}
+                                                className={`px-2 py-1 text-[8px] font-black rounded-sm uppercase transition-all ${heatmapMetric === m ? (darkMode ? 'bg-blue-600 text-white' : 'bg-[#0033A0] text-white') : (darkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-400')}`}>
+                                                {m === 'count' ? (language === 'KO' ? '전체' : 'All') : (language === 'KO' ? 'High만' : 'High')}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-[10px]">
+                                        <thead>
+                                            <tr>
+                                                <th className={`text-left py-1.5 pr-3 font-black text-[9px] uppercase tracking-wider w-24 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{language === 'KO' ? '지역' : 'Region'}</th>
+                                                {heatmapData.cats.map(cat => (
+                                                    <th key={cat} className={`text-center py-1.5 px-2 font-black text-[8px] uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                        {translateCategory(cat, language)}
+                                                    </th>
+                                                ))}
+                                                <th className={`text-center py-1.5 px-2 font-black text-[8px] uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>합계</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {heatmapData.regions.map(region => {
+                                                const rowTotal = heatmapData.cats.reduce((s, c) => s + (heatmapData.matrix[region]?.[c]?.[heatmapMetric] || 0), 0);
+                                                const maxInRow = Math.max(...heatmapData.cats.map(c => heatmapData.matrix[region]?.[c]?.[heatmapMetric] || 0), 1);
+                                                return (
+                                                    <tr key={region} onClick={() => setSelectedRegion(prev => prev === region ? 'All' : region)}
+                                                        className={`cursor-pointer transition-all ${selectedRegion === region ? (darkMode ? 'bg-blue-900/20' : 'bg-blue-50') : (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
+                                                        <td className={`py-2 pr-3 font-bold text-[10px] ${darkMode ? 'text-slate-300' : 'text-slate-700'} ${selectedRegion === region ? 'text-blue-500 font-black' : ''}`}>
+                                                            {region === 'South Korea' ? '🇰🇷 KR' : region === 'China' ? '🇨🇳 CN' : region === 'USA' ? '🇺🇸 US' : region === 'Vietnam' ? '🇻🇳 VN' : region === 'Europe' ? '🇪🇺 EU' : region === 'Japan' ? '🇯🇵 JP' : region === 'India' ? '🇮🇳 IN' : region === 'Mexico' ? '🇲🇽 MX' : '🌐 Global'}
+                                                        </td>
+                                                        {heatmapData.cats.map(cat => {
+                                                            const val = heatmapData.matrix[region]?.[cat]?.[heatmapMetric] || 0;
+                                                            const intensity = maxInRow > 0 ? val / maxInRow : 0;
+                                                            const bgColor = heatmapMetric === 'high'
+                                                                ? `rgba(239,68,68,${Math.min(0.8, intensity * 0.9 + 0.05)})`
+                                                                : `rgba(0,51,160,${Math.min(0.75, intensity * 0.75 + (val > 0 ? 0.08 : 0))})`;
+                                                            return (
+                                                                <td key={cat} className="py-2 px-2 text-center">
+                                                                    <div style={{ backgroundColor: val > 0 ? bgColor : 'transparent' }}
+                                                                        className={`mx-auto w-10 h-7 rounded-sm flex items-center justify-center font-black text-[11px] transition-all ${val > 0 ? 'text-white' : (darkMode ? 'text-slate-700' : 'text-slate-200')}`}>
+                                                                        {val > 0 ? val : '–'}
+                                                                    </div>
+                                                                </td>
+                                                            );
+                                                        })}
+                                                        <td className={`py-2 px-2 text-center font-black text-[11px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{rowTotal || '–'}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p className={`text-[8px] font-bold mt-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>
+                                    * {language === 'KO' ? '행 클릭 시 해당 지역 필터 적용' : 'Click row to filter by region'}
+                                    {selectedRegion !== 'All' && <span className="ml-2 text-blue-500">▶ {selectedRegion} 필터 중 <button onClick={() => setSelectedRegion('All')} className="underline ml-1">해제</button></span>}
+                                </p>
+                            </div>
+
+                            {/* 카테고리 버블/바 차트 */}
+                            <div className={`lg:col-span-5 rounded-sm border shadow-sm p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-5 text-slate-400">
+                                    <Activity size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
+                                    {language === 'KO' ? '카테고리 리스크 분포' : 'Category Risk Profile'}
+                                </h2>
+                                <div className="space-y-3">
+                                    {bubbleData.map((item, i) => {
+                                        const maxCount = bubbleData[0]?.count || 1;
+                                        const barWidth = (item.count / maxCount) * 100;
+                                        const highPct = item.count > 0 ? Math.round((item.high / item.count) * 100) : 0;
+                                        return (
+                                            <div key={item.name}
+                                                onClick={() => setSelectedFilter(prev => prev === item.name ? 'All' : item.name)}
+                                                className={`cursor-pointer p-3 rounded-sm border transition-all ${selectedFilter === item.name ? (darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-[#0033A0] bg-blue-50') : (darkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-100 hover:border-slate-300')}`}>
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[11px] font-black ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                                                            {translateCategory(item.name, language)}
+                                                        </span>
+                                                        {highPct >= 30 && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black rounded-sm uppercase">HOT</span>}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[9px]">
+                                                        <span className={`font-black ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.count}건</span>
+                                                        {item.high > 0 && <span className="text-red-500 font-black">H:{item.high}</span>}
+                                                        {item.med > 0 && <span className="text-amber-500 font-black">M:{item.med}</span>}
+                                                    </div>
+                                                </div>
+                                                <div className={`h-2 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                                                    <div className="h-full flex">
+                                                        <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${(item.high / maxCount) * 100}%` }}></div>
+                                                        <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${(item.med / maxCount) * 100}%` }}></div>
+                                                        <div className="h-full bg-sky-400 transition-all duration-500" style={{ width: `${((item.count - item.high - item.med) / maxCount) * 100}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between mt-1">
+                                                    <span className={`text-[8px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>High {highPct}%</span>
+                                                    <div style={{ width: `${barWidth}%` }} className="h-0.5 bg-slate-300 dark:bg-slate-600 rounded-full mt-1 self-end"></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <p className={`text-[8px] font-bold mt-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>
+                                    * {language === 'KO' ? '클릭 시 해당 카테고리 필터 적용' : 'Click to filter by category'}
+                                </p>
                             </div>
                         </div>
 
