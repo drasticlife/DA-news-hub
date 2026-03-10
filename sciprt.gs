@@ -187,9 +187,23 @@ function getSpecificSheetDataAsJson(sheetName) {
   var data = sheet.getDataRange().getValues();
   if (data.length === 0) return [];
   var headers = data[0];
+  var dateColIdx = headers.indexOf("Date");
   return data.slice(1).map(function (row) {
     var obj = {};
-    headers.forEach(function (header, index) { if (header) obj[header] = row[index] instanceof Date ? row[index].toISOString() : row[index]; });
+    headers.forEach(function (header, index) {
+      if (!header) return;
+      var val = row[index];
+      // Date 컬럼은 KST 기준 YYYY.MM.DD 텍스트로 강제 변환 (UTC 변환으로 날짜 밀림 방지)
+      if (index === dateColIdx && val instanceof Date) {
+        var tz = new Date(val.getTime() + 9 * 60 * 60 * 1000); // KST(+9)
+        var y = tz.getUTCFullYear();
+        var m = String(tz.getUTCMonth() + 1).padStart(2, "0");
+        var d = String(tz.getUTCDate()).padStart(2, "0");
+        obj[header] = y + "." + m + "." + d;
+      } else {
+        obj[header] = val instanceof Date ? val.toISOString() : val;
+      }
+    });
     return obj;
   });
 }
