@@ -1459,78 +1459,151 @@
       };
     }
 
-    async function fetchNews() {
-      const sources = [
-        { name: "Google Sheets (GAS)", url: GAS_URL },
-        { name: "GitHub JSON", url: GITHUB_DATA_URL },
-        { name: "Local JSON", url: "data.json" },
-      ];
+    // [월별 분할] 월별 로드 캐시 (한번 불러온 달은 재요청 안 함)
+    const _monthlyCache = {};
 
-      let success = false;
-
-      for (const source of sources) {
-        try {
-          const res = await fetch(source.url);
-
-          if (res.ok) {
-            allNews = await res.json();
-            success = true;
-            break;
-          } else {
-            console.warn(
-              `Failed to fetch from ${source.name}: ${res.status} ${res.statusText}`,
-            );
-          }
-        } catch (e) {
-          console.error(`Error fetching from ${source.name}:`, e);
+    // [월별 분할] 특정 월 키(예: "2026-M03")의 데이터를 fetch
+    async function fetchMonthData(monthKey) {
+      if (_monthlyCache[monthKey]) return _monthlyCache[monthKey]; // 캐시 히트
+      const url = getNewsUrl(monthKey);
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          _monthlyCache[monthKey] = data;
+          return data;
         }
+      } catch (e) {
+        console.warn(`[monthly] fetch 실패: ${monthKey}`, e);
       }
+      return null;
+    }
 
-      if (success) {
-        // 고유 ID 부여 (Deterministic ID for dashboard linkage)
-        allNews.forEach((n, i) => {
-          n._uId = `news-${i}`;
-        });
-
-        currentFilteredNews = [...allNews];
-
-        // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
-        setTimeout(() => renderCalendar(allNews), 100);
-        setTimeout(() => renderSummary(allNews), 300);
-        setTimeout(() => renderTags(allNews), 500);
-        setTimeout(() => renderWorldMap(allNews), 700);
-        setTimeout(() => {
-          applyFilters(true);
-          // Initial filter apply
-
-          // [추가] URL 파라미터 체크 (Deep Link / Direct View)
-          const urlParams = new URLSearchParams(window.location.search);
-          const targetId = urlParams.get("targetId");
-          const view = urlParams.get("view");
-
-          if (targetId || view === "hub" || view === "news") {
-            // 대시보드에서 왔거나 직접 뷰 요청인 경우 랜딩 페이지 스킵
-            isDashboardActive = true;
-            const lp = document.getElementById("landing-page");
-            if (lp) {
-              lp.style.display = "none";
-              lp.classList.add("hidden");
-            }
-            document.body.classList.remove("landing-active");
-
-            if (targetId) {
-              // 특정 기사로 포커스 (데이터 렌더링 후 실행되도록 넉넉한 타이밍)
-              setTimeout(() => focusNews(targetId), 800);
-            }
+    // [월별 분할] 모든 월 목록을 index.json에서 가져와 전체 로드
+    async function fetchAllMonths() {
+      try {
+        const res = await fetch(GITHUB_NEWS_INDEX_URL);
+        if (res.ok) {
+          const index = await res.json();
+          const allData = [];
+          for (const monthKey of index.months) {
+            const data = await fetchMonthData(monthKey);
+            if (data) allData.push(...data);
           }
-
-          document.getElementById("loading").style.display = "none";
-        }, 900);
-      } else {
-        document.getElementById("loading").innerHTML =
-          "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스(Local, GitHub, GAS)를 불러오는데 실패했습니다.</span>";
-        document.getElementById("loading").style.display = "none";
+          return allData;
+        }
+      } catch (e) {
+        console.warn("[monthly] index.json fetch 실패", e);
       }
+      return null;
+    }
+
+    async function fetchNews() {
+      // [월별 분할] 1순위: GAS (실시간), 2순위: 월별 JSON, 3순위: 기존 data.json (fallback)
+      const loadingEl = document.getElementById("loading");
+
+      // 1순위: GAS
+      try {
+        const res = await fetch(GAS_URL);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allNews = data;
+            _onFetchSuccess();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("GAS fetch 실패, 월별 JSON으로 전환", e);
+      }
+
+      // 2순위: 월별 JSON (현재 달 먼저 → 나머지 백그라운드 로드)
+      const nowKey = _curMonthKey;
+      const curMonthData = await fetchMonthData(nowKey);
+      if (curMonthData && curMonthData.length > 0) {
+        // 현재 달 데이터로 즉시 렌더링 (빠른 초기 표시)
+        allNews = curMonthData;
+        _onFetchSuccess();
+
+        // 나머지 달 백그라운드 로드 (완료되면 allNews 업데이트)
+        fetchAllMonths().then(allData => {
+          if (allData && allData.length > allNews.length) {
+            allNews = allData;
+            // 고유 ID 재부여
+            allNews.forEach((n, i) => { n._uId = `news-${i}`; });
+            currentFilteredNews = [...allNews];
+            // 캘린더/태그/지도만 조용히 업데이트 (피드는 현재 페이지 유지)
+            renderCalendar(allNews);
+            renderSummary(allNews);
+            renderTags(allNews);
+            renderWorldMap(allNews);
+          }
+        });
+        return;
+      }
+
+      // 3순위: fallback (기존 data.json — 하위 호환)
+      try {
+        const res = await fetch("data.json");
+        if (res.ok) {
+          allNews = await res.json();
+          _onFetchSuccess();
+          return;
+        }
+      } catch (e) {
+        console.error("data.json fallback 실패", e);
+      }
+
+      // 전부 실패
+      if (loadingEl) {
+        loadingEl.innerHTML =
+          "ERROR LOADING DATA<br><span style='font-size:9px; font-weight:400;'>모든 데이터 소스를 불러오는데 실패했습니다.</span>";
+        loadingEl.style.display = "none";
+      }
+    }
+
+    // fetchNews 성공 후 공통 처리 (기존 로직 그대로 유지)
+    function _onFetchSuccess() {
+      // 고유 ID 부여 (Deterministic ID for dashboard linkage)
+      allNews.forEach((n, i) => {
+        n._uId = `news-${i}`;
+      });
+
+      currentFilteredNews = [...allNews];
+
+      // 성능 최적화: 지구본 애니메이션 중에는 렌더링을 쪼개서 로드
+      setTimeout(() => renderCalendar(allNews), 100);
+      setTimeout(() => renderSummary(allNews), 300);
+      setTimeout(() => renderTags(allNews), 500);
+      setTimeout(() => renderWorldMap(allNews), 700);
+      setTimeout(() => {
+        applyFilters(true);
+        // Initial filter apply
+
+        // [추가] URL 파라미터 체크 (Deep Link / Direct View)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get("targetId");
+        const view = urlParams.get("view");
+
+        if (targetId || view === "hub" || view === "news") {
+          // 대시보드에서 왔거나 직접 뷰 요청인 경우 랜딩 페이지 스킵
+          isDashboardActive = true;
+          const lp = document.getElementById("landing-page");
+          if (lp) {
+            lp.style.display = "none";
+            lp.classList.add("hidden");
+          }
+          document.body.classList.remove("landing-active");
+
+          if (targetId) {
+            // 특정 기사로 포커스 (데이터 렌더링 후 실행되도록 넉넉한 타이밍)
+            setTimeout(() => focusNews(targetId), 800);
+          }
+        }
+
+        const loadingEl = document.getElementById("loading");
+        if (loadingEl) loadingEl.style.display = "none";
+      }, 900);
     }
 
     function renderAll(data) {
@@ -1541,7 +1614,7 @@
       renderFeed(data);
     }
 
-    function moveCalendar(yOff, mOff) {
+    async function moveCalendar(yOff, mOff) {
       curYear += yOff;
       curMonth += mOff;
       if (curMonth > 11) {
@@ -1555,6 +1628,26 @@
 
       document.getElementById("calHeader").innerText =
         `${curYear}. ${String(curMonth + 1).padStart(2, "0")}`;
+
+      // [월별 분할] 이동한 달의 데이터가 아직 없으면 lazy load
+      const targetKey = `${curYear}-M${String(curMonth + 1).padStart(2, "0")}`;
+      const hasData = allNews.some(n => {
+        const d = parseDate(n.Date);
+        return d.getFullYear() === curYear && d.getMonth() === curMonth;
+      });
+      if (!hasData) {
+        const newData = await fetchMonthData(targetKey);
+        if (newData && newData.length > 0) {
+          // 기존 allNews에 병합 (중복 방지)
+          const existingDates = new Set(allNews.map(n => n._uId).filter(Boolean));
+          const merged = [...allNews, ...newData];
+          // 고유 ID 재부여
+          merged.forEach((n, i) => { n._uId = `news-${i}`; });
+          allNews = merged;
+          currentFilteredNews = [...allNews];
+        }
+      }
+
       renderCalendar(allNews);
     }
 
