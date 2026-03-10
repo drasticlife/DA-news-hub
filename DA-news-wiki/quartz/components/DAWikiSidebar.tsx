@@ -42,6 +42,7 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       items: [
         { name: "에어컨", fileName: "에어컨", icon: "❄" },
         { name: "에어컨 효율", fileName: "에어컨 효율", icon: "⚡" },
+        { name: "에어컨 용량 단위", fileName: "에어컨 용량 단위", icon: "📏" },
         { name: "공기청정기", fileName: "공기청정기", icon: "☁" },
       ],
     },
