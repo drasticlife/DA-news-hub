@@ -75,12 +75,12 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
         { name: "프레스(Press)", fileName: "프레스(Press)", icon: "⚒️" },
         { name: "PCM·강판 소재", fileName: "PCM·강판 소재", icon: "◈" },
         { name: "LME/원자재 단가", fileName: "LME 및 원자재 단가", icon: "📉" },
-        { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
       ],
     },
     {
       label: "규제·인증·정책",
       items: [
+        { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
         { name: "인도 BIS 인증", fileName: "인도 BIS 인증", icon: "📜" },
       ],
     },
