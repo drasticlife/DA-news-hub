@@ -68,6 +68,12 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
         { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
       ],
     },
+    {
+      label: "규제·인증·정책",
+      items: [
+        { name: "인도 BIS 인증", fileName: "인도 BIS 인증", icon: "📜" },
+      ],
+    },
   ]
 
   return (
