@@ -7,6 +7,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+<!-- Leaflet.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --bg-primary: #0f1117;
@@ -46,7 +49,7 @@
     justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
   }
   .dash-header .logo {
     display: flex; align-items: center; gap: 10px;
@@ -73,6 +76,8 @@
     align-items: center;
     gap: 4px;
     height: 44px;
+    z-index: 999;
+    position: relative;
   }
   .period-tab {
     padding: 6px 16px; border-radius: 6px;
@@ -94,7 +99,7 @@
   .dash-body {
     display: grid;
     grid-template-columns: 300px 1fr 280px;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 1fr auto;
     height: calc(100vh - 96px);
     gap: 0;
   }
@@ -105,6 +110,7 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow: hidden;
+    z-index: 10;
   }
   .panel-header {
     padding: 14px 16px 10px;
@@ -189,35 +195,27 @@
     overflow: hidden;
   }
 
-  /* SVG 세계지도 */
-  #worldMap {
-    width: 100%; height: 100%;
-    cursor: default;
+  /* Leaflet 지도 */
+  #leafletMap {
+    width: 100%;
+    height: 100%;
+    background: #0a1628;
   }
-  .map-country {
-    fill: #1e2d45;
-    stroke: #2d3f5a;
-    stroke-width: 0.5;
-    transition: fill .2s;
-    cursor: pointer;
+
+  /* Leaflet 타일 다크 필터 */
+  .leaflet-tile {
+    filter: brightness(0.45) saturate(0.5) hue-rotate(190deg);
   }
-  .map-country:hover { fill: #2a4a6e; }
-  .map-country.has-news { fill: #1e3a5f; stroke: #3b6ea8; }
-  .map-country.selected { fill: var(--accent-blue) !important; stroke: #93c5fd; stroke-width: 1; }
-  .map-country.risk-high { fill: #4a2020; stroke: #8b3a3a; }
-  .map-country.risk-high:hover { fill: #6a2525; }
-  .map-country.risk-high.selected { fill: var(--accent-red) !important; }
-  .map-country.risk-med { fill: #3a2e10; stroke: #8b6914; }
-  .map-country.risk-med.selected { fill: var(--accent-yellow) !important; }
 
   /* 지도 범례 */
   .map-legend {
-    position: absolute; bottom: 14px; left: 14px;
+    position: absolute; bottom: 50px; left: 14px;
     display: flex; gap: 10px; align-items: center;
-    background: rgba(15,17,23,.85);
+    background: rgba(15,17,23,.9);
     border: 1px solid var(--border);
     border-radius: 6px; padding: 6px 12px;
     font-size: 10px; color: var(--text-muted);
+    z-index: 500;
   }
   .legend-item { display: flex; align-items: center; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -230,6 +228,7 @@
     display: flex; align-items: center; gap: 8px;
     font-size: 11px; color: var(--text-muted);
     min-height: 36px;
+    z-index: 10;
   }
   .filter-chip {
     display: flex; align-items: center; gap: 4px;
@@ -240,23 +239,40 @@
   }
   .filter-chip i { font-size: 9px; }
 
-  /* 지도 툴팁 */
-  #mapTooltip {
-    position: fixed;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 11px;
-    pointer-events: none;
-    z-index: 1000;
-    display: none;
-    min-width: 160px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  /* Leaflet 커스텀 팝업 */
+  .leaflet-popup-content-wrapper {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,.6) !important;
+    color: var(--text-primary) !important;
   }
-  #mapTooltip .tt-name { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-  #mapTooltip .tt-count { color: var(--accent-blue); font-size: 13px; font-weight: 700; }
-  #mapTooltip .tt-cats { color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+  .leaflet-popup-tip {
+    background: var(--bg-card) !important;
+  }
+  .leaflet-popup-content {
+    margin: 10px 14px !important;
+    font-family: 'Pretendard', -apple-system, sans-serif !important;
+  }
+  .lf-popup-name { font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 4px; }
+  .lf-popup-count { font-size: 15px; font-weight: 700; color: var(--accent-blue); }
+  .lf-popup-risk { font-size: 11px; margin-top: 4px; }
+  .lf-popup-cats { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Leaflet 줌 컨트롤 */
+  .leaflet-control-zoom {
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+  }
+  .leaflet-control-zoom a {
+    background: var(--bg-card) !important;
+    color: var(--text-secondary) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .leaflet-control-zoom a:hover {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+  }
 
   /* ── Right Panel ── */
   .right-panel {
@@ -264,6 +280,7 @@
     border-left: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow: hidden;
+    z-index: 10;
   }
   .right-scroll { flex: 1; overflow-y: auto; padding: 10px; }
   .right-scroll::-webkit-scrollbar { width: 4px; }
@@ -322,6 +339,7 @@
     border-top: 1px solid var(--border);
     max-height: 240px;
     display: flex; flex-direction: column;
+    z-index: 10;
   }
   .bottom-header {
     padding: 8px 16px;
@@ -451,6 +469,14 @@
     color: var(--text-muted); gap: 8px; font-size: 12px;
   }
   .no-data i { font-size: 28px; opacity: .3; }
+
+  /* Leaflet 기본 attribution 숨김 처리 */
+  .leaflet-control-attribution {
+    background: rgba(15,17,23,.7) !important;
+    color: var(--text-muted) !important;
+    font-size: 9px !important;
+  }
+  .leaflet-control-attribution a { color: var(--text-muted) !important; }
 </style>
 </head>
 <body>
@@ -510,38 +536,26 @@
     </div>
   </div>
 
-  <!-- CENTER: 세계지도 -->
+  <!-- CENTER: Leaflet 세계지도 -->
   <div class="center-panel">
     <div class="loading-overlay" id="mapLoading">
       <div class="spin"></div>
       <span style="font-size:12px;color:var(--text-muted)">데이터 로딩 중...</span>
     </div>
     <div class="map-container" id="mapContainer">
-      <!-- SVG 세계지도 (TopoJSON 기반 간략 버전) -->
-      <svg id="worldMap" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <rect width="960" height="500" fill="#0a1628"/>
-        <!-- 국가 경로들은 JS에서 주입 -->
-        <g id="countriesGroup"></g>
-        <!-- 뉴스 버블 -->
-        <g id="bubblesGroup"></g>
-      </svg>
+      <div id="leafletMap"></div>
+      <!-- 지도 범례 -->
       <div class="map-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Very High</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--accent-orange)"></div> High</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--accent-yellow)"></div> Med</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--accent-green)"></div> Low</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#3b5998"></div> 기사 있음</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b6ea8"></div> 기사 있음</div>
       </div>
     </div>
     <div class="map-filter-bar" id="mapFilterBar">
       <i class="fas fa-map-marker-alt" style="color:var(--text-muted)"></i>
-      <span id="filterStatus" style="color:var(--text-muted)">지도의 국가를 클릭해 필터링하세요</span>
+      <span id="filterStatus" style="color:var(--text-muted)">지도의 국가/마커를 클릭해 필터링하세요</span>
     </div>
   </div>
 
@@ -576,14 +590,11 @@
 
 </div>
 
-<!-- 지도 툴팁 -->
-<div id="mapTooltip"></div>
-
 <script src="assets/js/config.js"></script>
 <script>
 // ════════════════════════════════════════════════
-// DA Intelligence Dashboard v2.0
-// 평면 세계지도 + AI 브리핑 + 카테고리 패널
+// DA Intelligence Dashboard v3.0
+// Leaflet.js 평면 세계지도 + AI 브리핑 + 카테고리 패널
 // ════════════════════════════════════════════════
 
 // ── 상태 ──
@@ -591,8 +602,10 @@ let allNews = [];
 let intelData = null;
 let currentPeriod = 'thisWeek';
 let currentBriefingCat = 'all';
-let selectedRegion = null;
+let selectedRegion = null;   // 국가 코드 (예: 'KR', 'US')
 let selectedCat = null;
+let leafletMap = null;
+let markersLayer = null;
 
 // ── 기간 날짜 계산 ──
 function getPeriodRange(period) {
@@ -659,34 +672,41 @@ function riskColor(r) {
   return c[riskClass(r)] || '#64748b';
 }
 
-// ── 지역 → SVG 국가 ID 매핑 ──
-const REGION_MAP = {
-  'South Korea': ['KR'], 'Korea': ['KR'],
-  'USA': ['US'], 'United States': ['US'],
-  'China': ['CN'],
-  'Japan': ['JP'],
-  'Vietnam': ['VN'],
-  'EU': ['DE','FR','IT','ES','PL','NL','BE','SE','AT'],
-  'Poland': ['PL'],
-  'Mexico': ['MX'],
-  'India': ['IN'],
-  'Brazil': ['BR'],
-  'Egypt': ['EG'],
-  'SE Asia': ['VN','TH','ID','MY','PH'],
-  'Global': [],
-  'Asia-Pacific': ['KR','JP','CN','AU','IN'],
-  'Middle East': ['SA','AE','IR'],
-  'MEA': ['SA','AE','EG','ZA'],
+// ── 지역 → 좌표 & 국가 코드 ──
+const REGION_COORDS = {
+  'South Korea': { lat: 36.5, lng: 127.5, code: 'KR', name: '한국' },
+  'Korea':       { lat: 36.5, lng: 127.5, code: 'KR', name: '한국' },
+  'USA':         { lat: 38.0, lng: -97.0, code: 'US', name: '미국' },
+  'United States': { lat: 38.0, lng: -97.0, code: 'US', name: '미국' },
+  'China':       { lat: 35.0, lng: 105.0, code: 'CN', name: '중국' },
+  'Japan':       { lat: 36.0, lng: 138.0, code: 'JP', name: '일본' },
+  'Vietnam':     { lat: 16.0, lng: 107.0, code: 'VN', name: '베트남' },
+  'Poland':      { lat: 52.0, lng: 20.0,  code: 'PL', name: '폴란드' },
+  'Mexico':      { lat: 23.0, lng: -102.0,code: 'MX', name: '멕시코' },
+  'India':       { lat: 20.0, lng: 78.0,  code: 'IN', name: '인도' },
+  'Brazil':      { lat: -14.0, lng: -51.0,code: 'BR', name: '브라질' },
+  'Egypt':       { lat: 26.0, lng: 30.0,  code: 'EG', name: '이집트' },
+  'EU':          { lat: 50.0, lng: 15.0,  code: 'EU', name: 'EU' },
+  'SE Asia':     { lat: 5.0,  lng: 115.0, code: 'SEA',name: '동남아' },
+  'Global':      { lat: 20.0, lng: 0.0,   code: 'GL', name: '글로벌' },
+  'Asia-Pacific':{ lat: 30.0, lng: 130.0, code: 'AP', name: '아시아태평양' },
+  'Middle East': { lat: 25.0, lng: 45.0,  code: 'ME', name: '중동' },
+  'MEA':         { lat: 15.0, lng: 30.0,  code: 'MEA',name: 'MEA' },
 };
+
+// 국가 코드 역매핑 (코드 → 지역명 배열)
+function getRegionsByCode(code) {
+  return Object.entries(REGION_COORDS)
+    .filter(([, v]) => v.code === code)
+    .map(([k]) => k);
+}
 
 // ── 데이터 로드 ──
 async function loadData() {
   try {
-    // 뉴스 데이터 (현재 월 + 이전 월)
     const curKey = _curMonthKey;
     const curRes = await fetch(getNewsUrl(curKey)).then(r => r.json()).catch(() => []);
 
-    // 이전 달도 로드 (lastWeek/lastMonth 대응)
     const now = new Date();
     const prevKey = `${now.getFullYear()}-M${String(now.getMonth()).padStart(2,'0')}`;
     const prevRes = prevKey !== curKey
@@ -696,7 +716,6 @@ async function loadData() {
     allNews = [...(Array.isArray(curRes) ? curRes : []), ...(Array.isArray(prevRes) ? prevRes : [])];
     allNews.forEach((n, i) => { n._uid = `n${i}`; });
 
-    // 인텔 리포트
     const intelUrl = 'https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json';
     intelData = await fetch(intelUrl).then(r => r.json()).catch(() => null);
 
@@ -713,7 +732,7 @@ function renderAll() {
   updatePeriodLabel();
   renderHeaderStats();
   renderBriefing();
-  renderMap();
+  renderMapMarkers();
   renderCategoryCards();
   renderArticles();
 }
@@ -757,7 +776,6 @@ function renderBriefing() {
     return;
   }
 
-  // 업데이트 시각
   badge.style.display = 'flex';
   document.getElementById('updateTime').textContent = '업데이트: ' + (intelData.last_updated || '-');
 
@@ -776,10 +794,9 @@ function renderBriefing() {
   }
 
   status.textContent = '✓';
-  // <b>, <mark>, <br> 태그 허용
   const clean = script
-    .replace(/\[[\d,\s]+\]/g, '')           // 출처 번호 제거
-    .replace(/\*\*/g, '')                   // ** 제거
+    .replace(/\[[\d,\s]+\]/g, '')
+    .replace(/\*\*/g, '')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
 
@@ -794,212 +811,145 @@ function renderBriefing() {
   `;
 }
 
-// ── 세계지도 ──
-const COUNTRY_PATHS = {
-  US: "M 156 170 L 200 165 L 230 170 L 240 185 L 245 200 L 230 210 L 200 215 L 170 210 L 150 195 L 145 180 Z M 120 195 L 155 190 L 160 205 L 150 215 L 130 210 Z",
-  CA: "M 140 120 L 250 115 L 255 140 L 240 160 L 200 165 L 156 170 L 140 155 L 130 140 Z",
-  MX: "M 150 215 L 200 215 L 210 230 L 205 250 L 185 260 L 165 255 L 150 240 L 145 225 Z",
-  BR: "M 270 280 L 330 265 L 360 275 L 370 310 L 355 345 L 320 355 L 285 340 L 265 310 L 260 290 Z",
-  AR: "M 265 345 L 300 340 L 310 375 L 305 410 L 280 430 L 255 415 L 250 385 L 255 360 Z",
-  GB: "M 440 148 L 455 145 L 460 158 L 450 168 L 435 165 L 432 155 Z",
-  FR: "M 450 168 L 480 162 L 490 178 L 480 195 L 455 198 L 445 185 L 447 172 Z",
-  DE: "M 480 155 L 510 150 L 520 165 L 512 180 L 490 183 L 478 172 Z",
-  ES: "M 445 198 L 485 195 L 492 212 L 478 225 L 450 222 L 440 210 Z",
-  IT: "M 490 178 L 510 175 L 518 192 L 512 210 L 498 220 L 488 212 L 486 196 Z",
-  PL: "M 510 150 L 545 145 L 552 158 L 545 172 L 515 175 L 508 163 Z",
-  NL: "M 472 148 L 490 145 L 492 158 L 480 162 L 470 155 Z",
-  BE: "M 460 158 L 478 155 L 480 167 L 465 170 L 458 163 Z",
-  SE: "M 490 120 L 510 115 L 515 140 L 508 152 L 492 148 L 487 135 Z",
-  AT: "M 505 172 L 530 168 L 535 180 L 522 188 L 505 185 Z",
-  RU: "M 520 100 L 750 90 L 760 130 L 740 160 L 700 165 L 650 160 L 600 155 L 560 150 L 525 145 L 515 130 Z",
-  TR: "M 540 185 L 590 180 L 598 193 L 585 205 L 555 208 L 538 198 Z",
-  SA: "M 560 210 L 600 205 L 612 225 L 605 248 L 580 255 L 558 242 L 552 225 Z",
-  AE: "M 600 230 L 620 225 L 625 240 L 612 248 L 597 245 Z",
-  IR: "M 595 185 L 635 180 L 645 200 L 638 220 L 610 225 L 592 210 Z",
-  EG: "M 530 210 L 560 205 L 565 230 L 552 245 L 528 240 L 522 222 Z",
-  ZA: "M 510 360 L 545 352 L 558 375 L 550 400 L 525 408 L 502 395 L 498 370 Z",
-  NG: "M 475 285 L 505 278 L 512 298 L 500 315 L 475 315 L 468 298 Z",
-  ET: "M 545 280 L 575 272 L 582 295 L 568 312 L 545 308 L 538 292 Z",
-  IN: "M 648 195 L 695 188 L 710 215 L 700 255 L 675 272 L 650 262 L 635 235 L 638 210 Z",
-  CN: "M 695 160 L 775 148 L 790 175 L 778 210 L 740 225 L 700 220 L 680 200 L 682 178 Z",
-  KR: "M 775 175 L 795 170 L 800 185 L 790 195 L 772 192 Z",
-  JP: "M 798 168 L 820 160 L 828 175 L 818 188 L 800 185 Z M 810 152 L 830 145 L 836 158 L 825 165 L 808 162 Z",
-  TH: "M 712 232 L 730 228 L 735 248 L 725 260 L 710 255 L 705 242 Z",
-  VN: "M 730 228 L 748 222 L 755 242 L 748 262 L 733 265 L 725 248 Z",
-  ID: "M 720 285 L 755 278 L 775 285 L 778 298 L 755 305 L 722 300 Z M 778 282 L 810 275 L 820 285 L 812 298 L 780 295 Z",
-  MY: "M 715 262 L 745 255 L 750 270 L 735 278 L 715 275 Z",
-  PH: "M 770 240 L 790 232 L 800 248 L 790 262 L 768 258 Z",
-  AU: "M 748 335 L 820 318 L 848 340 L 850 380 L 828 408 L 790 415 L 755 405 L 730 375 L 728 348 Z",
-  NG2: "",
-};
+// ── Leaflet 지도 초기화 ──
+function initLeafletMap() {
+  if (leafletMap) return;
 
-// 국가명 표시
-const COUNTRY_NAMES = {
-  US:'미국', CA:'캐나다', MX:'멕시코', BR:'브라질', AR:'아르헨티나',
-  GB:'영국', FR:'프랑스', DE:'독일', ES:'스페인', IT:'이탈리아',
-  PL:'폴란드', NL:'네덜란드', BE:'벨기에', SE:'스웨덴', AT:'오스트리아',
-  RU:'러시아', TR:'튀르키예', SA:'사우디', AE:'UAE', IR:'이란',
-  EG:'이집트', ZA:'남아공', NG:'나이지리아', ET:'에티오피아',
-  IN:'인도', CN:'중국', KR:'한국', JP:'일본', TH:'태국',
-  VN:'베트남', ID:'인도네시아', MY:'말레이시아', PH:'필리핀', AU:'호주',
-};
+  leafletMap = L.map('leafletMap', {
+    center: [25, 10],
+    zoom: 2,
+    minZoom: 1,
+    maxZoom: 8,
+    zoomControl: true,
+    attributionControl: true,
+    worldCopyJump: false,
+  });
 
-function buildMap() {
-  const g = document.getElementById('countriesGroup');
-  g.innerHTML = '';
-  Object.entries(COUNTRY_PATHS).forEach(([id, path]) => {
-    if (!path) return;
-    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
-    el.setAttribute('d', path);
-    el.setAttribute('id', `country-${id}`);
-    el.classList.add('map-country');
-    el.dataset.country = id;
-    // 툴팁
-    el.addEventListener('mouseenter', e => showTooltip(e, id));
-    el.addEventListener('mousemove',  e => moveTooltip(e));
-    el.addEventListener('mouseleave', hideTooltip);
-    el.addEventListener('click', () => toggleRegion(id));
-    g.appendChild(el);
-  });
-  // 라벨 (주요국)
-  const labels = {KR:[782,185,'KR'], CN:[730,188,'CN'], JP:[812,175,'JP'], US:[192,192,'US'], IN:[672,230,'IN'], VN:[740,245,'VN'], MX:[175,238,'MX'], BR:[300,310,'BR'], PL:[530,162,'PL'], EG:[542,228,'EG']};
-  const lg = document.createElementNS('http://www.w3.org/2000/svg','g');
-  lg.id = 'labelsGroup';
-  Object.entries(labels).forEach(([id,[x,y,t]]) => {
-    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', x); txt.setAttribute('y', y);
-    txt.setAttribute('text-anchor','middle');
-    txt.setAttribute('font-size','7');
-    txt.setAttribute('fill','rgba(255,255,255,0.5)');
-    txt.setAttribute('pointer-events','none');
-    txt.textContent = t;
-    lg.appendChild(txt);
-  });
-  document.getElementById('worldMap').appendChild(lg);
+  // OpenStreetMap 타일 (다크 필터 CSS 적용)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abc',
+    maxZoom: 19,
+  }).addTo(leafletMap);
+
+  markersLayer = L.layerGroup().addTo(leafletMap);
 }
 
-// 지도에 데이터 반영
-function renderMap() {
+// ── 마커 렌더 ──
+function renderMapMarkers() {
+  if (!leafletMap) initLeafletMap();
+  markersLayer.clearLayers();
+
   const periodNews = filterByPeriod(allNews, currentPeriod);
-  // 국가별 집계
-  const countryData = {};
+
+  // 지역별 집계
+  const regionData = {};
   periodNews.forEach(n => {
-    const r = n.Region || n.Region_en || '';
-    String(r).split(',').map(x => x.trim()).forEach(region => {
-      const codes = REGION_MAP[region] || [];
-      codes.forEach(code => {
-        if (!countryData[code]) countryData[code] = { count:0, risks:[], cats:[] };
-        countryData[code].count++;
-        if (n.Risk) countryData[code].risks.push(n.Risk);
-        const cat = normalizeCat(n.Category);
-        if (!countryData[code].cats.includes(cat)) countryData[code].cats.push(cat);
-      });
+    const r = String(n.Region || n.Region_en || '');
+    r.split(',').map(x => x.trim()).forEach(region => {
+      const info = REGION_COORDS[region];
+      if (!info) return;
+      const key = info.code;
+      if (!regionData[key]) {
+        regionData[key] = { count: 0, risks: [], cats: [], name: info.name, lat: info.lat, lng: info.lng, regions: [] };
+      }
+      regionData[key].count++;
+      if (n.Risk) regionData[key].risks.push(n.Risk);
+      const cat = normalizeCat(n.Category);
+      if (!regionData[key].cats.includes(cat)) regionData[key].cats.push(cat);
+      if (!regionData[key].regions.includes(region)) regionData[key].regions.push(region);
     });
   });
-  window._countryData = countryData;
 
-  // 색상 적용
-  Object.entries(COUNTRY_PATHS).forEach(([id]) => {
-    const el = document.getElementById(`country-${id}`);
-    if (!el) return;
-    el.className = 'map-country';
-    const d = countryData[id];
-    if (!d) return;
-    el.classList.add('has-news');
-    // 최고 리스크로 색상 결정
-    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
-    if (maxRisk === 'Very High' || maxRisk === 'High') el.classList.add('risk-high');
-    else if (maxRisk === 'Med') el.classList.add('risk-med');
-    if (selectedRegion === id) el.classList.add('selected');
-  });
+  window._regionData = regionData;
 
-  // 버블 (뉴스 많은 국가)
-  renderBubbles(countryData);
-}
-
-// 버블 렌더
-const COUNTRY_CENTERS = {
-  US:[195,188], CA:[192,138], MX:[178,235], BR:[308,308], AR:[278,385],
-  GB:[447,155], FR:[465,182], DE:[497,165], ES:[462,210], IT:[500,195],
-  PL:[530,160], RU:[638,125], TR:[568,192], SA:[580,232], AE:[612,238],
-  IR:[618,202], EG:[542,228], IN:[672,228], CN:[735,185], KR:[783,182],
-  JP:[812,172], VN:[740,245], TH:[720,245], ID:[748,292], MY:[728,268], AU:[788,370],
-};
-function renderBubbles(countryData) {
-  const g = document.getElementById('bubblesGroup');
-  g.innerHTML = '';
-  Object.entries(countryData).forEach(([id, d]) => {
-    const center = COUNTRY_CENTERS[id];
-    if (!center || d.count < 2) return;
-    const r = Math.min(4 + d.count * 1.2, 16);
+  // 마커 생성
+  Object.entries(regionData).forEach(([code, d]) => {
     const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
     const color = riskColor(maxRisk);
-    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('cx', center[0]); circle.setAttribute('cy', center[1]);
-    circle.setAttribute('r', r);
-    circle.setAttribute('fill', color);
-    circle.setAttribute('fill-opacity', '0.3');
-    circle.setAttribute('stroke', color);
-    circle.setAttribute('stroke-width', '1.5');
-    circle.setAttribute('pointer-events', 'none');
-    g.appendChild(circle);
-    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', center[0]); txt.setAttribute('y', center[1]+3);
-    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size','7');
-    txt.setAttribute('fill','#fff'); txt.setAttribute('font-weight','700');
-    txt.setAttribute('pointer-events','none');
-    txt.textContent = d.count;
-    g.appendChild(txt);
+    const isSelected = selectedRegion === code;
+
+    // 버블 크기
+    const radius = Math.min(8 + d.count * 2.5, 40);
+
+    const circleMarker = L.circleMarker([d.lat, d.lng], {
+      radius: radius,
+      fillColor: color,
+      color: isSelected ? '#fff' : color,
+      weight: isSelected ? 3 : 1.5,
+      opacity: 1,
+      fillOpacity: isSelected ? 0.85 : 0.55,
+    });
+
+    // 팝업
+    const riskLabel = { vh: 'Very High', h: 'High', m: 'Med', l: 'Low' };
+    const rc = riskClass(maxRisk);
+    circleMarker.bindPopup(`
+      <div class="lf-popup-name">${d.name}</div>
+      <div class="lf-popup-count">${d.count}건</div>
+      <div class="lf-popup-risk">최고 리스크: <b style="color:${color}">${maxRisk}</b></div>
+      <div class="lf-popup-cats">${d.cats.join(', ')}</div>
+    `, { closeButton: false, offset: [0, -5] });
+
+    circleMarker.on('click', () => {
+      toggleRegion(code);
+    });
+
+    circleMarker.on('mouseover', function() { this.openPopup(); });
+    circleMarker.on('mouseout', function() { this.closePopup(); });
+
+    markersLayer.addLayer(circleMarker);
+
+    // 카운트 레이블 (5건 이상)
+    if (d.count >= 3) {
+      const icon = L.divIcon({
+        html: `<div style="
+          background:transparent;
+          color:#fff;
+          font-size:${d.count >= 10 ? '10' : '9'}px;
+          font-weight:700;
+          text-align:center;
+          line-height:${radius*2}px;
+          width:${radius*2}px;
+          height:${radius*2}px;
+          margin-left:-${radius}px;
+          margin-top:-${radius}px;
+          pointer-events:none;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        ">${d.count}</div>`,
+        className: '',
+        iconSize: [radius*2, radius*2],
+        iconAnchor: [radius, radius],
+      });
+      const labelMarker = L.marker([d.lat, d.lng], { icon, interactive: false });
+      markersLayer.addLayer(labelMarker);
+    }
   });
 }
 
-// 툴팁
-function showTooltip(e, id) {
-  const d = (window._countryData || {})[id];
-  const name = COUNTRY_NAMES[id] || id;
-  const tt = document.getElementById('mapTooltip');
-  if (!d) {
-    tt.innerHTML = `<div class="tt-name">${name}</div><div style="color:var(--text-muted);font-size:10px">기사 없음</div>`;
-  } else {
-    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
-    tt.innerHTML = `
-      <div class="tt-name">${name}</div>
-      <div class="tt-count">${d.count}건</div>
-      <div class="tt-cats">${d.cats.join(', ')}<br>최고 리스크: <b style="color:${riskColor(maxRisk)}">${maxRisk}</b></div>
-    `;
-  }
-  tt.style.display = 'block';
-  moveTooltip(e);
-}
-function moveTooltip(e) {
-  const tt = document.getElementById('mapTooltip');
-  tt.style.left = (e.clientX + 14) + 'px';
-  tt.style.top  = (e.clientY - 10) + 'px';
-}
-function hideTooltip() { document.getElementById('mapTooltip').style.display = 'none'; }
-
-// 지역 선택/해제
-function toggleRegion(id) {
-  if (selectedRegion === id) {
+// ── 지역 선택/해제 ──
+function toggleRegion(code) {
+  if (selectedRegion === code) {
     selectedRegion = null;
   } else {
-    selectedRegion = id;
-    // 선택된 국가에 해당하는 region key 찾기
+    selectedRegion = code;
   }
   updateFilterBar();
-  renderMap();
+  renderMapMarkers();
   renderCategoryCards();
   renderArticles();
 }
+
 function getSelectedRegionLabel() {
   if (!selectedRegion) return null;
-  return COUNTRY_NAMES[selectedRegion] || selectedRegion;
+  const d = (window._regionData || {})[selectedRegion];
+  return d ? d.name : selectedRegion;
 }
+
 function updateFilterBar() {
   const bar = document.getElementById('filterStatus');
-  const container = document.getElementById('mapFilterBar');
   if (!selectedRegion) {
-    bar.innerHTML = '<span style="color:var(--text-muted)">지도의 국가를 클릭해 필터링하세요</span>';
+    bar.innerHTML = '<span style="color:var(--text-muted)">지도의 국가/마커를 클릭해 필터링하세요</span>';
     return;
   }
   const name = getSelectedRegionLabel();
@@ -1011,21 +961,16 @@ function updateFilterBar() {
   `;
 }
 
-// 필터된 뉴스
+// ── 필터된 뉴스 ──
 function getFilteredNews() {
   let news = filterByPeriod(allNews, currentPeriod);
-  // 지역 필터
   if (selectedRegion) {
-    // selectedRegion code → region text 역매핑
-    const validRegions = Object.entries(REGION_MAP)
-      .filter(([, codes]) => codes.includes(selectedRegion))
-      .map(([r]) => r);
+    const validRegions = getRegionsByCode(selectedRegion);
     news = news.filter(n => {
       const r = String(n.Region || n.Region_en || '');
       return validRegions.some(vr => r.includes(vr));
     });
   }
-  // 카테고리 필터
   if (selectedCat) {
     news = news.filter(n => normalizeCat(n.Category) === selectedCat);
   }
@@ -1035,11 +980,9 @@ function getFilteredNews() {
 // ── 카테고리 카드 ──
 function renderCategoryCards() {
   const periodNews = filterByPeriod(allNews, currentPeriod);
-  // 지역 필터만 적용 (카테고리 필터 제외)
   let base = periodNews;
   if (selectedRegion) {
-    const validRegions = Object.entries(REGION_MAP)
-      .filter(([, codes]) => codes.includes(selectedRegion)).map(([r]) => r);
+    const validRegions = getRegionsByCode(selectedRegion);
     base = base.filter(n => {
       const r = String(n.Region || n.Region_en || '');
       return validRegions.some(vr => r.includes(vr));
@@ -1105,7 +1048,6 @@ function updateActiveFiltersLabel() {
 // ── 기사 카드 ──
 function renderArticles() {
   const filtered = getFilteredNews();
-  // 리스크 순 정렬, 최대 30개
   const sorted = filtered.sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0)).slice(0,30);
   document.getElementById('articleCountBadge').textContent = `${filtered.length}건`;
   updateActiveFiltersLabel();
@@ -1161,7 +1103,7 @@ function setBriefingCat(cat, el) {
 
 // ── 초기화 ──
 document.addEventListener('DOMContentLoaded', () => {
-  buildMap();
+  initLeafletMap();
   loadData();
 });
 </script>
