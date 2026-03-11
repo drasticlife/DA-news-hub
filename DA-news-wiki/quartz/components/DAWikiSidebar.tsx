@@ -28,12 +28,14 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       label: "냉장·냉동",
       items: [
         { name: "냉장고", fileName: "냉장고", icon: "🌡" },
+        { name: "냉장고 종류 및 원리", fileName: "냉장고 종류 및 원리", icon: "🧊" },
       ],
     },
     {
       label: "세탁·건조",
       items: [
         { name: "세탁기", fileName: "세탁기", icon: "💧" },
+        { name: "세탁기 종류 및 원리", fileName: "세탁기 종류 및 원리", icon: "🫧" },
         { name: "건조기", fileName: "건조기", icon: "💨" },
       ],
     },
@@ -41,9 +43,9 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       label: "공조·청정",
       items: [
         { name: "에어컨", fileName: "에어컨", icon: "❄" },
+        { name: "에어컨 종류 및 분류", fileName: "에어컨 종류 및 분류", icon: "🌬️" },
         { name: "에어컨 효율", fileName: "에어컨 효율", icon: "⚡" },
         { name: "에어컨 용량 단위", fileName: "에어컨 용량 단위", icon: "📏" },
-        { name: "에어컨 종류 및 분류", fileName: "에어컨 종류 및 분류", icon: "🌬️" },
         { name: "공기청정기", fileName: "공기청정기", icon: "☁" },
       ],
     },
@@ -51,7 +53,14 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       label: "조리·주방",
       items: [
         { name: "오븐·전자레인지", fileName: "오븐·전자레인지", icon: "🔥" },
+        { name: "조리 기구 및 가열 원리", fileName: "조리 기구 및 가열 원리", icon: "🍳" },
         { name: "식기세척기", fileName: "식기세척기", icon: "✨" },
+      ],
+    },
+    {
+      label: "기타",
+      items: [
+        { name: "청소기 종류 및 작동 원리", fileName: "청소기 종류 및 작동 원리", icon: "🧹" },
       ],
     },
     {
