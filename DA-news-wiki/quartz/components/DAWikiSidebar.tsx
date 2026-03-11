@@ -58,7 +58,7 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
       ],
     },
     {
-      label: "기타",
+      label: "청소기",
       items: [
         { name: "청소기 종류 및 작동 원리", fileName: "청소기 종류 및 작동 원리", icon: "🧹" },
       ],
