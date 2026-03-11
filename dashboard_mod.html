@@ -1,1750 +1,1169 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DA Strategic Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DA Intelligence Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-card: #1e2130;
+    --bg-hover: #252840;
+    --accent-blue: #4f8ef7;
+    --accent-teal: #2dd4bf;
+    --accent-red: #f87171;
+    --accent-orange: #fb923c;
+    --accent-yellow: #fbbf24;
+    --accent-green: #34d399;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #2d3148;
+  }
 
-    <!-- 1. Tailwind CSS (디자인) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="assets/css/index.css" />
-    <script src="assets/js/config.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <!-- 2. Import Map (리액트 및 라이브러리 모듈 설정) -->
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom": "https://esm.sh/react-dom@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-            "recharts": "https://esm.sh/recharts@2.12.0?external=react,react-dom",
-            "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react"
-        }
-    }
-    </script>
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-    <!-- 3. Babel (JSX 변환기) -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  /* ── Header ── */
+  .dash-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .dash-header .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 700; color: var(--text-primary);
+    text-decoration: none;
+  }
+  .dash-header .logo span { color: var(--accent-blue); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); font-size: 12px; cursor: pointer;
+    text-decoration: none; transition: all .2s;
+  }
+  .back-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-    <!-- 4. Lottie Web Component (새 로딩 애니메이션) -->
-    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js" type="module"></script>
+  /* ── Period Tabs ── */
+  .period-bar {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 44px;
+  }
+  .period-tab {
+    padding: 6px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    color: var(--text-secondary); border: 1px solid transparent;
+    transition: all .2s; white-space: nowrap;
+  }
+  .period-tab:hover { color: var(--text-primary); background: var(--bg-card); }
+  .period-tab.active {
+    color: #fff; background: var(--accent-blue);
+    border-color: var(--accent-blue);
+  }
+  .period-label {
+    margin-left: auto; font-size: 11px; color: var(--text-muted);
+    padding: 4px 10px; background: var(--bg-card); border-radius: 4px;
+  }
 
-    <style>
-        /* 커스텀 스크롤바 스타일 */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
+  /* ── Main Layout ── */
+  .dash-body {
+    display: grid;
+    grid-template-columns: 300px 1fr 280px;
+    grid-template-rows: auto 1fr;
+    height: calc(100vh - 96px);
+    gap: 0;
+  }
 
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
+  /* ── Left Panel ── */
+  .left-panel {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: .05em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .panel-title i { color: var(--accent-blue); font-size: 11px; }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #E2E8F0;
-            border-radius: 0px;
-        }
+  /* 브리핑 카테고리 탭 */
+  .briefing-cats {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-tab {
+    padding: 3px 9px; border-radius: 4px;
+    font-size: 11px; cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-secondary); background: var(--bg-card);
+    transition: all .15s;
+  }
+  .cat-tab:hover { color: var(--text-primary); border-color: var(--accent-blue); }
+  .cat-tab.active { color: #fff; background: var(--accent-blue); border-color: var(--accent-blue); }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
+  /* 브리핑 스크롤 영역 */
+  .briefing-scroll {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .briefing-scroll::-webkit-scrollbar { width: 4px; }
+  .briefing-scroll::-webkit-scrollbar-track { background: transparent; }
+  .briefing-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+  .briefing-meta {
+    font-size: 10px; color: var(--text-muted);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .briefing-meta .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-teal); }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #F8F9FB;
-        }
+  .briefing-text {
+    font-size: 12.5px; line-height: 1.8; color: var(--text-secondary);
+  }
+  .briefing-text b { color: var(--text-primary); font-weight: 600; }
+  .briefing-text mark {
+    background: rgba(79,142,247,.18);
+    color: #93c5fd;
+    border-radius: 3px;
+    padding: 1px 3px;
+  }
+  .briefing-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 200px; gap: 10px;
+    color: var(--text-muted); font-size: 12px;
+  }
+  .briefing-empty i { font-size: 32px; opacity: .3; }
 
-        * {
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
+  /* 업데이트 시각 */
+  .update-badge {
+    margin: 10px 14px 0;
+    padding: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 10px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+  }
 
-        /* Strategic Narrative 내 강조 스타일 (index.html 일관성) */
-        h2 mark {
-            background-color: #DBEAFE;
-            color: #1D4ED8;
-            border-radius: 3px;
-            padding: 0 3px;
-            font-weight: 700;
-        }
+  /* ── Center Panel ── */
+  .center-panel {
+    background: var(--bg-primary);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
 
-        h2 b {
-            color: #1E40AF;
-            font-weight: 900;
-        }
+  /* SVG 세계지도 */
+  #worldMap {
+    width: 100%; height: 100%;
+    cursor: default;
+  }
+  .map-country {
+    fill: #1e2d45;
+    stroke: #2d3f5a;
+    stroke-width: 0.5;
+    transition: fill .2s;
+    cursor: pointer;
+  }
+  .map-country:hover { fill: #2a4a6e; }
+  .map-country.has-news { fill: #1e3a5f; stroke: #3b6ea8; }
+  .map-country.selected { fill: var(--accent-blue) !important; stroke: #93c5fd; stroke-width: 1; }
+  .map-country.risk-high { fill: #4a2020; stroke: #8b3a3a; }
+  .map-country.risk-high:hover { fill: #6a2525; }
+  .map-country.risk-high.selected { fill: var(--accent-red) !important; }
+  .map-country.risk-med { fill: #3a2e10; stroke: #8b6914; }
+  .map-country.risk-med.selected { fill: var(--accent-yellow) !important; }
 
-        /* [신규] 히트맵 셀 호버 효과 */
-        table td div:hover {
-            transform: scale(1.15);
-            z-index: 10;
-            position: relative;
-        }
+  /* 지도 범례 */
+  .map-legend {
+    position: absolute; bottom: 14px; left: 14px;
+    display: flex; gap: 10px; align-items: center;
+    background: rgba(15,17,23,.85);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 12px;
+    font-size: 10px; color: var(--text-muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-        /* [신규] 브리핑 카드 숫자 강조 */
-        .briefing-number {
-            color: #F59E0B;
-            font-weight: 900;
-        }
+  /* 지도 필터 상태 */
+  .map-filter-bar {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-muted);
+    min-height: 36px;
+  }
+  .filter-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 10px;
+    background: var(--accent-blue); color: #fff;
+    font-size: 10px; font-weight: 500;
+    cursor: pointer;
+  }
+  .filter-chip i { font-size: 9px; }
 
-        /* [신규] 카테고리 바 애니메이션 */
-        @keyframes barSlideIn {
-            from { width: 0%; }
-            to { width: var(--target-width); }
-        }
+  /* 지도 툴팁 */
+  #mapTooltip {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+    min-width: 160px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  #mapTooltip .tt-name { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  #mapTooltip .tt-count { color: var(--accent-blue); font-size: 13px; font-weight: 700; }
+  #mapTooltip .tt-cats { color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
 
-        /* [신규] Risk pulse animation */
-        @keyframes riskPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .risk-high-pulse {
-            animation: riskPulse 1.5s ease-in-out infinite;
-        }
-    </style>
+  /* ── Right Panel ── */
+  .right-panel {
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .right-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+  .right-scroll::-webkit-scrollbar { width: 4px; }
+  .right-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* 카테고리 카드 */
+  .cat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .cat-card:hover { border-color: var(--accent-blue); background: var(--bg-hover); }
+  .cat-card.active { border-color: var(--accent-blue); background: rgba(79,142,247,.08); }
+  .cat-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .cat-name {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cat-icon { font-size: 13px; }
+  .cat-count {
+    font-size: 18px; font-weight: 700; color: var(--accent-blue);
+    line-height: 1;
+  }
+  .cat-risk-bar {
+    height: 3px; border-radius: 2px;
+    background: var(--border);
+    margin: 6px 0 4px;
+    overflow: hidden;
+  }
+  .cat-risk-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-yellow), var(--accent-red));
+    transition: width .4s ease;
+  }
+  .cat-top-title {
+    font-size: 10px; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+  .cat-top-risk {
+    display: inline-block; font-size: 9px; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px; margin-right: 4px;
+  }
+
+  /* ── Bottom Articles ── */
+  .bottom-panel {
+    grid-column: 1 / -1;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    max-height: 240px;
+    display: flex; flex-direction: column;
+  }
+  .bottom-header {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .bottom-title {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bottom-title i { color: var(--accent-yellow); }
+  .article-count-badge {
+    font-size: 10px; color: var(--text-muted);
+    background: var(--bg-card); padding: 2px 8px; border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .articles-scroll {
+    flex: 1; overflow-x: auto; overflow-y: hidden;
+    display: flex; gap: 10px; padding: 10px 16px;
+    scroll-snap-type: x mandatory;
+  }
+  .articles-scroll::-webkit-scrollbar { height: 4px; }
+  .articles-scroll::-webkit-scrollbar-track { background: transparent; }
+  .articles-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* 기사 카드 */
+  .article-card {
+    flex-shrink: 0;
+    width: 240px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .2s;
+    scroll-snap-align: start;
+    display: flex; flex-direction: column; gap: 5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .article-card:hover { border-color: var(--accent-blue); transform: translateY(-1px); }
+  .article-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; border-radius: 2px 0 0 2px;
+  }
+  .article-card.risk-vh::before { background: #ef4444; }
+  .article-card.risk-h::before { background: var(--accent-orange); }
+  .article-card.risk-m::before { background: var(--accent-yellow); }
+  .article-card.risk-l::before { background: var(--accent-green); }
+
+  .article-meta {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 9px; color: var(--text-muted);
+  }
+  .risk-badge {
+    display: inline-flex; align-items: center;
+    padding: 1px 5px; border-radius: 3px;
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase;
+  }
+  .risk-badge.vh { background: rgba(239,68,68,.15); color: #f87171; }
+  .risk-badge.h  { background: rgba(251,146,60,.15); color: #fb923c; }
+  .risk-badge.m  { background: rgba(251,191,36,.15); color: #fbbf24; }
+  .risk-badge.l  { background: rgba(52,211,153,.15); color: #34d399; }
+
+  .article-title {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .article-summary {
+    font-size: 10px; color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .article-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: auto;
+  }
+  .article-cat-tag {
+    font-size: 9px; color: var(--accent-teal);
+    background: rgba(45,212,191,.1); padding: 1px 6px; border-radius: 3px;
+  }
+  .article-date { font-size: 9px; color: var(--text-muted); }
+
+  /* ── Stats strip ── */
+  .stats-strip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 16px;
+  }
+  .stat-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 4px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    font-size: 10px; color: var(--text-muted);
+  }
+  .stat-pill b { color: var(--text-primary); font-weight: 600; }
+
+  /* ── Loading / Empty ── */
+  .loading-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-primary);
+    flex-direction: column; gap: 12px;
+    z-index: 50;
+  }
+  .spin {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent-blue);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Scrollbar global ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── No data ── */
+  .no-data {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 30px;
+    color: var(--text-muted); gap: 8px; font-size: 12px;
+  }
+  .no-data i { font-size: 28px; opacity: .3; }
+</style>
 </head>
-
 <body>
-    <!-- ── 글로벌 네비 드로어 (순수 HTML, React 외부) ── -->
-    <div id="dashmod-drawer-overlay" onclick="closeDashModDrawer()"
-        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1200;backdrop-filter:blur(2px);">
+
+<!-- Header -->
+<header class="dash-header">
+  <a href="index.html" class="logo">
+    <i class="fas fa-shield-alt" style="color:var(--accent-blue)"></i>
+    DA <span>Intelligence</span> Dashboard
+  </a>
+  <div class="header-right">
+    <div class="stats-strip" id="headerStats"></div>
+    <a href="index.html" class="back-btn">
+      <i class="fas fa-newspaper"></i> News Hub
+    </a>
+  </div>
+</header>
+
+<!-- Period Tabs -->
+<div class="period-bar">
+  <button class="period-tab active" onclick="setPeriod('thisWeek',this)">이번 주</button>
+  <button class="period-tab" onclick="setPeriod('lastWeek',this)">지난 주</button>
+  <button class="period-tab" onclick="setPeriod('thisMonth',this)">이번 달</button>
+  <button class="period-tab" onclick="setPeriod('lastMonth',this)">지난 달</button>
+  <div class="period-label" id="periodLabel">로딩 중...</div>
+</div>
+
+<!-- Main Body -->
+<div class="dash-body">
+
+  <!-- LEFT: AI 브리핑 -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-robot"></i> AI 브리핑
+      </div>
+      <div id="briefingStatus" style="font-size:10px;color:var(--text-muted)"></div>
     </div>
-    <div id="dashmod-drawer"
-        style="position:fixed;top:0;left:-320px;width:280px;height:100%;background:white;z-index:1300;transition:left 0.3s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;padding:20px 16px;box-shadow:4px 0 24px rgba(0,0,0,0.15);font-family:'Pretendard',sans-serif;">
-
-        <div
-            style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <div
-                    style="background:#0033A0;color:white;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:900;letter-spacing:0.1em;">
-                    DA</div>
-                <span
-                    style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;letter-spacing:0.03em;">Purchase
-                    Intel</span>
-            </div>
-            <button onclick="closeDashModDrawer()"
-                style="padding:4px;border-radius:8px;border:none;background:transparent;cursor:pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                    stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
-        </div>
-
-        <div
-            style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:8px;">
-            NAVIGATE</div>
-        <nav style="display:flex;flex-direction:column;gap:2px;margin-bottom:16px;">
-            <a href="index.html?view=hub"
-                style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#475569;text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;"
-                onmouseover="this.style.background='#eff6ff';this.style.color='#0033A0';"
-                onmouseout="this.style.background='';this.style.color='#475569';">
-                <span
-                    style="width:28px;height:28px;background:#f1f5f9;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">📰</span>
-                <span>News Hub</span>
-            </a>
-            <a href="dashboard_mod.html"
-                style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#eff6ff;color:#0033A0;text-decoration:none;font-size:13px;font-weight:700;">
-                <span
-                    style="width:28px;height:28px;background:#dbeafe;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">📊</span>
-                <span style="flex:1;">Dashboard</span>
-                <span
-                    style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#dbeafe;color:#0033A0;">현재</span>
-            </a>
-            <a href="dashboard_3d.html"
-                style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#475569;text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;"
-                onmouseover="this.style.background='#eff6ff';this.style.color='#0033A0';"
-                onmouseout="this.style.background='';this.style.color='#475569';">
-                <span
-                    style="width:28px;height:28px;background:#f1f5f9;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">🌐</span>
-                <span>3D Globe Briefing</span>
-            </a>
-            <a href="wiki/index.html"
-                style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:#475569;text-decoration:none;font-size:13px;font-weight:700;transition:all 0.15s;"
-                onmouseover="this.style.background='#eff6ff';this.style.color='#0033A0';"
-                onmouseout="this.style.background='';this.style.color='#475569';">
-                <span
-                    style="width:28px;height:28px;background:#f1f5f9;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">📖</span>
-                <span style="flex:1;">Product Wiki</span>
-                <span
-                    style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#fef3c7;color:#d97706;">NEW</span>
-            </a>
-        </nav>
-
-        <div style="border-top:1px solid #e2e8f0;margin:16px 0;"></div>
-        <div id="dashmod-user-info"
-            style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:10px;padding:0 4px;"></div>
-        <button id="dashmod-logout-btn" onclick="dashmodLogout()"
-            style="display:none;width:100%;padding:9px 12px;border-radius:8px;border:none;background:#fef2f2;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-align:left;align-items:center;gap:8px;margin-bottom:6px;transition:background 0.2s;"
-            onmouseover="this.style.background='#fee2e2';" onmouseout="this.style.background='#fef2f2';">
-            🚪 로그아웃
-        </button>
-        <a href="index.html" id="dashmod-login-btn"
-            style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:8px;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;text-decoration:none;transition:background 0.2s;"
-            onmouseover="this.style.background='#dcfce7';" onmouseout="this.style.background='#f0fdf4';">
-            🔑 로그인 화면
-        </a>
+    <!-- 카테고리 탭 -->
+    <div class="briefing-cats" id="briefingCats">
+      <button class="cat-tab active" data-cat="all" onclick="setBriefingCat('all',this)">종합</button>
+      <button class="cat-tab" data-cat="원자재" onclick="setBriefingCat('원자재',this)">원자재</button>
+      <button class="cat-tab" data-cat="거시경제" onclick="setBriefingCat('거시경제',this)">거시경제</button>
+      <button class="cat-tab" data-cat="생산지역" onclick="setBriefingCat('생산지역',this)">생산지역</button>
+      <button class="cat-tab" data-cat="경쟁사" onclick="setBriefingCat('경쟁사',this)">경쟁사</button>
+      <button class="cat-tab" data-cat="신기술동향" onclick="setBriefingCat('신기술동향',this)">신기술</button>
     </div>
+    <div id="updateBadge" class="update-badge" style="display:none">
+      <i class="fas fa-clock" style="color:var(--accent-teal)"></i>
+      <span id="updateTime"></span>
+    </div>
+    <div class="briefing-scroll" id="briefingContent">
+      <div class="briefing-empty">
+        <i class="fas fa-brain"></i>
+        <span>브리핑 로딩 중...</span>
+      </div>
+    </div>
+  </div>
 
-    <!-- ── 글로벌 헤더 (DA Wiki Header 복제) ── -->
-    <header class="da-wiki-header"
-        style="position:fixed;top:0;left:0;right:0;height:56px;background:#0033A0;color:white;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:1100;box-shadow:0 2px 16px rgba(0,51,160,0.5);backdrop-filter:blur(4px);border-bottom:1px solid rgba(255,255,255,0.1);transform:translateZ(0);">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <button onclick="toggleDashModDrawer()" aria-label="메인 허브 메뉴 열기" id="dashmod-hamburger"
-                style="display:flex;align-items:center;justify-content:center;color:white;opacity:0.8;transition:opacity 0.15s;background:transparent;border:none;cursor:pointer;padding:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" x2="20" y1="12" y2="12" />
-                    <line x1="4" x2="20" y1="6" y2="6" />
-                    <line x1="4" x2="20" y1="18" y2="18" />
-                </svg>
-            </button>
-            <a href="index.html?view=hub"
-                style="display:flex;align-items:center;gap:8px;text-decoration:none;color:white;opacity:0.95;transition:opacity 0.15s;">
-                <div
-                    style="background:white;color:#0033A0;font-size:10px;font-weight:900;padding:2px 6px;border-radius:4px;letter-spacing:0.05em;">
-                    DA</div>
-                <span
-                    style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;"
-                    class="hidden sm:inline">Purchase Intelligence</span>
-            </a>
-            <div style="color:rgba(255,255,255,0.4);font-size:12px;" class="hidden sm:inline">/</div>
-            <span
-                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.8);"
-                class="hidden sm:inline">Dashboard</span>
+  <!-- CENTER: 세계지도 -->
+  <div class="center-panel">
+    <div class="loading-overlay" id="mapLoading">
+      <div class="spin"></div>
+      <span style="font-size:12px;color:var(--text-muted)">데이터 로딩 중...</span>
+    </div>
+    <div class="map-container" id="mapContainer">
+      <!-- SVG 세계지도 (TopoJSON 기반 간략 버전) -->
+      <svg id="worldMap" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect width="960" height="500" fill="#0a1628"/>
+        <!-- 국가 경로들은 JS에서 주입 -->
+        <g id="countriesGroup"></g>
+        <!-- 뉴스 버블 -->
+        <g id="bubblesGroup"></g>
+      </svg>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Very High</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-orange)"></div> High</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-yellow)"></div> Med</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-green)"></div> Low</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b5998"></div> 기사 있음</div>
+      </div>
+    </div>
+    <div class="map-filter-bar" id="mapFilterBar">
+      <i class="fas fa-map-marker-alt" style="color:var(--text-muted)"></i>
+      <span id="filterStatus" style="color:var(--text-muted)">지도의 국가를 클릭해 필터링하세요</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: 카테고리별 이슈 -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <i class="fas fa-chart-bar"></i> 카테고리별 이슈
+      </div>
+    </div>
+    <div class="right-scroll" id="categoryCards">
+      <div class="no-data"><i class="fas fa-spinner fa-spin"></i><span>로딩 중...</span></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: 핵심 기사 -->
+  <div class="bottom-panel">
+    <div class="bottom-header">
+      <div class="bottom-title">
+        <i class="fas fa-bolt"></i>
+        핵심 기사
+        <span id="activeFiltersLabel" style="font-size:10px;color:var(--text-muted);margin-left:4px"></span>
+      </div>
+      <span class="article-count-badge" id="articleCountBadge">0건</span>
+    </div>
+    <div class="articles-scroll" id="articlesContainer">
+      <div class="no-data" style="width:100%;justify-content:center">
+        <i class="fas fa-newspaper"></i><span>기사를 불러오는 중...</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 지도 툴팁 -->
+<div id="mapTooltip"></div>
+
+<script src="assets/js/config.js"></script>
+<script>
+// ════════════════════════════════════════════════
+// DA Intelligence Dashboard v2.0
+// 평면 세계지도 + AI 브리핑 + 카테고리 패널
+// ════════════════════════════════════════════════
+
+// ── 상태 ──
+let allNews = [];
+let intelData = null;
+let currentPeriod = 'thisWeek';
+let currentBriefingCat = 'all';
+let selectedRegion = null;
+let selectedCat = null;
+
+// ── 기간 날짜 계산 ──
+function getPeriodRange(period) {
+  const now = new Date();
+  const dow = now.getDay();
+  const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - dow); startOfWeek.setHours(0,0,0,0);
+  const startOfLastWeek = new Date(startOfWeek); startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+  const endOfLastWeek = new Date(startOfWeek); endOfLastWeek.setDate(startOfWeek.getDate() - 1);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  const map = {
+    thisWeek:  { start: startOfWeek,     end: now,           label: '이번 주' },
+    lastWeek:  { start: startOfLastWeek, end: endOfLastWeek, label: '지난 주' },
+    thisMonth: { start: startOfMonth,    end: now,           label: '이번 달' },
+    lastMonth: { start: startOfLastMonth,end: endOfLastMonth,label: '지난 달' },
+  };
+  return map[period];
+}
+
+function parseDate(d) {
+  if (!d) return new Date(0);
+  const s = String(d).replace(/\./g,'-').replace(/\s/g,'');
+  const p = s.split('T')[0].split('-');
+  return p.length < 3 ? new Date(0) : new Date(p[0], p[1]-1, p[2]);
+}
+
+function filterByPeriod(news, period) {
+  const { start, end } = getPeriodRange(period);
+  return news.filter(n => { const d = parseDate(n.Date); return d >= start && d <= end; });
+}
+
+// ── 카테고리 정규화 ──
+const CAT_ICON = {
+  '원자재': '⛏️', '거시경제': '📊', '생산지역': '🏭',
+  '경쟁사': '🏢', '신기술동향': '💡', '신기술': '💡', 'AI기술': '🤖', '기타': '📌'
+};
+const CAT_COLOR = {
+  '원자재': '#fb923c', '거시경제': '#4f8ef7', '생산지역': '#34d399',
+  '경쟁사': '#f87171', '신기술동향': '#a78bfa', '신기술': '#a78bfa', 'AI기술': '#2dd4bf'
+};
+const CAT_MAIN = ['원자재','거시경제','생산지역','경쟁사','신기술동향'];
+
+function normalizeCat(raw) {
+  if (!raw) return '기타';
+  const r = String(raw).split(':')[0].trim();
+  if (r === '신기술' || r === 'AI기술') return '신기술동향';
+  if (CAT_MAIN.includes(r)) return r;
+  return '기타';
+}
+
+// ── 리스크 ──
+const RISK_SCORE = { 'Very High': 4, 'High': 3, 'Med': 2, 'Low': 1 };
+function riskClass(r) {
+  if (!r) return 'l';
+  const s = r.toLowerCase().replace(' ','');
+  if (s === 'veryhigh') return 'vh';
+  if (s === 'high') return 'h';
+  if (s === 'med') return 'm';
+  return 'l';
+}
+function riskColor(r) {
+  const c = { vh:'#ef4444', h:'#fb923c', m:'#fbbf24', l:'#34d399' };
+  return c[riskClass(r)] || '#64748b';
+}
+
+// ── 지역 → SVG 국가 ID 매핑 ──
+const REGION_MAP = {
+  'South Korea': ['KR'], 'Korea': ['KR'],
+  'USA': ['US'], 'United States': ['US'],
+  'China': ['CN'],
+  'Japan': ['JP'],
+  'Vietnam': ['VN'],
+  'EU': ['DE','FR','IT','ES','PL','NL','BE','SE','AT'],
+  'Poland': ['PL'],
+  'Mexico': ['MX'],
+  'India': ['IN'],
+  'Brazil': ['BR'],
+  'Egypt': ['EG'],
+  'SE Asia': ['VN','TH','ID','MY','PH'],
+  'Global': [],
+  'Asia-Pacific': ['KR','JP','CN','AU','IN'],
+  'Middle East': ['SA','AE','IR'],
+  'MEA': ['SA','AE','EG','ZA'],
+};
+
+// ── 데이터 로드 ──
+async function loadData() {
+  try {
+    // 뉴스 데이터 (현재 월 + 이전 월)
+    const curKey = _curMonthKey;
+    const curRes = await fetch(getNewsUrl(curKey)).then(r => r.json()).catch(() => []);
+
+    // 이전 달도 로드 (lastWeek/lastMonth 대응)
+    const now = new Date();
+    const prevKey = `${now.getFullYear()}-M${String(now.getMonth()).padStart(2,'0')}`;
+    const prevRes = prevKey !== curKey
+      ? await fetch(getNewsUrl(prevKey)).then(r => r.json()).catch(() => [])
+      : [];
+
+    allNews = [...(Array.isArray(curRes) ? curRes : []), ...(Array.isArray(prevRes) ? prevRes : [])];
+    allNews.forEach((n, i) => { n._uid = `n${i}`; });
+
+    // 인텔 리포트
+    const intelUrl = 'https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json';
+    intelData = await fetch(intelUrl).then(r => r.json()).catch(() => null);
+
+    document.getElementById('mapLoading').style.display = 'none';
+    renderAll();
+  } catch(e) {
+    console.error('loadData error', e);
+    document.getElementById('mapLoading').style.display = 'none';
+  }
+}
+
+// ── 전체 렌더 ──
+function renderAll() {
+  updatePeriodLabel();
+  renderHeaderStats();
+  renderBriefing();
+  renderMap();
+  renderCategoryCards();
+  renderArticles();
+}
+
+// ── 기간 라벨 ──
+function updatePeriodLabel() {
+  const { start, end, label } = getPeriodRange(currentPeriod);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  const periodNews = filterByPeriod(allNews, currentPeriod);
+  document.getElementById('periodLabel').textContent =
+    `${label} ${fmt(start)} ~ ${fmt(end)} · ${periodNews.length}건`;
+}
+
+// ── 헤더 통계 ──
+function renderHeaderStats() {
+  const periodNews = filterByPeriod(allNews, currentPeriod);
+  let vh=0, h=0;
+  periodNews.forEach(n => {
+    if(n.Risk==='Very High') vh++;
+    else if(n.Risk==='High') h++;
+  });
+  document.getElementById('headerStats').innerHTML = `
+    <div class="stat-pill"><b style="color:#ef4444">${vh}</b> Very High</div>
+    <div class="stat-pill"><b style="color:#fb923c">${h}</b> High</div>
+    <div class="stat-pill"><b style="color:var(--accent-blue)">${periodNews.length}</b> 총 기사</div>
+  `;
+}
+
+// ── AI 브리핑 ──
+function renderBriefing() {
+  const content = document.getElementById('briefingContent');
+  const badge = document.getElementById('updateBadge');
+  const status = document.getElementById('briefingStatus');
+
+  if (!intelData) {
+    content.innerHTML = `<div class="briefing-empty">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>브리핑 데이터가 없습니다</span>
+      <span style="font-size:10px;color:var(--text-muted)">앵커 브리핑 생성 후 GitHub 배포 필요</span>
+    </div>`;
+    return;
+  }
+
+  // 업데이트 시각
+  badge.style.display = 'flex';
+  document.getElementById('updateTime').textContent = '업데이트: ' + (intelData.last_updated || '-');
+
+  const scripts = intelData.scripts || {};
+  const periodScripts = scripts[currentPeriod] || {};
+  const script = periodScripts[currentBriefingCat];
+
+  if (!script) {
+    content.innerHTML = `<div class="briefing-empty">
+      <i class="fas fa-file-alt"></i>
+      <span>해당 기간/카테고리 브리핑 없음</span>
+      <span style="font-size:10px;color:var(--text-muted)">앵커 브리핑 재생성 후 배포하세요</span>
+    </div>`;
+    status.textContent = '없음';
+    return;
+  }
+
+  status.textContent = '✓';
+  // <b>, <mark>, <br> 태그 허용
+  const clean = script
+    .replace(/\[[\d,\s]+\]/g, '')           // 출처 번호 제거
+    .replace(/\*\*/g, '')                   // ** 제거
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
+  content.innerHTML = `
+    <div class="briefing-meta">
+      <div class="dot"></div>
+      ${currentPeriod === 'thisWeek' ? '이번 주' : currentPeriod === 'lastWeek' ? '지난 주' : currentPeriod === 'thisMonth' ? '이번 달' : '지난 달'}
+      ·
+      ${currentBriefingCat === 'all' ? '종합' : currentBriefingCat}
+    </div>
+    <div class="briefing-text">${clean}</div>
+  `;
+}
+
+// ── 세계지도 ──
+const COUNTRY_PATHS = {
+  US: "M 156 170 L 200 165 L 230 170 L 240 185 L 245 200 L 230 210 L 200 215 L 170 210 L 150 195 L 145 180 Z M 120 195 L 155 190 L 160 205 L 150 215 L 130 210 Z",
+  CA: "M 140 120 L 250 115 L 255 140 L 240 160 L 200 165 L 156 170 L 140 155 L 130 140 Z",
+  MX: "M 150 215 L 200 215 L 210 230 L 205 250 L 185 260 L 165 255 L 150 240 L 145 225 Z",
+  BR: "M 270 280 L 330 265 L 360 275 L 370 310 L 355 345 L 320 355 L 285 340 L 265 310 L 260 290 Z",
+  AR: "M 265 345 L 300 340 L 310 375 L 305 410 L 280 430 L 255 415 L 250 385 L 255 360 Z",
+  GB: "M 440 148 L 455 145 L 460 158 L 450 168 L 435 165 L 432 155 Z",
+  FR: "M 450 168 L 480 162 L 490 178 L 480 195 L 455 198 L 445 185 L 447 172 Z",
+  DE: "M 480 155 L 510 150 L 520 165 L 512 180 L 490 183 L 478 172 Z",
+  ES: "M 445 198 L 485 195 L 492 212 L 478 225 L 450 222 L 440 210 Z",
+  IT: "M 490 178 L 510 175 L 518 192 L 512 210 L 498 220 L 488 212 L 486 196 Z",
+  PL: "M 510 150 L 545 145 L 552 158 L 545 172 L 515 175 L 508 163 Z",
+  NL: "M 472 148 L 490 145 L 492 158 L 480 162 L 470 155 Z",
+  BE: "M 460 158 L 478 155 L 480 167 L 465 170 L 458 163 Z",
+  SE: "M 490 120 L 510 115 L 515 140 L 508 152 L 492 148 L 487 135 Z",
+  AT: "M 505 172 L 530 168 L 535 180 L 522 188 L 505 185 Z",
+  RU: "M 520 100 L 750 90 L 760 130 L 740 160 L 700 165 L 650 160 L 600 155 L 560 150 L 525 145 L 515 130 Z",
+  TR: "M 540 185 L 590 180 L 598 193 L 585 205 L 555 208 L 538 198 Z",
+  SA: "M 560 210 L 600 205 L 612 225 L 605 248 L 580 255 L 558 242 L 552 225 Z",
+  AE: "M 600 230 L 620 225 L 625 240 L 612 248 L 597 245 Z",
+  IR: "M 595 185 L 635 180 L 645 200 L 638 220 L 610 225 L 592 210 Z",
+  EG: "M 530 210 L 560 205 L 565 230 L 552 245 L 528 240 L 522 222 Z",
+  ZA: "M 510 360 L 545 352 L 558 375 L 550 400 L 525 408 L 502 395 L 498 370 Z",
+  NG: "M 475 285 L 505 278 L 512 298 L 500 315 L 475 315 L 468 298 Z",
+  ET: "M 545 280 L 575 272 L 582 295 L 568 312 L 545 308 L 538 292 Z",
+  IN: "M 648 195 L 695 188 L 710 215 L 700 255 L 675 272 L 650 262 L 635 235 L 638 210 Z",
+  CN: "M 695 160 L 775 148 L 790 175 L 778 210 L 740 225 L 700 220 L 680 200 L 682 178 Z",
+  KR: "M 775 175 L 795 170 L 800 185 L 790 195 L 772 192 Z",
+  JP: "M 798 168 L 820 160 L 828 175 L 818 188 L 800 185 Z M 810 152 L 830 145 L 836 158 L 825 165 L 808 162 Z",
+  TH: "M 712 232 L 730 228 L 735 248 L 725 260 L 710 255 L 705 242 Z",
+  VN: "M 730 228 L 748 222 L 755 242 L 748 262 L 733 265 L 725 248 Z",
+  ID: "M 720 285 L 755 278 L 775 285 L 778 298 L 755 305 L 722 300 Z M 778 282 L 810 275 L 820 285 L 812 298 L 780 295 Z",
+  MY: "M 715 262 L 745 255 L 750 270 L 735 278 L 715 275 Z",
+  PH: "M 770 240 L 790 232 L 800 248 L 790 262 L 768 258 Z",
+  AU: "M 748 335 L 820 318 L 848 340 L 850 380 L 828 408 L 790 415 L 755 405 L 730 375 L 728 348 Z",
+  NG2: "",
+};
+
+// 국가명 표시
+const COUNTRY_NAMES = {
+  US:'미국', CA:'캐나다', MX:'멕시코', BR:'브라질', AR:'아르헨티나',
+  GB:'영국', FR:'프랑스', DE:'독일', ES:'스페인', IT:'이탈리아',
+  PL:'폴란드', NL:'네덜란드', BE:'벨기에', SE:'스웨덴', AT:'오스트리아',
+  RU:'러시아', TR:'튀르키예', SA:'사우디', AE:'UAE', IR:'이란',
+  EG:'이집트', ZA:'남아공', NG:'나이지리아', ET:'에티오피아',
+  IN:'인도', CN:'중국', KR:'한국', JP:'일본', TH:'태국',
+  VN:'베트남', ID:'인도네시아', MY:'말레이시아', PH:'필리핀', AU:'호주',
+};
+
+function buildMap() {
+  const g = document.getElementById('countriesGroup');
+  g.innerHTML = '';
+  Object.entries(COUNTRY_PATHS).forEach(([id, path]) => {
+    if (!path) return;
+    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+    el.setAttribute('d', path);
+    el.setAttribute('id', `country-${id}`);
+    el.classList.add('map-country');
+    el.dataset.country = id;
+    // 툴팁
+    el.addEventListener('mouseenter', e => showTooltip(e, id));
+    el.addEventListener('mousemove',  e => moveTooltip(e));
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('click', () => toggleRegion(id));
+    g.appendChild(el);
+  });
+  // 라벨 (주요국)
+  const labels = {KR:[782,185,'KR'], CN:[730,188,'CN'], JP:[812,175,'JP'], US:[192,192,'US'], IN:[672,230,'IN'], VN:[740,245,'VN'], MX:[175,238,'MX'], BR:[300,310,'BR'], PL:[530,162,'PL'], EG:[542,228,'EG']};
+  const lg = document.createElementNS('http://www.w3.org/2000/svg','g');
+  lg.id = 'labelsGroup';
+  Object.entries(labels).forEach(([id,[x,y,t]]) => {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', x); txt.setAttribute('y', y);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size','7');
+    txt.setAttribute('fill','rgba(255,255,255,0.5)');
+    txt.setAttribute('pointer-events','none');
+    txt.textContent = t;
+    lg.appendChild(txt);
+  });
+  document.getElementById('worldMap').appendChild(lg);
+}
+
+// 지도에 데이터 반영
+function renderMap() {
+  const periodNews = filterByPeriod(allNews, currentPeriod);
+  // 국가별 집계
+  const countryData = {};
+  periodNews.forEach(n => {
+    const r = n.Region || n.Region_en || '';
+    String(r).split(',').map(x => x.trim()).forEach(region => {
+      const codes = REGION_MAP[region] || [];
+      codes.forEach(code => {
+        if (!countryData[code]) countryData[code] = { count:0, risks:[], cats:[] };
+        countryData[code].count++;
+        if (n.Risk) countryData[code].risks.push(n.Risk);
+        const cat = normalizeCat(n.Category);
+        if (!countryData[code].cats.includes(cat)) countryData[code].cats.push(cat);
+      });
+    });
+  });
+  window._countryData = countryData;
+
+  // 색상 적용
+  Object.entries(COUNTRY_PATHS).forEach(([id]) => {
+    const el = document.getElementById(`country-${id}`);
+    if (!el) return;
+    el.className = 'map-country';
+    const d = countryData[id];
+    if (!d) return;
+    el.classList.add('has-news');
+    // 최고 리스크로 색상 결정
+    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
+    if (maxRisk === 'Very High' || maxRisk === 'High') el.classList.add('risk-high');
+    else if (maxRisk === 'Med') el.classList.add('risk-med');
+    if (selectedRegion === id) el.classList.add('selected');
+  });
+
+  // 버블 (뉴스 많은 국가)
+  renderBubbles(countryData);
+}
+
+// 버블 렌더
+const COUNTRY_CENTERS = {
+  US:[195,188], CA:[192,138], MX:[178,235], BR:[308,308], AR:[278,385],
+  GB:[447,155], FR:[465,182], DE:[497,165], ES:[462,210], IT:[500,195],
+  PL:[530,160], RU:[638,125], TR:[568,192], SA:[580,232], AE:[612,238],
+  IR:[618,202], EG:[542,228], IN:[672,228], CN:[735,185], KR:[783,182],
+  JP:[812,172], VN:[740,245], TH:[720,245], ID:[748,292], MY:[728,268], AU:[788,370],
+};
+function renderBubbles(countryData) {
+  const g = document.getElementById('bubblesGroup');
+  g.innerHTML = '';
+  Object.entries(countryData).forEach(([id, d]) => {
+    const center = COUNTRY_CENTERS[id];
+    if (!center || d.count < 2) return;
+    const r = Math.min(4 + d.count * 1.2, 16);
+    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
+    const color = riskColor(maxRisk);
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', center[0]); circle.setAttribute('cy', center[1]);
+    circle.setAttribute('r', r);
+    circle.setAttribute('fill', color);
+    circle.setAttribute('fill-opacity', '0.3');
+    circle.setAttribute('stroke', color);
+    circle.setAttribute('stroke-width', '1.5');
+    circle.setAttribute('pointer-events', 'none');
+    g.appendChild(circle);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', center[0]); txt.setAttribute('y', center[1]+3);
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('font-size','7');
+    txt.setAttribute('fill','#fff'); txt.setAttribute('font-weight','700');
+    txt.setAttribute('pointer-events','none');
+    txt.textContent = d.count;
+    g.appendChild(txt);
+  });
+}
+
+// 툴팁
+function showTooltip(e, id) {
+  const d = (window._countryData || {})[id];
+  const name = COUNTRY_NAMES[id] || id;
+  const tt = document.getElementById('mapTooltip');
+  if (!d) {
+    tt.innerHTML = `<div class="tt-name">${name}</div><div style="color:var(--text-muted);font-size:10px">기사 없음</div>`;
+  } else {
+    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
+    tt.innerHTML = `
+      <div class="tt-name">${name}</div>
+      <div class="tt-count">${d.count}건</div>
+      <div class="tt-cats">${d.cats.join(', ')}<br>최고 리스크: <b style="color:${riskColor(maxRisk)}">${maxRisk}</b></div>
+    `;
+  }
+  tt.style.display = 'block';
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const tt = document.getElementById('mapTooltip');
+  tt.style.left = (e.clientX + 14) + 'px';
+  tt.style.top  = (e.clientY - 10) + 'px';
+}
+function hideTooltip() { document.getElementById('mapTooltip').style.display = 'none'; }
+
+// 지역 선택/해제
+function toggleRegion(id) {
+  if (selectedRegion === id) {
+    selectedRegion = null;
+  } else {
+    selectedRegion = id;
+    // 선택된 국가에 해당하는 region key 찾기
+  }
+  updateFilterBar();
+  renderMap();
+  renderCategoryCards();
+  renderArticles();
+}
+function getSelectedRegionLabel() {
+  if (!selectedRegion) return null;
+  return COUNTRY_NAMES[selectedRegion] || selectedRegion;
+}
+function updateFilterBar() {
+  const bar = document.getElementById('filterStatus');
+  const container = document.getElementById('mapFilterBar');
+  if (!selectedRegion) {
+    bar.innerHTML = '<span style="color:var(--text-muted)">지도의 국가를 클릭해 필터링하세요</span>';
+    return;
+  }
+  const name = getSelectedRegionLabel();
+  bar.innerHTML = `
+    <div class="filter-chip" onclick="toggleRegion('${selectedRegion}')">
+      <i class="fas fa-times"></i> ${name} 필터 해제
+    </div>
+    <span style="color:var(--text-secondary)">${name} 관련 기사 표시 중</span>
+  `;
+}
+
+// 필터된 뉴스
+function getFilteredNews() {
+  let news = filterByPeriod(allNews, currentPeriod);
+  // 지역 필터
+  if (selectedRegion) {
+    // selectedRegion code → region text 역매핑
+    const validRegions = Object.entries(REGION_MAP)
+      .filter(([, codes]) => codes.includes(selectedRegion))
+      .map(([r]) => r);
+    news = news.filter(n => {
+      const r = String(n.Region || n.Region_en || '');
+      return validRegions.some(vr => r.includes(vr));
+    });
+  }
+  // 카테고리 필터
+  if (selectedCat) {
+    news = news.filter(n => normalizeCat(n.Category) === selectedCat);
+  }
+  return news;
+}
+
+// ── 카테고리 카드 ──
+function renderCategoryCards() {
+  const periodNews = filterByPeriod(allNews, currentPeriod);
+  // 지역 필터만 적용 (카테고리 필터 제외)
+  let base = periodNews;
+  if (selectedRegion) {
+    const validRegions = Object.entries(REGION_MAP)
+      .filter(([, codes]) => codes.includes(selectedRegion)).map(([r]) => r);
+    base = base.filter(n => {
+      const r = String(n.Region || n.Region_en || '');
+      return validRegions.some(vr => r.includes(vr));
+    });
+  }
+
+  const container = document.getElementById('categoryCards');
+  if (base.length === 0) {
+    container.innerHTML = `<div class="no-data"><i class="fas fa-inbox"></i><span>해당 기간 기사 없음</span></div>`;
+    return;
+  }
+
+  const catGroups = {};
+  CAT_MAIN.forEach(c => catGroups[c] = []);
+  base.forEach(n => {
+    const c = normalizeCat(n.Category);
+    if (catGroups[c]) catGroups[c].push(n);
+  });
+
+  container.innerHTML = CAT_MAIN.map(cat => {
+    const items = catGroups[cat];
+    const count = items.length;
+    const topItem = items.sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0))[0];
+    const riskRatio = items.length > 0
+      ? items.filter(n => n.Risk === 'Very High' || n.Risk === 'High').length / Math.max(items.length, 1)
+      : 0;
+    const color = CAT_COLOR[cat] || '#64748b';
+    const icon = CAT_ICON[cat] || '📌';
+    const isActive = selectedCat === cat;
+
+    return `<div class="cat-card ${isActive ? 'active' : ''}" onclick="toggleCat('${cat}')">
+      <div class="cat-card-header">
+        <div class="cat-name">
+          <span class="cat-icon">${icon}</span>
+          ${cat}
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-            <a href="wiki/index.html"
-                style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;transition:all 0.15s;white-space:nowrap;background:rgba(255,255,255,0.12);color:white;"
-                onmouseover="this.style.background='rgba(255,255,255,0.22)'"
-                onmouseout="this.style.background='rgba(255,255,255,0.12)'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                </svg>
-                <span class="hidden sm:inline">Product Wiki</span>
-            </a>
-            <a href="index.html?view=hub"
-                style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;transition:all 0.15s;white-space:nowrap;background:#3b82f6;color:white;"
-                onmouseover="this.style.background='#60a5fa'" onmouseout="this.style.background='#3b82f6'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2" />
-                    <path d="M4 22a2 2 0 0 1-2-2v-7l3-3 3 3v9" />
-                    <path d="M14 13h4" />
-                    <path d="M14 9h4" />
-                    <path d="M14 17h4" />
-                </svg>
-                <span class="hidden sm:inline">News Hub</span>
-            </a>
-        </div>
-    </header>
-    <div id="root"></div>
-
-    <!-- 4. 메인 애플리케이션 코드 -->
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useMemo, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import {
-            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-            BarChart, Bar, Cell, Legend, AreaChart, Area, ScatterChart, Scatter, ZAxis, RadarChart, PolarGrid, PolarAngleAxis, Radar
-        } from 'recharts';
-        import {
-            Globe, Calendar, LayoutGrid, ArrowUpRight,
-            Search, Bell, Moon, Sun, TrendingUp, AlertCircle, Info, Filter, MousePointer2, Clock, MapPin, CheckCircle2,
-            Zap, Hash, ShieldAlert, Sparkles, MessageSquare, Tag, Fingerprint, ExternalLink, ChevronDown, List,
-            ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, RotateCcw, CalendarRange, XCircle, Target,
-            BarChart3, FileText, Eye, LogOut, X, Cpu, Activity, Radio, Layers, Mic
-        } from 'lucide-react';
-
-        // [월별 분할] news/ 폴더 기반 URL
-        const GITHUB_NEWS_BASE = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/news";
-        const GITHUB_NEWS_INDEX_URL = `${GITHUB_NEWS_BASE}/index.json`;
-        const _dashNow = new Date();
-        const _dashMonthKey = `${_dashNow.getFullYear()}-M${String(_dashNow.getMonth() + 1).padStart(2, "0")}`;
-        // [하위 호환] 기존 RAW_DATA_URL → 현재 달 파일로 자동 연결
-        const RAW_DATA_URL = `${GITHUB_NEWS_BASE}/${_dashMonthKey}.json`;
-        const GAS_URL = "https://script.google.com/macros/s/AKfycby6E7X1vODajQSkXLyWVjstXR7IF0LY7W8sHiCHVNbrp1cjEEQBttS7fWZxTYw9i0ie6Q/exec";
-        const INTEL_URL = "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json";
-
-        // [월별 분할] 전체 데이터 로드 헬퍼 (index.json → 월별 파일 순차 fetch → 병합)
-        const _dashMonthCache = {};
-        async function fetchAllNewsData() {
-            try {
-                const idxRes = await fetch(GITHUB_NEWS_INDEX_URL);
-                if (!idxRes.ok) throw new Error("index.json fetch 실패");
-                const index = await idxRes.json();
-                const allData = [];
-                for (const monthKey of index.months) {
-                    if (_dashMonthCache[monthKey]) {
-                        allData.push(..._dashMonthCache[monthKey]);
-                        continue;
-                    }
-                    try {
-                        const res = await fetch(`${GITHUB_NEWS_BASE}/${monthKey}.json`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            _dashMonthCache[monthKey] = data;
-                            allData.push(...data);
-                        }
-                    } catch (e) { console.warn(`월별 fetch 실패: ${monthKey}`, e); }
-                }
-                return allData;
-            } catch (e) {
-                console.warn("fetchAllNewsData 실패", e);
-                return null;
-            }
-        }
-
-        // --- 1. 상수 정의 (에러 방지를 위해 최상단 고정) ---
-        const COLORS = {
-            headerBlue: '#0033A0',
-            activeBlue: '#0747A6',
-            riskHigh: '#DE350B',
-            riskMed: '#FFAB00',
-            riskLow: '#00B8D9',
-        };
-
-        const RISK_COLORS = {
-            'High': COLORS.riskHigh,
-            'Med': COLORS.riskMed,
-            'Low': COLORS.riskLow
-        };
-
-        const CATEGORY_COLORS = {
-            '원자재': '#0747A6',
-            '거시/정책': '#2684FF',
-            '경쟁사': '#4C9AFF',
-            '생산지역': '#8993A4',
-            '신기술동향': '#0052CC',
-            '기타': '#B3D4FF'
-        };
-
-        const REGION_COORDS = {
-            'Global': { x: '50%', y: '45%' },
-            'USA': { x: '22%', y: '40%' },
-            'South Korea': { x: '82%', y: '42%' },
-            'China': { x: '78%', y: '45%' },
-            'Europe': { x: '52%', y: '35%' },
-            'Japan': { x: '85%', y: '45%' },
-            'Vietnam': { x: '76%', y: '58%' },
-            'India': { x: '70%', y: '55%' },
-            'Mexico': { x: '25%', y: '50%' },
-        };
-
-        // --- 2. Helper Functions ---
-
-        const safeString = (val) => {
-            if (val === null || val === undefined) return "";
-            if (typeof val === 'object') {
-                if (Array.isArray(val)) return val.join(', ');
-                return "";
-            }
-            return String(val);
-        };
-
-        const normalizeDate = (dateStr) => {
-            const ds = safeString(dateStr);
-            if (!ds || ds.includes("NaN")) return "";
-            const tSplit = ds.split('T')[0];
-            const cleaned = tSplit.replace(/[\.\/]/g, '-');
-            const parts = cleaned.split('-');
-            if (parts.length === 3) {
-                const y = parts[0];
-                const m = parts[1].padStart(2, '0');
-                const d = parts[2].padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-            return isNaN(new Date(cleaned).getTime()) ? "" : cleaned;
-        };
-
-        const normalizeCategory = (catStr) => {
-            const cs = safeString(catStr);
-            if (!cs) return "기타";
-            const base = cs.split(':')[0].trim();
-            if (base === 'AI기술' || base === 'AI기능' || base === '신기술' || base === '신기술동향') return '신기술동향';
-            if (base.includes('거시') || base.includes('정책') || base.includes('거시경제')) return '거시/정책';
-            if (base.includes('지역') || base.includes('생산')) return '지역별 분석';
-            return base;
-        };
-
-        const translateCategory = (catStr, lang) => {
-            if (lang === 'KO') return catStr;
-            const cs = safeString(catStr).replace(/^#/, '').trim(); // # 제거 및 트리밍
-            const mapping = {
-                // 상단 메뉴 및 대표 카테고리
-                '원자재': 'Material',
-                '거시/정책': 'Macro',
-                '지역별 분석': 'Region',
-                '경쟁사': 'Competitors',
-                '신기술동향': 'New Tech',
-                '기타': 'Misc',
-                '통합 분석': 'Unified',
-                '공급망 통합': 'Supply Chain',
-                '전략 시황': 'Strategy',
-
-                // 원본 데이터 시트 명칭 대응
-                '거시경제': 'Macro',
-                '생산지역': 'Region',
-
-                // 상세 카테고리 및 상위 태그
-                '수급': 'Supply',
-                '원자재수급': 'Supply',
-                '가격': 'Price',
-                '원가성과': 'Cost',
-                '환율': 'Exchange',
-                '관율': 'Exchange', // 사용자 오타 대응
-                '금리': 'Rate',
-                '노동정치': 'Labor/Politics',
-                '정치': 'Politics',
-                '노동': 'Labor',
-                '정책': 'Policy',
-                '기능': 'Features',
-                '기술': 'Tech',
-                '공급망': 'Supply Chain',
-                '원가': 'Cost',
-                '수출': 'Export',
-                '수입': 'Import',
-
-                // 주요 뉴스 태그 (Strategic Tags 대응)
-                '관세': 'Tariff',
-                '철강': 'Steel',
-                '미국': 'USA',
-                '중국': 'China',
-                '인도': 'India',
-                '유럽': 'Europe',
-                '일본': 'Japan',
-                '전기료': 'Power',
-                '구리': 'Copper',
-                '알루미늄': 'Aluminum',
-                '동결': 'Freeze',
-                '네고': 'Nego',
-                '배터리': 'Battery',
-                '반도체': 'Chips',
-                '전기차': 'EV',
-                '보조금': 'Subsidy',
-                '인플레이션': 'Inflation',
-                '러시아': 'Russia',
-                '우크라이나': 'Ukraine',
-                '유가': 'Oil Price',
-                '탄소': 'Carbon',
-                '공급': 'Supply',
-                '수요': 'Demand',
-                '재고': 'Inventory',
-                '설비': 'Equipment',
-                '투자': 'Investment',
-                'M&A': 'M&A',
-                '특허': 'Patent',
-                '표준': 'Standard',
-                '규제': 'Regulation',
-                '제재': 'Sanction',
-                '협상': 'Negotiation',
-                '파업': 'Strike',
-                '전망': 'Outlook',
-                '현황': 'Status',
-                '분석': 'Analysis',
-                '보고': 'Report',
-                '동향': 'Trend',
-                '이슈': 'Issue',
-                '리스크': 'Risk',
-                '글로벌': 'Global',
-                '공급망리스크': 'SCM Risk',
-                '원자재가격': 'Material Price',
-                '친환경': 'Eco-friendly',
-                'ESG': 'ESG',
-                'RE100': 'RE100',
-                '탄소중립': 'Net Zero',
-                '핵심광물': 'Critical Minerals',
-                '희토류': 'Rare Earth',
-                '리튬': 'Lithium',
-                '니켈': 'Nickel',
-                '코발트': 'Cobalt',
-                '흑연': 'Graphite'
-            };
-
-            // 콜론 기반 세부 카테고리 처리
-            if (cs.includes(':')) {
-                const parts = cs.split(':').map(p => p.trim());
-                const main = mapping[parts[0]] || parts[0];
-                const sub = mapping[parts[1]] || parts[1];
-                return `${main}: ${sub}`;
-            }
-
-            return mapping[cs] || cs;
-        };
-
-        const getFormattedWeek = (dateStr) => {
-            const normalized = normalizeDate(dateStr);
-            const date = new Date(normalized);
-            if (isNaN(date.getTime())) return safeString(dateStr);
-            const tempDate = new Date(date.getTime());
-            tempDate.setHours(0, 0, 0, 0);
-            tempDate.setDate(tempDate.getDate() + 3 - (tempDate.getDay() + 6) % 7);
-            const week1 = new Date(tempDate.getFullYear(), 0, 4);
-            const weekNum = 1 + Math.round(((tempDate.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-            const year = tempDate.getFullYear().toString().substring(2);
-            const paddedWeek = weekNum.toString().padStart(2, '0');
-            return `'${year}.W${paddedWeek}`;
-        };
-
-        // --- 3. Sub Components ---
-
-        const DateSlider = ({ selectedDate, onDateChange, availableDates, hasArticlesMap, darkMode, latestDateStr }) => {
-            const scrollRef = useRef(null);
-            const itemRefs = useRef({});
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            useEffect(() => {
-                const el = scrollRef.current;
-                if (!el) return;
-                const handleWheel = (e) => {
-                    if (Math.abs(e.deltaY) > 0) {
-                        e.preventDefault();
-                        el.scrollLeft += (e.deltaY * 6);
-                    }
-                };
-                el.addEventListener('wheel', handleWheel, { passive: false });
-                return () => el.removeEventListener('wheel', handleWheel);
-            }, []);
-
-            useEffect(() => {
-                const targetRefKey = (selectedDate === 'LastWeek' || selectedDate === 'LastMonth') ? todayStr : selectedDate;
-                if (targetRefKey && itemRefs.current[targetRefKey]) {
-                    setTimeout(() => {
-                        itemRefs.current[targetRefKey].scrollIntoView({
-                            behavior: 'smooth', block: 'nearest', inline: 'center'
-                        });
-                    }, 150);
-                }
-            }, [selectedDate, todayStr]);
-
-            const jumpDate = (days) => {
-                const current = (selectedDate === 'LastMonth' || selectedDate === 'LastWeek') ? new Date() : new Date(selectedDate);
-                current.setDate(current.getDate() + days);
-                const targetStr = current.toISOString().split('T')[0];
-                onDateChange(targetStr);
-            };
-
-            return (
-                <div className={`w-full border-b overflow-hidden relative shadow-sm h-36 flex items-center transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-                    <div className={`flex items-center px-6 gap-3 z-30 shadow-[15px_0_15px_-5px_rgba(0,0,0,0.05)] border-r h-full transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
-                        <div className="flex flex-col gap-2 min-w-[130px]">
-                            <button onClick={() => onDateChange('LastMonth')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === 'LastMonth' ? 'bg-[#0033A0] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100')}`}><CalendarRange size={11} /> LAST MONTH</button>
-                            <button onClick={() => onDateChange('LastWeek')} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === 'LastWeek' ? 'bg-[#0052CC] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100')}`}><CalendarRange size={11} /> LAST WEEK</button>
-                            <button onClick={() => {
-                                // 오늘 기사 있으면 오늘로, 없으면 가장 최근 날짜로 이동
-                                const target = hasArticlesMap[todayStr] ? todayStr : (latestDateStr || todayStr);
-                                onDateChange(target);
-                            }} className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest transition-all border ${selectedDate === todayStr ? 'bg-[#0747A6] text-white border-transparent shadow-lg' : (darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-white text-[#0747A6] border-[#0747A6]/20 hover:bg-blue-50')}`}><RotateCcw size={11} /> TODAY</button>
-                        </div>
-                        <div className={`w-[1px] h-16 mx-2 ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}></div>
-                        <div className="flex items-center gap-1">
-                            <button onClick={() => jumpDate(-30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsLeft size={22} /></button>
-                            <button onClick={() => jumpDate(-7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronLeft size={22} /></button>
-                        </div>
-                    </div>
-                    <div ref={scrollRef} className="flex items-center gap-6 px-[5%] py-8 overflow-x-auto no-scrollbar scroll-smooth snap-x flex-1 h-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                        {availableDates.map((date) => {
-                            const d = new Date(date);
-                            const isSelected = selectedDate === date;
-                            return (
-                                <button key={date} ref={el => itemRefs.current[date] = el} onClick={() => onDateChange(date)} className={`snap-center flex-shrink-0 transition-all duration-500 flex flex-col items-center min-w-[100px] py-3 rounded-2xl relative ${isSelected ? 'scale-125 opacity-100 bg-blue-500/10 ring-2 ring-blue-500/30 shadow-md' : 'scale-90 opacity-20 hover:opacity-50'} ${date === todayStr && !isSelected ? 'border border-blue-500/30 shadow-sm' : ''}`}>
-                                    <span className={`text-[9px] font-black uppercase mb-1 ${isSelected ? (darkMode ? 'text-blue-400' : 'text-[#0747A6]') : 'text-slate-400'}`}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
-                                    <span className={`text-2xl font-black tracking-tighter ${isSelected ? (darkMode ? 'text-white' : 'text-[#172B4D]') : 'text-slate-500'}`}>{d.getDate()}</span>
-                                    <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${isSelected ? (darkMode ? 'text-blue-400' : 'text-[#0747A6]') : 'text-slate-300'}`}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                                    {hasArticlesMap[date] && <div className={`absolute top-2 right-4 w-1.5 h-1.5 rounded-full ${isSelected ? (darkMode ? 'bg-blue-400' : 'bg-[#0747A6]') : 'bg-blue-300 animate-pulse'}`} />}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <div className={`flex items-center px-8 gap-1 z-30 shadow-[-15px_0_15px_-5px_rgba(0,0,0,0.05)] border-l h-full min-w-[120px] justify-center transition-colors ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
-                        <button onClick={() => jumpDate(7)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronRight size={22} /></button>
-                        <button onClick={() => jumpDate(30)} className={`p-2 rounded-full transition-all ${darkMode ? 'text-slate-500 hover:text-white hover:bg-slate-800' : 'text-slate-300 hover:text-[#0747A6] hover:bg-slate-50'}`}><ChevronsRight size={22} /></button>
-                    </div>
-                </div>
-            );
-        };
-
-        const IndexModal = ({ isOpen, onClose, darkMode }) => {
-            if (!isOpen) return null;
-            return (
-                <div onClick={onClose} className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[1000] animate-in fade-in duration-300">
-                    <div onClick={e => e.stopPropagation()} className={`p-6 rounded-2xl shadow-2xl relative border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-100'}`}>
-                        <button onClick={onClose} className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
-                            <X size={24} />
-                        </button>
-                        <div className="w-full flex justify-center items-center mt-4">
-                            <iframe src="TradingView Widget.html" style={{ width: '580px', height: '430px', border: 'none', overflow: 'hidden' }} scrolling="no"></iframe>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange, darkMode, lang }) => {
-            // Updated symmetry
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            if (totalPages <= 1) return null;
-
-
-            const maxVisiblePages = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-
-            const pages = [];
-            for (let i = startPage; i <= endPage; i++) pages.push(i);
-
-            return (
-                <div className="pagination-container">
-                    <button
-                        className="pagination-btn nav-text"
-                        disabled={currentPage === 1}
-                        onClick={() => { onPageChange(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                        {lang === 'KO' ? '처음' : 'First'}
-                    </button>
-                    <button
-                        className="pagination-btn"
-                        disabled={currentPage === 1}
-                        onClick={() => { onPageChange(currentPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                        <ChevronLeft size={16} />
-                    </button>
-
-                    {pages.map(p => (
-                        <button
-                            key={p}
-                            className={`pagination-btn ${p === currentPage ? 'active' : ''}`}
-                            onClick={() => { onPageChange(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                        >
-                            {p}
-                        </button>
-                    ))}
-
-                    <button
-                        className="pagination-btn"
-                        disabled={currentPage === totalPages}
-                        onClick={() => { onPageChange(currentPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                        <ChevronRight size={16} />
-                    </button>
-                    <button
-                        className="pagination-btn nav-text"
-                        disabled={currentPage === totalPages}
-                        onClick={() => { onPageChange(totalPages); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                        {lang === 'KO' ? '마지막' : 'Last'}
-                    </button>
-
-                </div>
-            );
-        };
-
-        // --- 4. Main Application ---
-
-        const App = () => {
-            const [rawData, setRawData] = useState([]);
-            const [intelData, setIntelData] = useState(null);
-            const [selectedFilter, setSelectedFilter] = useState('All');
-            const [selectedRisk, setSelectedRisk] = useState('All');
-            const [selectedTag, setSelectedTag] = useState(null);
-            const [selectedDate, setSelectedDate] = useState('LastWeek');
-            const [timeRange, setTimeRange] = useState('Weekly');
-            const [loading, setLoading] = useState(true);
-            const [darkMode, setDarkMode] = useState(false);
-            const [language, setLanguage] = useState('KO');
-            const [searchTarget, setSearchTarget] = useState('Both');
-            const [selectedRegion, setSelectedRegion] = useState('All');
-            const [searchKeyword, setSearchKeyword] = useState('');
-            const [briefingPeriod, setBriefingPeriod] = useState('thisWeek');
-            const [briefingCategory, setBriefingCategory] = useState('all');
-            const [heatmapMetric, setHeatmapMetric] = useState('count');
-            const [latestDateStr, setLatestDateStr] = useState(new Date().toISOString().split('T')[0]);
-            const [currPage, setCurrPage] = useState(1);
-            const itemsPerPage = 10;
-            const [monthlyStats, setMonthlyStats] = useState([]);
-
-            const [showReport, setShowReport] = useState(false);
-            const [showIndex, setShowIndex] = useState(false);
-            const [currentUser, setCurrentUser] = useState(null);
-            const mapRef = useRef(null);
-
-            useEffect(() => {
-                const user = JSON.parse(localStorage.getItem('da_user'));
-                if (user) setCurrentUser(user);
-            }, []);
-
-            useEffect(() => {
-                const fetchData = async () => {
-                    setLoading(true);
-
-                    // [최적화] 1. 캐시 데이터(sessionStorage) 확인
-                    let cachedData = null;
-                    let cachedIntel = null;
-                    let cachedMonthly = null;
-                    try {
-                        cachedData = sessionStorage.getItem('cachedNewsData');
-                        cachedIntel = sessionStorage.getItem('cachedIntel');
-                        cachedMonthly = sessionStorage.getItem('cachedMonthlyStats');
-                    } catch (e) {
-                        console.warn("Cache access failed", e);
-                    }
-
-                    // [최적화] 2. 캐시가 있으면 즉시 로드 (Plan A)
-                    let mainDataReady = false;
-                    if (cachedData) {
-                        try {
-                            const json = JSON.parse(cachedData);
-                            processData(json);
-                            mainDataReady = true;
-                            console.log("Loaded main data from cache");
-                        } catch (e) {
-                            console.error("Cache parse error", e);
-                        }
-                    }
-
-                    if (cachedIntel) {
-                        try {
-                            setIntelData(JSON.parse(cachedIntel));
-                            console.log("Loaded intel data from cache");
-                        } catch (e) { console.error("Intel cache parse error", e); }
-                    }
-
-                    if (cachedMonthly) {
-                        try {
-                            setMonthlyStats(JSON.parse(cachedMonthly));
-                            console.log("Loaded monthly stats from cache");
-                        } catch (e) { console.error("Monthly cache parse error", e); }
-                    }
-
-                    // [최적화] 3. 데이터 페칭
-                    // 1순위: 월별 JSON 전체 병합 (빠른 로드)
-                    let mainFetchSuccess = false;
-                    const allMonthlyData = await fetchAllNewsData();
-                    if (allMonthlyData && allMonthlyData.length > 0) {
-                        processData(allMonthlyData);
-                        sessionStorage.setItem('cachedNewsData', JSON.stringify(allMonthlyData));
-                        mainDataReady = true;
-                        mainFetchSuccess = true;
-                        console.log("Loaded from monthly JSON files");
-                    }
-
-                    // 2순위: GAS (월별 JSON 실패 시 fallback)
-                    if (!mainFetchSuccess) {
-                        try {
-                            const response = await fetch(GAS_URL);
-                            if (response.ok) {
-                                const json = await response.json();
-                                if (Array.isArray(json) && json.length > 0) {
-                                    processData(json);
-                                    sessionStorage.setItem('cachedNewsData', JSON.stringify(json));
-                                    mainDataReady = true;
-                                    mainFetchSuccess = true;
-                                    console.log("Loaded from Google Sheets (fallback)");
-                                }
-                            }
-                        } catch (e) {
-                            console.warn("GAS fetch 실패", e);
-                        }
-                    }
-
-                    // 4. 추가 데이터 페칭 (Intel, Monthly 등 캐시가 없으면 진행)
-                    if (!cachedIntel && mainDataReady) {
-                        try {
-                            const intelRes = await fetch(INTEL_URL);
-                            if (intelRes.ok) {
-                                const intelJson = await intelRes.json();
-                                setIntelData(intelJson);
-                                sessionStorage.setItem('cachedIntel', JSON.stringify(intelJson));
-                            }
-                        } catch (e) { console.warn("Failed to fetch intel_report", e); }
-                    }
-
-                    // 월간 통계 (항상 최신화를 원할 수 있으므로, 캐시가 있어도 백그라운드에서 한 번 더 업데이트 가능)
-                    // 여기서는 속도를 위해 캐시가 없을 때만 fetch 하거나, 비공격적으로 fetch
-                    try {
-                        const mResponse = await fetch(`${GAS_URL}?type=monthly`);
-                        if (mResponse.ok) {
-                            const mJson = await mResponse.json();
-                            setMonthlyStats(mJson);
-                            sessionStorage.setItem('cachedMonthlyStats', JSON.stringify(mJson));
-                        }
-                    } catch (e) { console.warn("Failed to fetch monthly stats", e); }
-
-                    setLoading(false);
-                };
-
-                const processData = (json) => {
-                    try {
-                        const formatted = json.map((item, index) => {
-                            const ko_title = safeString(item.B || item.Title || item.title || '제목 없음');
-                            const en_title = safeString(item.M || item.Title_en || item.title_en || ko_title || 'No Title');
-
-                            const ko_category = normalizeCategory(item.C || item.Category || item.category);
-                            const en_category = safeString(item.O || item.Category_en || item.category_en || 'MISC');
-
-                            const ko_raw = item.D || item.Summary || item.summary || item.Content || item.content || item['기사내용'];
-                            const en_raw = item.N || item.Summary_en || item.summary_en || item.n;
-
-                            const ko_content = safeString(ko_raw || '상세 내용이 없습니다.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
-                            const en_content = safeString(en_raw || ko_raw || 'No Content Available.').replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
-
-                            const ko_tags = safeString(item.J || item.Tag || item.tag || "").split(',').map(t => t.trim()).filter(Boolean);
-                            // P열(Tag_en) 필드 인식을 더 강화 (대소문자 무관하게 탐색 시도 가능하나 일단 키워드 추가)
-                            const en_tags_found = item.P || item.Tag_en || item.tag_en || item.TAG_EN || item.TagEn || "";
-                            const en_tags_raw = safeString(en_tags_found).split(',').map(t => t.trim()).filter(Boolean);
-                            const en_tags = en_tags_raw.length > 0 ? en_tags_raw : ko_tags;
-
-                            const ko_region = safeString(item.I || item.Region || 'Global').trim();
-                            const en_region = safeString(item.Q || item.Region_en || item.region_en || 'Global').trim();
-
-                            const ko_bot = safeString(item.BOT || item.Bot || item.bot).trim();
-                            const en_bot = safeString(item["BOT(eng)"] || item.BOT_en || item.bot_en || item.M || ko_bot).trim();
-
-                            return {
-                                _uId: `news-${index}`,
-                                date: normalizeDate(item.A || item.Date || item.date || '2026-02-01'),
-                                risk: safeString(item.G || item.Risk || item.risk || 'Low'),
-                                viewCount: Number(item.ViewCount || item.viewCount || 0),
-                                ko: { title: ko_title, category: ko_category, content: ko_content, tags: ko_tags, region: ko_region, bot: ko_bot },
-                                en: { title: en_title, category: en_category, content: en_content, tags: en_tags, region: en_region, bot: en_bot }
-                            };
-                        }).filter(item => item.date !== "");
-
-                        setRawData(formatted);
-                        const dates = formatted.map(d => d.date).sort((a, b) => b.localeCompare(a));
-                        if (dates.length > 0) setLatestDateStr(dates[0]);
-                        setSelectedDate('LastWeek');
-                    } catch (err) {
-                        console.error("Data Process Error:", err);
-                    }
-                };
-
-                fetchData();
-            }, []);
-
-            const availableDates = useMemo(() => {
-                const dates = [];
-                const base = new Date(latestDateStr);
-                const start = new Date(base);
-                start.setDate(base.getDate() - 90);
-                for (let i = 0; i <= 120; i++) {
-                    const d = new Date(start); d.setDate(start.getDate() + i);
-                    dates.push(d.toISOString().split('T')[0]);
-                }
-                return dates;
-            }, [latestDateStr]);
-
-            const hasArticlesMap = useMemo(() => {
-                const map = {}; rawData.forEach(d => { map[d.date] = true; });
-                return map;
-            }, [rawData]);
-
-            const currentLocaleData = useMemo(() => {
-                return rawData.map(d => ({
-                    ...d,
-                    ...d[language.toLowerCase()]
-                }));
-            }, [rawData, language]);
-
-            const filteredData = useMemo(() => {
-                let data = currentLocaleData;
-                if (selectedFilter !== 'All') data = data.filter(d => d.ko.category === selectedFilter);
-                if (selectedRisk !== 'All') data = data.filter(d => d.risk === selectedRisk);
-                if (selectedRegion !== 'All') data = data.filter(d => d.region === selectedRegion);
-                if (selectedTag) data = data.filter(d => d.tags.includes(selectedTag));
-
-                const baseDate = new Date(latestDateStr);
-
-                if (selectedDate === 'LastWeek') {
-                    const lastWeek = new Date(baseDate); lastWeek.setDate(baseDate.getDate() - 7);
-                    data = data.filter(d => { const itemDate = new Date(d.date); return itemDate >= lastWeek && itemDate <= baseDate; });
-                } else if (selectedDate === 'LastMonth') {
-                    const lastMonth = new Date(baseDate); lastMonth.setDate(baseDate.getDate() - 30);
-                    data = data.filter(d => { const itemDate = new Date(d.date); return itemDate >= lastMonth && itemDate <= baseDate; });
-                } else if (selectedDate !== 'All') {
-                    data = data.filter(d => d.date === selectedDate);
-                }
-
-                if (searchKeyword.trim()) {
-                    const kw = searchKeyword.toLowerCase();
-                    data = data.filter(d => {
-                        const titleMatch = safeString(d.title).toLowerCase().includes(kw);
-                        const contentMatch = safeString(d.content).toLowerCase().includes(kw);
-                        if (searchTarget === 'Both') return titleMatch || contentMatch;
-                        if (searchTarget === 'Title') return titleMatch;
-                        if (searchTarget === 'Content') return contentMatch;
-                        return true;
-                    });
-                }
-                return data;
-            }, [currentLocaleData, selectedFilter, selectedRisk, selectedTag, selectedDate, searchKeyword, searchTarget, latestDateStr]);
-
-            // [추가] 필터 변경 시 페이지 초기화
-            useEffect(() => {
-                setCurrPage(1);
-            }, [selectedFilter, selectedRisk, selectedTag, selectedDate, searchKeyword, selectedRegion]);
-
-            const cardStats = useMemo(() => {
-
-                if (!filteredData.length) return { count: 0, topRegion: '-', topCat: '-', critical: { level: 'None', title: '-', content: '-' } };
-                const regions = {}; filteredData.forEach(d => { regions[d.region] = (regions[d.region] || 0) + 1; });
-                const sortedRegions = Object.entries(regions).filter(([name]) => name !== 'Global').sort((a, b) => b[1] - a[1]);
-                const riskPriority = { 'High': 3, 'Med': 2, 'Low': 1 };
-                const topRiskItem = [...filteredData].sort((a, b) => (riskPriority[b.risk] || 0) - (riskPriority[a.risk] || 0))[0];
-                return {
-                    count: filteredData.length,
-                    topRegion: sortedRegions.length > 0 ? safeString(sortedRegions[0][0]) : 'Global',
-                    topCat: selectedFilter === 'All' ? (language === 'KO' ? '통합 분석' : 'Unified') : translateCategory(selectedFilter, language),
-                    critical: { level: safeString(topRiskItem.risk), title: safeString(topRiskItem.title), content: safeString(topRiskItem.content) }
-                };
-            }, [filteredData, selectedFilter, language]);
-
-            const strategicNarrative = useMemo(() => {
-                if (intelData) {
-                    // 1. 기간 키 변환 (Dashboard 키 → intel_report.json 키)
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    let periodKey = 'thisWeek'; // default
-                    if (selectedDate === 'LastWeek') periodKey = 'lastWeek';
-                    else if (selectedDate === 'LastMonth') periodKey = 'lastMonth';
-                    else if (selectedDate === todayStr) periodKey = 'thisWeek';
-                    // 그 외 특정 날짜의 경우 최신(thisWeek) 브리핑 출력
-
-                    // 2. 카테고리 키 변환
-                    const catKeyMap = {
-                        '원자재': '원자재',
-                        '거시/정책': '거시경제',
-                        '지역별 분석': '생산지역',
-                        '경쟁사': '경쟁사',
-                        '신기술동향': '신기술동향',
-                        'AI기술': '신기술동향',
-                    };
-                    const catKey = catKeyMap[selectedFilter] || 'all';
-
-                    // 3. 신규 구조(scripts[period][cat]) 우선 탐색
-                    if (intelData.scripts && intelData.scripts[periodKey]) {
-                        const targetScript = intelData.scripts[periodKey][catKey] || intelData.scripts[periodKey]['all'];
-                        if (targetScript) return targetScript;
-                    }
-
-                    // 4. 구버전/하위 호환 fallback
-                    if (intelData.categoryScripts) {
-                        const legacyCat = catKey === 'all' ? 'all' : catKey;
-                        if (intelData.categoryScripts[legacyCat]) return intelData.categoryScripts[legacyCat];
-                    }
-                    if (intelData.dailyBriefing && intelData.dailyBriefing.script) return intelData.dailyBriefing.script;
-                }
-
-                // 데이터 없을 때 자동 생성 fallback
-                if (!filteredData.length) return language === 'KO' ? `현재 선택된 조건에 부합하는 리스크 데이터가 부재합니다.` : `No risk data found for the selected context.`;
-                let dateLabel = selectedDate === 'LastMonth' ? (language === 'KO' ? '최근 30일' : 'Last 30 Days') : (selectedDate === 'LastWeek' ? (language === 'KO' ? '최근 7일' : 'Last 7 Days') : (selectedDate === 'All' ? (language === 'KO' ? '전체 기간' : 'All Period') : selectedDate));
-                const catLabel = selectedFilter === 'All' ? (language === 'KO' ? '공급망 통합' : 'Supply Chain') : translateCategory(selectedFilter, language);
-                return language === 'KO' ? `${dateLabel} 기준, ${catLabel} 섹터 분석 결과 ${cardStats.topRegion} 지역 이슈가 가장 두드러집니다. ${filteredData.filter(d => d.risk === 'High').length > 0 ? '특히 High 리스크에 대한 선제적 대응이 권고됩니다.' : ''}` : `Based on ${dateLabel}, the ${catLabel} analysis highlights key issues in ${cardStats.topRegion}. ${filteredData.filter(d => d.risk === 'High').length > 0 ? 'Urgent attention is advised for High Risk cases.' : 'Risk levels are currently stable.'}`;
-            }, [intelData, selectedFilter, selectedDate, filteredData.length, language, cardStats.topRegion]);
-
-
-            const timelineStats = useMemo(() => {
-                if (!currentLocaleData.length) return [];
-                const groupedMap = {}; const chartCats = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
-                const trendBaseData = currentLocaleData.filter(d => {
-                    let match = true;
-                    if (selectedFilter !== 'All') match = match && d.ko.category === selectedFilter;
-                    if (selectedRisk !== 'All') match = match && d.risk === selectedRisk;
-                    if (selectedTag) match = match && d.tags.includes(selectedTag);
-                    return match;
-                });
-                trendBaseData.forEach(item => {
-                    const d = new Date(item.date); if (isNaN(d.getTime())) return;
-                    let key = timeRange === 'Weekly' ? getFormattedWeek(item.date) : (timeRange === 'Monthly' ? `${d.getFullYear()}.${(d.getMonth() + 1).toString().padStart(2, '0')}` : item.date);
-                    if (!groupedMap[key]) { groupedMap[key] = { date: key, count: 0 }; chartCats.forEach(c => groupedMap[key][c] = 0); }
-                    groupedMap[key].count++; if (chartCats.includes(item.ko.category)) groupedMap[key][item.ko.category]++;
-                });
-                return Object.values(groupedMap).sort((a, b) => a.date.localeCompare(b.date));
-            }, [currentLocaleData, timeRange, selectedFilter, selectedRisk, selectedTag]);
-
-            const dynamicTags = useMemo(() => {
-                if (!filteredData.length) return [];
-                const tagCounts = {}; filteredData.forEach(item => { item.tags.forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }); });
-                return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([text, count]) => ({
-                    text: safeString(text),
-                    count,
-                    translated: translateCategory(text, language)
-                }));
-            }, [filteredData, language]);
-
-            const riskProfileData = useMemo(() => {
-                const cats = language === 'KO' ? ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'] : ['Material', 'Macro', 'Region', 'Competitors', 'New Tech'];
-                const mapping = { 'Material': '원자재', 'Macro': '거시/정책', 'Region': '지역별 분석', 'Competitors': '경쟁사', 'New Tech': '신기술동향' };
-                return cats.map(cat => {
-                    const targetCat = language === 'KO' ? cat : mapping[cat];
-                    const catData = filteredData.filter(d => d.ko.category === targetCat);
-                    return { name: cat, High: catData.filter(d => d.risk === 'High').length, Med: catData.filter(d => d.risk === 'Med').length, Low: catData.filter(d => d.risk === 'Low').length };
-                });
-            }, [filteredData, language]);
-
-            // [추가] 인기 카테고리 (조회수 기준)
-            const popularCategoryData = useMemo(() => {
-                const catViews = {};
-                filteredData.forEach(d => {
-                    const cat = translateCategory(d.ko.category, language);
-                    catViews[cat] = (catViews[cat] || 0) + d.viewCount;
-                });
-                return Object.entries(catViews)
-                    .map(([name, value]) => ({ name, value }))
-                    .sort((a, b) => b.value - a.value);
-            }, [filteredData, language]);
-
-            // [추가] 최다 조회 기사
-            const topArticles = useMemo(() => {
-                return [...filteredData]
-                    .sort((a, b) => b.viewCount - a.viewCount)
-                    .slice(0, 5);
-            }, [filteredData]);
-
-            // [신규] 리전×카테고리 히트맵 데이터
-            const heatmapData = useMemo(() => {
-                const REGIONS = ['China', 'USA', 'South Korea', 'Vietnam', 'Europe', 'Japan', 'India', 'Mexico', 'Global'];
-                const CATS = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
-                const matrix = {};
-                REGIONS.forEach(r => { matrix[r] = {}; CATS.forEach(c => { matrix[r][c] = { count: 0, high: 0 }; }); });
-                currentLocaleData.forEach(item => {
-                    const r = item.ko.region || 'Global';
-                    const c = item.ko.category;
-                    if (matrix[r] && matrix[r][c] !== undefined) {
-                        matrix[r][c].count++;
-                        if (item.risk === 'High') matrix[r][c].high++;
-                    }
-                });
-                return { matrix, regions: REGIONS, cats: CATS };
-            }, [currentLocaleData]);
-
-            // [신규] 카테고리 버블 데이터
-            const bubbleData = useMemo(() => {
-                const CATS = ['원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향'];
-                return CATS.map((cat, i) => {
-                    const catItems = currentLocaleData.filter(d => d.ko.category === cat);
-                    const highCount = catItems.filter(d => d.risk === 'High').length;
-                    const medCount = catItems.filter(d => d.risk === 'Med').length;
-                    return {
-                        name: cat,
-                        count: catItems.length,
-                        high: highCount,
-                        med: medCount,
-                        riskRatio: catItems.length > 0 ? highCount / catItems.length : 0
-                    };
-                }).sort((a, b) => b.count - a.count);
-            }, [currentLocaleData]);
-
-            // [신규] 브리핑 스크립트 파서 (텍스트 → 구조화)
-            const parseBriefingScript = (script) => {
-                if (!script) return { paragraphs: [], actions: [] };
-                const lines = script.split(/\n|(?<=\.) (?=[①-⑳])|(?<=\.) (?=\(\d+\))/).filter(l => l.trim());
-                const paragraphs = [];
-                const actions = [];
-                lines.forEach(line => {
-                    const trimmed = line.trim();
-                    if (/^[①②③④⑤⑥⑦⑧⑨⑩]|^\([1-9]\)|^\d+\./.test(trimmed)) {
-                        actions.push(trimmed);
-                    } else if (trimmed.length > 10) {
-                        paragraphs.push(trimmed);
-                    }
-                });
-                return { paragraphs, actions };
-            };
-
-            // [신규] 현재 브리핑 스크립트 가져오기 (탭 상태 기반)
-            const currentBriefingScript = useMemo(() => {
-                if (!intelData) return null;
-                const catKeyMap = {
-                    'all': 'all', '원자재': '원자재', '거시/정책': '거시경제',
-                    '지역별 분석': '생산지역', '경쟁사': '경쟁사', '신기술동향': '신기술동향'
-                };
-                const catKey = catKeyMap[briefingCategory] || 'all';
-                if (intelData.scripts && intelData.scripts[briefingPeriod]) {
-                    const script = intelData.scripts[briefingPeriod][catKey] || intelData.scripts[briefingPeriod]['all'];
-                    if (script) return script;
-                }
-                if (intelData.categoryScripts && intelData.categoryScripts[catKey]) return intelData.categoryScripts[catKey];
-                if (intelData.dailyBriefing && intelData.dailyBriefing.script) return intelData.dailyBriefing.script;
-                return null;
-            }, [intelData, briefingPeriod, briefingCategory]);
-
-            const handleLink = (id) => window.location.href = `index.html?targetId=${id}`;
-            const goToIndex = () => window.location.href = 'index.html?view=hub';
-            const logOut = () => {
-                localStorage.removeItem("da_user");
-                window.location.href = "index.html";
-            };
-            const resetFilters = () => { setSelectedFilter('All'); setSelectedRisk('All'); setSelectedRegion('All'); setSelectedTag(null); setSelectedDate('LastWeek'); setSearchKeyword(''); };
-
-            // 지도와의 통신 처리 로직 추가
-            useEffect(() => {
-                const handleMessage = (e) => {
-                    if (e.data.type === 'filterByCountry') {
-                        setSelectedRegion(e.data.country);
-                    }
-                };
-                window.addEventListener('message', handleMessage);
-                return () => window.removeEventListener('message', handleMessage);
-            }, []);
-
-            useEffect(() => {
-                if (mapRef.current && mapRef.current.contentWindow) {
-                    const countryMap = {};
-                    filteredData.forEach(d => {
-                        if (d.region && d.region !== 'Global') {
-                            countryMap[d.region] = (countryMap[d.region] || 0) + 1;
-                        }
-                    });
-                    mapRef.current.contentWindow.postMessage({ type: 'updateData', data: countryMap }, '*');
-                }
-            }, [filteredData]);
-
-            // [추가] 로딩 애니메이션 랜덤 순차 재생 로직
-            const LOTTIE_URLS = [
-                "https://lottie.host/43ada85a-c45a-4cc5-8b01-e0c76650dba8/79RRpsjJH0.lottie",
-                "https://lottie.host/063867c2-3f3d-4ede-8e0f-51c5e352d85b/t8c7HUbPGE.lottie",
-                "https://lottie.host/c10868aa-6ca2-468e-bd01-1cc1c6c0e21d/MI35VKUbQa.lottie"
-            ];
-            // 1. 진입 시 순서를 무작위로 한 번 섞음
-            const [shuffledUrls] = useState(() => [...LOTTIE_URLS].sort(() => Math.random() - 0.5));
-            // 2. 현재 재생 중인 인덱스 관리
-            const [aniIndex, setAniIndex] = useState(0);
-            const lottieRef = useRef(null);
-
-            useEffect(() => {
-                const el = lottieRef.current;
-                if (el) {
-                    const handleComplete = () => {
-                        // 다음 애니메이션으로 이동 (순환)
-                        setAniIndex((prev) => (prev + 1) % shuffledUrls.length);
-                    };
-                    el.addEventListener('complete', handleComplete);
-                    return () => el.removeEventListener('complete', handleComplete);
-                }
-            }, [aniIndex, shuffledUrls]);
-
-            if (loading) return (
-                <div className="flex h-screen items-center justify-center bg-white font-sans overflow-hidden">
-                    <div className="flex flex-col items-center justify-center">
-                        <dotlottie-wc
-                            ref={lottieRef}
-                            src={shuffledUrls[aniIndex]}
-                            style={{ width: '600px', height: '600px' }}
-                            autoplay
-                        ></dotlottie-wc>
-                        <p className="text-[12px] font-black text-[#0033A0] uppercase tracking-[0.5em] -mt-10 z-10">
-                            Calibrating Decision Core
-                        </p>
-                    </div>
-                </div>
-            );
-
-            const menuLabels = {
-                KO: ['전략 시황', '원자재', '거시/정책', '지역별 분석', '경쟁사', '신기술동향', 'INDEX'],
-                EN: ['Strategy', 'Material', 'Macro', 'Region', 'Competitors', 'New Tech', 'Index']
-            };
-
-            const searchLabels = {
-                KO: { placeholder: '뉴스 키워드 검색...', options: ['제목+본문', '제목', '본문'] },
-                EN: { placeholder: 'Search keywords...', options: ['Title+Content', 'Title', 'Content'] }
-            };
-
-            return (
-                <div className={`min-h-screen transition-colors duration-500 font-sans antialiased pb-24 ${darkMode ? 'bg-slate-950 text-slate-200' : 'bg-[#F8F9FB] text-[#172B4D]'}`}>
-                    <header className="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
-                                <h1 className="font-bold text-[13px] tracking-tight uppercase">PURCHASE INTELLIGENCE</h1>
-                            </div>
-                            <nav className="flex items-center gap-3 lg:gap-4 text-[11px] font-bold">
-                                {menuLabels[language].map((m, idx) => {
-                                    const catKey = menuLabels['KO'][idx];
-                                    if (m.toUpperCase() === 'INDEX') {
-                                        return (
-                                            <button key={m} onClick={() => setShowIndex(true)} className="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">{m}</button>
-                                        );
-                                    }
-                                    const isSelected = (m === '전략 시황' || m === 'Strategy') ? selectedFilter === 'All' : selectedFilter === catKey;
-                                    return (
-                                        <button key={m} onClick={() => { setSelectedFilter(m === '전략 시황' || m === 'Strategy' ? 'All' : catKey); setSelectedTag(null); }} className={`transition-all py-1 border-b-2 uppercase ${isSelected ? 'text-white border-white' : 'text-white/60 border-transparent hover:text-white'}`}>{m}</button>
-                                    );
-                                })}
-                            </nav>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-white rounded-full p-0.5 shadow-lg overflow-hidden border border-blue-200/50">
-                                <div className="relative">
-                                    <select value={searchTarget} onChange={(e) => setSearchTarget(e.target.value)} className="bg-transparent text-[#172B4D] text-[10px] font-black py-1 pl-4 pr-8 border-none focus:ring-0 appearance-none cursor-pointer">
-                                        <option value="Both">{searchLabels[language].options[0]}</option>
-                                        <option value="Title">{searchLabels[language].options[1]}</option>
-                                        <option value="Content">{searchLabels[language].options[2]}</option>
-                                    </select>
-                                    <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                                <div className="w-[1px] h-4 bg-slate-200"></div>
-                                <div className="flex items-center flex-1 px-3">
-                                    <Search size={14} className="text-slate-400 mr-2" />
-                                    <input type="text" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder={searchLabels[language].placeholder} className="bg-transparent border-none text-[11px] text-[#172B4D] font-bold focus:ring-0 w-36 placeholder:text-slate-300 uppercase tracking-tighter" />
-                                </div>
-                            </div>
-                            <button onClick={goToIndex} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white"><List size={14} /> NEWS HUB</button>
-
-                            {/* User info & Logout aligned with index.html */}
-                            <div className="flex items-center gap-3 ml-2 border-l border-white/20 pl-4 h-8">
-                                <div className="flex flex-col leading-tight">
-                                    <span className="text-[10px] font-black opacity-80">{currentUser ? currentUser.userName : 'Guest'}</span>
-                                    <span className="text-[9px] font-bold opacity-60">님</span>
-                                </div>
-                                <button
-                                    onClick={logOut}
-                                    className="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest transition-all"
-                                >
-                                    LOGOUT
-                                </button>
-                            </div>
-
-                            <button onClick={() => setLanguage(l => l === 'KO' ? 'EN' : 'KO')} className="bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-sm text-[10px] font-black border border-white/20 uppercase tracking-widest">{language}</button>
-                            <button onClick={() => setDarkMode(!darkMode)} className="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
-                        </div>
-                    </header>
-
-                    <DateSlider selectedDate={selectedDate} onDateChange={setSelectedDate} availableDates={availableDates} hasArticlesMap={hasArticlesMap} darkMode={darkMode} lang={language} latestDateStr={latestDateStr} />
-
-                    <main className="max-w-[1600px] mx-auto p-8 space-y-8 animate-in fade-in duration-700">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            {/* 기사 수 + 리스크 분포 */}
-                            <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] group shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-[#0033A0]">{language === 'KO' ? '기사 분석 수' : 'Article Intensity'}</p>
-                                <h3 className={`text-4xl font-black tracking-tighter ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>{filteredData.length} <span className="text-[10px] font-normal text-slate-400 uppercase ml-1">Cases</span></h3>
-                                <div className={`mt-3 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                                    <div className="h-full flex">
-                                        <div className="h-full bg-red-500 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='High').length/filteredData.length)*100}%` : '0%' }}></div>
-                                        <div className="h-full bg-amber-400 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='Med').length/filteredData.length)*100}%` : '0%' }}></div>
-                                        <div className="h-full bg-sky-400 transition-all" style={{ width: filteredData.length > 0 ? `${(filteredData.filter(d=>d.risk==='Low').length/filteredData.length)*100}%` : '0%' }}></div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-3 mt-1.5 text-[8px] font-bold">
-                                    <span className="text-red-500">H:{filteredData.filter(d=>d.risk==='High').length}</span>
-                                    <span className="text-amber-500">M:{filteredData.filter(d=>d.risk==='Med').length}</span>
-                                    <span className="text-sky-500">L:{filteredData.filter(d=>d.risk==='Low').length}</span>
-                                </div>
-                            </div>
-                            {/* 집중 지역 */}
-                            <div className={`p-6 rounded-sm border transition-all hover:border-[#0033A0] shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '집중 지역' : 'Impact Hotspot'}</p>
-                                <h3 className={`text-3xl font-black tracking-tighter flex items-center gap-3 uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}><MapPin size={24} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {cardStats.topRegion}</h3>
-                            </div>
-                            {/* 최대 리스크 */}
-                            <div onClick={() => setSelectedRisk(prev => prev === 'High' ? 'All' : 'High')} className={`p-6 rounded-sm border shadow-sm cursor-pointer transition-all hover:shadow-md ${selectedRisk === 'High' ? 'border-red-500 ring-2 ring-red-500/20' : (darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200')}`}>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? '최대 리스크' : 'Max Risk Depth'}</p>
-                                <div className="flex items-center gap-3"><div className={`w-3.5 h-3.5 rounded-full ${selectedRisk === 'High' ? 'bg-red-500 animate-pulse' : (darkMode ? 'bg-blue-400' : 'bg-[#0033A0]')}`}></div><h3 className={`text-3xl font-black tracking-tighter uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{selectedRisk}</h3></div>
-                                <p className={`text-[8px] font-bold mt-2 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>Click to {selectedRisk === 'High' ? 'reset' : 'filter High'}</p>
-                            </div>
-                            {/* HOT 카테고리 */}
-                            <div className={`p-6 rounded-sm border shadow-sm ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{language === 'KO' ? 'HOT 카테고리' : 'Hot Category'}</p>
-                                <div className="space-y-1.5 mt-2">
-                                    {bubbleData.slice(0, 3).map((item, i) => (
-                                        <div key={item.name} onClick={() => setSelectedFilter(prev => prev === item.name ? 'All' : item.name)}
-                                            className={`flex items-center justify-between cursor-pointer rounded-sm px-2 py-1.5 transition-all ${selectedFilter === item.name ? (darkMode ? 'bg-blue-900/30' : 'bg-blue-50') : (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
-                                            <span className={`text-[10px] font-bold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{translateCategory(item.name, language)}</span>
-                                            <span className={`text-[9px] font-black ${i === 0 ? 'text-blue-500' : (darkMode ? 'text-slate-500' : 'text-slate-400')}`}>{item.count}건</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── AI STRATEGIC BRIEFING CARD (신규 디자인) ── */}
-                        {(() => {
-                            const parsed = parseBriefingScript(currentBriefingScript || strategicNarrative);
-                            const anchorName = intelData?.dailyBriefing?.anchor_name || 'Strategic-Bot';
-                            const lastUpdated = intelData?.last_updated;
-                            const periodTabs = [
-                                { key: 'thisWeek', label: language === 'KO' ? '이번 주' : 'This Week' },
-                                { key: 'lastWeek', label: language === 'KO' ? '저번 주' : 'Last Week' },
-                                { key: 'thisMonth', label: language === 'KO' ? '이번 달' : 'This Month' },
-                                { key: 'lastMonth', label: language === 'KO' ? '저번 달' : 'Last Month' },
-                            ];
-                            const catTabs = [
-                                { key: 'all', label: language === 'KO' ? '통합' : 'All' },
-                                { key: '원자재', label: language === 'KO' ? '원자재' : 'Material' },
-                                { key: '거시/정책', label: language === 'KO' ? '거시/정책' : 'Macro' },
-                                { key: '지역별 분석', label: language === 'KO' ? '생산지역' : 'Region' },
-                                { key: '경쟁사', label: language === 'KO' ? '경쟁사' : 'Competitors' },
-                                { key: '신기술동향', label: language === 'KO' ? '신기술' : 'New Tech' },
-                            ];
-                            const highlightNumbers = (text) => {
-                                return text
-                                    .replace(/(\d[\.\d,%원+~]+(KRW|억|조|\%|원|달러|배|건)?)/g, '<span style="color:#F59E0B;font-weight:900">$1</span>')
-                                    .replace(/(High|High Risk|High\s*리스크)/gi, '<span style="color:#EF4444;font-weight:900">$1</span>')
-                                    .replace(/(관세|tariff)/gi, '<span style="color:#8B5CF6;font-weight:700">$1</span>');
-                            };
-                            return (
-                                <div className={`rounded-sm shadow-lg overflow-hidden border ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
-                                    {/* 헤더 */}
-                                    <div className={`px-6 py-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#0D1B3E] border-slate-700' : 'bg-[#0033A0] border-[#002280]'}`}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative">
-                                                <div className="w-9 h-9 rounded-full bg-blue-400/20 flex items-center justify-center border border-blue-300/30">
-                                                    <Radio size={16} className="text-blue-200 animate-pulse" />
-                                                </div>
-                                                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></div>
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-blue-300 uppercase tracking-[0.2em]">AI Intelligence Anchor</p>
-                                                <p className="text-[13px] font-black text-white">{anchorName}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            {lastUpdated && <span className="text-[9px] text-blue-300/70 font-bold">{lastUpdated}</span>}
-                                            {(selectedFilter !== 'All' || selectedRisk !== 'All' || selectedTag || (selectedDate !== 'LastWeek' && selectedDate !== 'LastMonth') || searchKeyword) && (
-                                                <button onClick={resetFilters} className="flex items-center gap-1.5 text-[9px] font-black bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-sm transition-all uppercase">
-                                                    <Clock size={10} /> {language === 'KO' ? '필터 해제' : 'Reset'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* 기간 탭 */}
-                                    <div className={`px-6 py-2 flex items-center gap-2 border-b overflow-x-auto no-scrollbar ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest mr-2 ${darkMode ? 'text-slate-500' : 'text-slate-300'}`}><CalendarRange size={10} className="inline mr-1" />PERIOD</span>
-                                        {periodTabs.map(tab => (
-                                            <button key={tab.key} onClick={() => setBriefingPeriod(tab.key)}
-                                                className={`px-3 py-1.5 rounded-sm text-[9px] font-black uppercase whitespace-nowrap transition-all ${briefingPeriod === tab.key ? 'bg-[#0033A0] text-white shadow-sm' : (darkMode ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                        <div className={`w-px h-4 mx-1 ${darkMode ? 'bg-slate-600' : 'bg-slate-200'}`}></div>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest mr-2 ${darkMode ? 'text-slate-500' : 'text-slate-300'}`}><Layers size={10} className="inline mr-1" />CATEGORY</span>
-                                        {catTabs.map(tab => (
-                                            <button key={tab.key} onClick={() => setBriefingCategory(tab.key)}
-                                                className={`px-3 py-1.5 rounded-sm text-[9px] font-black uppercase whitespace-nowrap transition-all ${briefingCategory === tab.key ? 'bg-blue-600 text-white shadow-sm' : (darkMode ? 'bg-slate-700 text-slate-400 hover:bg-slate-600' : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200')}`}>
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {/* 브리핑 본문 */}
-                                    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* 메인 내러티브 */}
-                                        <div className="lg:col-span-2 space-y-3">
-                                            <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>
-                                                <Mic size={11} /> {language === 'KO' ? '브리핑 대본' : 'Briefing Script'}
-                                            </p>
-                                            {parsed.paragraphs.length > 0 ? (
-                                                parsed.paragraphs.map((para, i) => (
-                                                    <p key={i} className={`text-[13px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
-                                                        dangerouslySetInnerHTML={{ __html: highlightNumbers(para) }} />
-                                                ))
-                                            ) : (
-                                                <p className={`text-[13px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
-                                                    dangerouslySetInnerHTML={{ __html: highlightNumbers((currentBriefingScript || strategicNarrative).replace(/\n/g, ' ')) }} />
-                                            )}
-                                        </div>
-                                        {/* 권고 액션 */}
-                                        <div className={`p-4 rounded-sm border-l-4 ${darkMode ? 'bg-slate-800 border-blue-500' : 'bg-blue-50 border-[#0033A0]'}`}>
-                                            <p className={`text-[9px] font-black uppercase tracking-[0.2em] mb-3 flex items-center gap-2 ${darkMode ? 'text-blue-400' : 'text-[#0033A0]'}`}>
-                                                <Zap size={11} /> {language === 'KO' ? '권고 액션' : 'Action Items'}
-                                            </p>
-                                            {parsed.actions.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {parsed.actions.map((action, i) => (
-                                                        <div key={i} className={`flex gap-2 text-[12px] leading-snug ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                                                            <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${darkMode ? 'bg-blue-600 text-white' : 'bg-[#0033A0] text-white'}`}>{i + 1}</span>
-                                                            <span dangerouslySetInnerHTML={{ __html: highlightNumbers(action.replace(/^[①②③④⑤⑥⑦⑧⑨⑩]|^\([1-9]\)|^\d+\.\s*/, '')) }} />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className={`space-y-2`}>
-                                                    {/* 액션 아이템이 없으면 위험 지표 간략 표시 */}
-                                                    <div className={`text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                                        <div className="flex justify-between mb-1"><span className="font-bold">High Risk</span><span className="text-red-500 font-black">{filteredData.filter(d=>d.risk==='High').length}</span></div>
-                                                        <div className="flex justify-between mb-1"><span className="font-bold">Med Risk</span><span className="text-amber-500 font-black">{filteredData.filter(d=>d.risk==='Med').length}</span></div>
-                                                        <div className="flex justify-between"><span className="font-bold">Low Risk</span><span className="text-sky-500 font-black">{filteredData.filter(d=>d.risk==='Low').length}</span></div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className={`lg:col-span-4 rounded-sm border shadow-sm p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><TrendingUp size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '리스크 추세' : 'Risk Trend'}</h2>
-                                    <div className="flex bg-slate-100 p-0.5 rounded-sm dark:bg-slate-800">
-                                        {['Weekly', 'Monthly'].map(v => (<button key={v} onClick={() => setTimeRange(v)} className={`px-3 py-1 text-[8px] font-black rounded-sm transition-all ${timeRange === v ? (darkMode ? 'bg-blue-600 text-white' : 'bg-white text-[#0033A0] shadow-sm') : 'text-slate-400'}`}>{v}</button>))}
-                                    </div>
-                                </div>
-                                {/* 리스크별 색상 범례 */}
-                                <div className="flex gap-3 mb-3">
-                                    {[['High', '#EF4444'], ['Med', '#F59E0B'], ['Low', '#38BDF8']].map(([label, color]) => (
-                                        <div key={label} className="flex items-center gap-1">
-                                            <div style={{ backgroundColor: color }} className="w-2.5 h-2.5 rounded-sm"></div>
-                                            <span className={`text-[8px] font-black ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="h-[195px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={(() => {
-                                            const riskMap = {};
-                                            currentLocaleData.forEach(item => {
-                                                const d = new Date(item.date); if (isNaN(d.getTime())) return;
-                                                let key = timeRange === 'Weekly' ? getFormattedWeek(item.date) : `${d.getFullYear()}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
-                                                if (!riskMap[key]) riskMap[key] = { date: key, High: 0, Med: 0, Low: 0 };
-                                                if (item.risk === 'High') riskMap[key].High++;
-                                                else if (item.risk === 'Med') riskMap[key].Med++;
-                                                else riskMap[key].Low++;
-                                            });
-                                            return Object.values(riskMap).sort((a,b) => a.date.localeCompare(b.date)).slice(-12);
-                                        })()}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#334155" : "#EDF2F7"} />
-                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#8993A4', fontWeight: 700 }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#8993A4', fontWeight: 700 }} />
-                                            <RechartsTooltip contentStyle={darkMode ? { backgroundColor: '#1E293B', border: '1px solid #334155', color: '#fff', fontSize: '10px' } : { fontSize: '10px' }} />
-                                            <Bar dataKey="High" stackId="a" fill="#EF4444" radius={[0,0,0,0]} />
-                                            <Bar dataKey="Med" stackId="a" fill="#F59E0B" radius={[0,0,0,0]} />
-                                            <Bar dataKey="Low" stackId="a" fill="#38BDF8" radius={[2,2,0,0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                            <div className={`lg:col-span-4 rounded-sm border shadow-sm p-6 flex flex-col justify-between ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><Globe size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} /> {language === 'KO' ? '지도' : 'Mapping'}</h2>
-                                    {selectedRegion !== 'All' && (
-                                        <button onClick={() => setSelectedRegion('All')} className="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-sm uppercase tracking-tighter">RESET MAP</button>
-                                    )}
-                                </div>
-                                <div className={`relative aspect-video rounded-sm overflow-hidden flex items-center justify-center shadow-inner ${darkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                    <iframe
-                                        ref={mapRef}
-                                        src="InteractiveMap.html"
-                                        className="w-full h-full border-none"
-                                        title="Interactive Map"
-                                    />
-                                </div>
-                            </div>
-                            <div className={`lg:col-span-4 p-6 rounded-sm shadow-xl relative overflow-hidden group border-b-4 ${darkMode ? 'bg-slate-900 border-blue-600' : 'bg-[#172B4D] border-[#0033A0]'}`}>
-                                <div className="relative z-10">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-blue-200"><Tag size={14} /> {language === 'KO' ? '전략 태그' : 'Strategic Tags'}</h2>
-                                        {selectedTag && <button onClick={() => setSelectedTag(null)} className="flex items-center gap-1 text-[8px] font-black bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded-sm transition-all text-white"><XCircle size={10} /> RESET</button>}
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-[140px] custom-scrollbar pr-2">
-                                        {dynamicTags.map(tag => (
-                                            <button key={tag.text} onClick={() => setSelectedTag(prev => prev === tag.text ? null : tag.text)} className={`px-2 py-1 rounded-sm text-[9px] font-bold border transition-all flex items-center gap-1.5 ${selectedTag === tag.text ? 'bg-white text-[#172B4D] border-white shadow-lg' : 'bg-white/5 border-white/10 hover:bg-white/15 text-blue-100'}`}>#{tag.translated} <span className={`text-[7.5px] font-black opacity-30`}>{tag.count}</span></button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <Fingerprint className="absolute -bottom-8 -right-8 w-24 h-24 text-white/5" />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className={`lg:col-span-9 rounded-sm border shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className={`p-4 border-b flex items-center justify-between ${darkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-50/50 border-slate-100'}`}>
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400"><Filter size={12} /> {language === 'KO' ? '대상 인텔리전스 컨텍스트 피드' : 'Target Intelligence Context Feed'}</h2>
-                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm ${darkMode ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{filteredData.length} Articles Loaded</span>
-                                </div>
-                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {(filteredData.slice().reverse().slice((currPage - 1) * itemsPerPage, currPage * itemsPerPage)).map((item, idx) => (
-                                        <div key={idx} className={`p-6 transition-all cursor-pointer group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-blue-50/20'}`} onClick={() => handleLink(item._uId)}>
-                                            <div className="flex items-center gap-3 mb-3 text-[8.5px] font-black uppercase tracking-widest">
-                                                <span className="px-2 py-0.5 rounded-sm text-white shadow-sm" style={{ backgroundColor: item.risk === 'High' ? RISK_COLORS.High : (CATEGORY_COLORS[item.category] || COLORS.activeBlue) }}>{safeString(item.category)}</span>
-                                                <span className="text-slate-400 border-l border-slate-200 pl-3 dark:border-slate-700">{safeString(item.region)}</span>
-                                                <span className="text-slate-300 border-l border-slate-200 pl-3 dark:border-slate-700 font-medium">{safeString(item.date)}</span>
-                                                <span className={`ml-auto font-bold ${item.risk === 'High' ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>{safeString(item.risk)} RISK</span>
-                                            </div>
-                                            <h4 className={`text-[15px] font-bold leading-snug transition-colors mb-3 group-hover:text-blue-500 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{safeString(item.title)}</h4>
-                                            {/* 🚀 기사 본문 출력 보장 */}
-                                            <p className="text-[12.5px] text-slate-500 leading-relaxed line-clamp-3 mb-3 dark:text-slate-400">{safeString(item.content)}</p>
-
-                                            {/* 🤖 BOT 인사이트 (Strategic Action) 추가 */}
-                                            {item.bot && (
-                                                <div className={`mb-4 p-4 rounded-sm border-l-4 ${darkMode ? 'bg-blue-900/10 border-blue-500/50 text-blue-100' : 'bg-blue-50 border-blue-600/50 text-blue-900'}`}>
-                                                    <div className="flex items-center gap-2 mb-1.5 overflow-hidden">
-                                                        <Cpu size={12} className="animate-pulse shrink-0" />
-                                                        <span className="text-[10px] font-black uppercase tracking-tighter opacity-70 italic whitespace-nowrap">Strategic Intelligence Insight</span>
-                                                    </div>
-                                                    <p className="text-[11.5px] font-medium leading-relaxed opacity-90 line-clamp-3 italic">
-                                                        {safeString(item.bot)}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            <div className="flex flex-wrap gap-1.5">{item.tags.map(t => (<span key={t} className={`text-[8px] font-bold px-1.5 py-0.5 rounded-sm ${darkMode ? 'text-blue-400 bg-blue-900/20' : 'text-blue-400 bg-blue-50/50'}`}>#{translateCategory(t, language)}</span>))}</div>
-                                        </div>
-                                    ))}
-                                    <div className="p-6 border-t dark:border-slate-800">
-                                        <Pagination
-                                            totalItems={filteredData.length}
-                                            itemsPerPage={itemsPerPage}
-                                            currentPage={currPage}
-                                            onPageChange={setCurrPage}
-                                            darkMode={darkMode}
-                                            lang={language}
-                                        />
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div className={`lg:col-span-3 rounded-sm border shadow-sm p-6 flex flex-col transition-all hover:shadow-md ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-6 text-slate-400">
-                                    <Target size={16} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
-                                    {language === 'KO' ? '본 주간 최다 조회 기사' : 'Weekly Most Viewed'}
-                                </h2>
-                                <div className="space-y-4 flex-1 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
-                                    {topArticles.map((article, i) => (
-                                        <div key={i} onClick={() => handleLink(article._uId)} className={`p-4 rounded-sm border transition-all cursor-pointer hover:border-blue-400 group ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
-                                            <div className="flex justify-between items-start gap-2 mb-2">
-                                                <span className={`text-[8.5px] font-black uppercase ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{article.category}</span>
-                                                <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1.5"><Eye size={10} /> {article.viewCount}</span>
-                                            </div>
-                                            <h5 className={`text-[12.5px] font-bold leading-snug line-clamp-2 group-hover:text-blue-500 transition-colors ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{article.title}</h5>
-                                            <div className="mt-2 text-[10px] text-slate-400 font-medium">{article.date}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <TrendingUp size={12} /> Insight Statistics Active
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── 리전×카테고리 히트맵 + 카테고리 버블 차트 (신규) ── */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            {/* 리전×카테고리 히트맵 */}
-                            <div className={`lg:col-span-7 rounded-sm border shadow-sm p-6 overflow-hidden ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-slate-400">
-                                        <Layers size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
-                                        {language === 'KO' ? '지역 × 카테고리 리스크 히트맵' : 'Region × Category Risk Heatmap'}
-                                    </h2>
-                                    <div className="flex gap-1">
-                                        {['count', 'high'].map(m => (
-                                            <button key={m} onClick={() => setHeatmapMetric(m)}
-                                                className={`px-2 py-1 text-[8px] font-black rounded-sm uppercase transition-all ${heatmapMetric === m ? (darkMode ? 'bg-blue-600 text-white' : 'bg-[#0033A0] text-white') : (darkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-400')}`}>
-                                                {m === 'count' ? (language === 'KO' ? '전체' : 'All') : (language === 'KO' ? 'High만' : 'High')}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-[10px]">
-                                        <thead>
-                                            <tr>
-                                                <th className={`text-left py-1.5 pr-3 font-black text-[9px] uppercase tracking-wider w-24 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{language === 'KO' ? '지역' : 'Region'}</th>
-                                                {heatmapData.cats.map(cat => (
-                                                    <th key={cat} className={`text-center py-1.5 px-2 font-black text-[8px] uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                                                        {translateCategory(cat, language)}
-                                                    </th>
-                                                ))}
-                                                <th className={`text-center py-1.5 px-2 font-black text-[8px] uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>합계</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {heatmapData.regions.map(region => {
-                                                const rowTotal = heatmapData.cats.reduce((s, c) => s + (heatmapData.matrix[region]?.[c]?.[heatmapMetric] || 0), 0);
-                                                const maxInRow = Math.max(...heatmapData.cats.map(c => heatmapData.matrix[region]?.[c]?.[heatmapMetric] || 0), 1);
-                                                return (
-                                                    <tr key={region} onClick={() => setSelectedRegion(prev => prev === region ? 'All' : region)}
-                                                        className={`cursor-pointer transition-all ${selectedRegion === region ? (darkMode ? 'bg-blue-900/20' : 'bg-blue-50') : (darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50')}`}>
-                                                        <td className={`py-2 pr-3 font-bold text-[10px] ${darkMode ? 'text-slate-300' : 'text-slate-700'} ${selectedRegion === region ? 'text-blue-500 font-black' : ''}`}>
-                                                            {region === 'South Korea' ? '🇰🇷 KR' : region === 'China' ? '🇨🇳 CN' : region === 'USA' ? '🇺🇸 US' : region === 'Vietnam' ? '🇻🇳 VN' : region === 'Europe' ? '🇪🇺 EU' : region === 'Japan' ? '🇯🇵 JP' : region === 'India' ? '🇮🇳 IN' : region === 'Mexico' ? '🇲🇽 MX' : '🌐 Global'}
-                                                        </td>
-                                                        {heatmapData.cats.map(cat => {
-                                                            const val = heatmapData.matrix[region]?.[cat]?.[heatmapMetric] || 0;
-                                                            const intensity = maxInRow > 0 ? val / maxInRow : 0;
-                                                            const bgColor = heatmapMetric === 'high'
-                                                                ? `rgba(239,68,68,${Math.min(0.8, intensity * 0.9 + 0.05)})`
-                                                                : `rgba(0,51,160,${Math.min(0.75, intensity * 0.75 + (val > 0 ? 0.08 : 0))})`;
-                                                            return (
-                                                                <td key={cat} className="py-2 px-2 text-center">
-                                                                    <div style={{ backgroundColor: val > 0 ? bgColor : 'transparent' }}
-                                                                        className={`mx-auto w-10 h-7 rounded-sm flex items-center justify-center font-black text-[11px] transition-all ${val > 0 ? 'text-white' : (darkMode ? 'text-slate-700' : 'text-slate-200')}`}>
-                                                                        {val > 0 ? val : '–'}
-                                                                    </div>
-                                                                </td>
-                                                            );
-                                                        })}
-                                                        <td className={`py-2 px-2 text-center font-black text-[11px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{rowTotal || '–'}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p className={`text-[8px] font-bold mt-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>
-                                    * {language === 'KO' ? '행 클릭 시 해당 지역 필터 적용' : 'Click row to filter by region'}
-                                    {selectedRegion !== 'All' && <span className="ml-2 text-blue-500">▶ {selectedRegion} 필터 중 <button onClick={() => setSelectedRegion('All')} className="underline ml-1">해제</button></span>}
-                                </p>
-                            </div>
-
-                            {/* 카테고리 버블/바 차트 */}
-                            <div className={`lg:col-span-5 rounded-sm border shadow-sm p-6 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h2 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-5 text-slate-400">
-                                    <Activity size={14} className={darkMode ? 'text-blue-400' : 'text-[#0033A0]'} />
-                                    {language === 'KO' ? '카테고리 리스크 분포' : 'Category Risk Profile'}
-                                </h2>
-                                <div className="space-y-3">
-                                    {bubbleData.map((item, i) => {
-                                        const maxCount = bubbleData[0]?.count || 1;
-                                        const barWidth = (item.count / maxCount) * 100;
-                                        const highPct = item.count > 0 ? Math.round((item.high / item.count) * 100) : 0;
-                                        return (
-                                            <div key={item.name}
-                                                onClick={() => setSelectedFilter(prev => prev === item.name ? 'All' : item.name)}
-                                                className={`cursor-pointer p-3 rounded-sm border transition-all ${selectedFilter === item.name ? (darkMode ? 'border-blue-500 bg-blue-900/20' : 'border-[#0033A0] bg-blue-50') : (darkMode ? 'border-slate-700 hover:border-slate-600' : 'border-slate-100 hover:border-slate-300')}`}>
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-[11px] font-black ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                                                            {translateCategory(item.name, language)}
-                                                        </span>
-                                                        {highPct >= 30 && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black rounded-sm uppercase">HOT</span>}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-[9px]">
-                                                        <span className={`font-black ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{item.count}건</span>
-                                                        {item.high > 0 && <span className="text-red-500 font-black">H:{item.high}</span>}
-                                                        {item.med > 0 && <span className="text-amber-500 font-black">M:{item.med}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className={`h-2 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                                                    <div className="h-full flex">
-                                                        <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${(item.high / maxCount) * 100}%` }}></div>
-                                                        <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${(item.med / maxCount) * 100}%` }}></div>
-                                                        <div className="h-full bg-sky-400 transition-all duration-500" style={{ width: `${((item.count - item.high - item.med) / maxCount) * 100}%` }}></div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between mt-1">
-                                                    <span className={`text-[8px] font-bold ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>High {highPct}%</span>
-                                                    <div style={{ width: `${barWidth}%` }} className="h-0.5 bg-slate-300 dark:bg-slate-600 rounded-full mt-1 self-end"></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <p className={`text-[8px] font-bold mt-3 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>
-                                    * {language === 'KO' ? '클릭 시 해당 카테고리 필터 적용' : 'Click to filter by category'}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* --- Monthly Performance Report Section --- */}
-                        <div className={`mt-10 p-8 rounded-sm border-2 border-dashed transition-all hover:bg-opacity-80 relative overflow-hidden ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-blue-50/30 border-blue-100'}`}>
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-[#0033A0] text-white rounded-sm shadow-lg"><BarChart3 size={24} /></div>
-                                    <div>
-                                        <h2 className="text-xl font-black tracking-tight text-[#0033A0] dark:text-blue-400">Strategic Engagement Analysis</h2>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">의사결정 지원 및 전략 정보 활용 지표</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setShowReport(!showReport)} className="bg-[#0033A0] hover:bg-blue-700 text-white px-6 py-2.5 rounded-sm text-[11px] font-black uppercase tracking-widest transition-all shadow-md flex items-center gap-2">
-                                    {showReport ? <XCircle size={14} /> : <FileText size={14} />} {showReport ? 'Close Analysis' : 'Generate Summary'}
-                                </button>
-                            </div>
-
-                            {showReport && (
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-top duration-500 relative z-10">
-                                    <div className={`p-6 rounded-sm shadow-sm ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Eye size={14} /> Engagement Summary</h3>
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">{language === 'KO' ? '누적 정보 열람 (PV)' : 'Total Page Views'}</span>
-                                                <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0)}</span>
-                                            </div>
-                                            <div className="flex justify-between items-end border-b pb-2">
-                                                <span className="text-[11px] font-bold text-slate-400">{language === 'KO' ? '고유 방문 활용 (Sessions)' : 'Unique Sessions'}</span>
-                                                <span className="text-2xl font-black tracking-tighter">{monthlyStats.reduce((acc, curr) => acc + (Number(curr.Sessions) || 0), 0)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={`p-6 rounded-sm shadow-sm lg:col-span-2 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-[#0033A0] dark:text-blue-400 mb-4 flex items-center gap-2"><Target size={14} /> Strategic Category Focus</h3>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {Object.entries(monthlyStats.reduce((acc, curr) => {
-                                                acc[curr.Category] = (acc[curr.Category] || 0) + (Number(curr.Views) || 0);
-                                                return acc;
-                                            }, {})).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([cat, val], idx) => (
-                                                <div key={cat} className="flex flex-col">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase line-clamp-1">{translateCategory(cat, language)}</span>
-                                                    <span className="text-lg font-black">{val} <span className="text-[8px] font-bold text-blue-500">PV</span></span>
-                                                    <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 mt-1 rounded-full overflow-hidden">
-                                                        <div className="bg-[#0033A0] dark:bg-blue-500 h-full" style={{ width: `${Math.min(100, (val / (monthlyStats.reduce((acc, curr) => acc + (Number(curr.Views) || 0), 0) || 1)) * 100)}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            <Fingerprint className="absolute -bottom-10 -left-10 w-48 h-48 text-blue-500/5 rotate-12" />
-                        </div>
-                    </main>
-                    <footer className={`max-w-[1600px] mx-auto px-8 py-14 border-t text-center text-slate-400 transition-colors ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                        <p className="text-[9px] font-black uppercase tracking-[0.4em]">DA Intelligence Mapping Core // Framework Stable Release v8.2</p>
-                    </footer>
-                    <IndexModal isOpen={showIndex} onClose={() => setShowIndex(false)} darkMode={darkMode} />
-                </div>
-            );
-        };
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-
-    <!-- 글로벌 드로어 JS -->
-    <script>
-        function toggleDashModDrawer() {
-            const drawer = document.getElementById('dashmod-drawer');
-            const overlay = document.getElementById('dashmod-drawer-overlay');
-            const isOpen = parseInt(drawer.style.left) === 0;
-            if (isOpen) {
-                closeDashModDrawer();
-            } else {
-                const user = JSON.parse(localStorage.getItem('da_user'));
-                const userEl = document.getElementById('dashmod-user-info');
-                if (userEl) userEl.textContent = user ? user.userName + '님 로그인 중' : '로그인되지 않음';
-                const logoutBtn = document.getElementById('dashmod-logout-btn');
-                const loginBtn = document.getElementById('dashmod-login-btn');
-                if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
-                if (loginBtn) loginBtn.style.display = user ? 'none' : 'flex';
-                drawer.style.left = '0px';
-                overlay.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-            }
-        }
-        function closeDashModDrawer() {
-            document.getElementById('dashmod-drawer').style.left = '-320px';
-            document.getElementById('dashmod-drawer-overlay').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-        async function dashmodLogout() {
-            try {
-                const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                await supabaseClient.auth.signOut();
-            } catch (e) { console.error("Logout error", e); }
-            localStorage.removeItem('da_user');
-            window.location.href = 'index.html';
-        }
-    </script>
+        <div class="cat-count" style="color:${color}">${count}</div>
+      </div>
+      <div class="cat-risk-bar">
+        <div class="cat-risk-fill" style="width:${Math.round(riskRatio*100)}%"></div>
+      </div>
+      <div class="cat-top-title">
+        ${topItem ? `<span class="cat-top-risk" style="background:${riskColor(topItem.Risk)}22;color:${riskColor(topItem.Risk)}">${topItem.Risk||'Low'}</span>${topItem.Title||''}` : '기사 없음'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCat(cat) {
+  selectedCat = selectedCat === cat ? null : cat;
+  renderCategoryCards();
+  renderArticles();
+  updateActiveFiltersLabel();
+}
+
+function updateActiveFiltersLabel() {
+  const parts = [];
+  if (selectedRegion) parts.push(getSelectedRegionLabel());
+  if (selectedCat) parts.push(selectedCat);
+  document.getElementById('activeFiltersLabel').textContent = parts.length ? `— ${parts.join(' · ')}` : '';
+}
+
+// ── 기사 카드 ──
+function renderArticles() {
+  const filtered = getFilteredNews();
+  // 리스크 순 정렬, 최대 30개
+  const sorted = filtered.sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0)).slice(0,30);
+  document.getElementById('articleCountBadge').textContent = `${filtered.length}건`;
+  updateActiveFiltersLabel();
+
+  const container = document.getElementById('articlesContainer');
+  if (sorted.length === 0) {
+    container.innerHTML = `<div class="no-data" style="width:100%;justify-content:center;flex-direction:row;gap:8px"><i class="fas fa-inbox"></i><span>조건에 맞는 기사가 없습니다</span></div>`;
+    return;
+  }
+
+  container.innerHTML = sorted.map(n => {
+    const rc = riskClass(n.Risk);
+    const cat = normalizeCat(n.Category);
+    const color = CAT_COLOR[cat] || '#64748b';
+    const dateStr = String(n.Date||'').replace(/T.+/,'');
+    const summary = String(n.Summary||n.Summary_en||'').replace(/<[^>]+>/g,'').slice(0,80);
+
+    return `<div class="article-card risk-${rc}" onclick="openArticle('${(n.URL||'').split('\n')[0].trim()}')">
+      <div class="article-meta">
+        <span class="risk-badge ${rc}">${n.Risk||'Low'}</span>
+        <span>${dateStr}</span>
+      </div>
+      <div class="article-title">${n.Title||n.Title_en||'제목 없음'}</div>
+      ${summary ? `<div class="article-summary">${summary}...</div>` : ''}
+      <div class="article-footer">
+        <span class="article-cat-tag" style="color:${color};background:${color}18">${cat}</span>
+        <span class="article-date">${n.Region||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openArticle(url) {
+  if (url && url.startsWith('http')) window.open(url, '_blank');
+}
+
+// ── 이벤트 핸들러 ──
+function setPeriod(p, el) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  selectedRegion = null; selectedCat = null;
+  updateFilterBar();
+  renderAll();
+}
+
+function setBriefingCat(cat, el) {
+  currentBriefingCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBriefing();
+}
+
+// ── 초기화 ──
+document.addEventListener('DOMContentLoaded', () => {
+  buildMap();
+  loadData();
+});
+</script>
 </body>
-
 </html>
