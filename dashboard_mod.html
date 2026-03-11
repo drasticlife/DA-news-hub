@@ -4,33 +4,64 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DA Intelligence Dashboard</title>
-<!-- 다크모드 플리커 방지: 저장된 테마 즉시 적용 -->
-<script>(function(){if(localStorage.getItem('da_dash_dark')==='1')document.documentElement.classList.add('dark');else document.documentElement.classList.add('dark');}());</script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config = { darkMode: "class" };</script>
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-<!-- Lucide Icons -->
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <!-- Leaflet.js -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+  /* ════════════════════════════════════════
+     CSS 변수 — 다크 (기본)
+  ════════════════════════════════════════ */
   :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #1a1d27;
-    --bg-card: #1e2130;
-    --bg-hover: #252840;
-    --accent-blue: #4f8ef7;
-    --accent-teal: #2dd4bf;
-    --accent-red: #f87171;
+    --bg-primary:    #0f1117;
+    --bg-secondary:  #1a1d27;
+    --bg-card:       #1e2130;
+    --bg-hover:      #252840;
+    --accent-blue:   #4f8ef7;
+    --accent-teal:   #2dd4bf;
+    --accent-red:    #f87171;
     --accent-orange: #fb923c;
     --accent-yellow: #fbbf24;
-    --accent-green: #34d399;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --border: #2d3148;
+    --accent-green:  #34d399;
+    --text-primary:  #e2e8f0;
+    --text-secondary:#94a3b8;
+    --text-muted:    #64748b;
+    --border:        #2d3148;
+    --header-bg:     #1a1d27;
+    --header-border: #2d3148;
+    --map-tile-filter: brightness(0.45) saturate(0.5) hue-rotate(190deg);
+    --drawer-bg:     #1e2130;
+    --drawer-text:   #e2e8f0;
+    --drawer-subtext:#94a3b8;
+    --drawer-item-hover: #252840;
+    --drawer-item-active-bg: rgba(79,142,247,.15);
+    --drawer-item-active-text: #93c5fd;
+    --drawer-border: #2d3148;
+    --drawer-section-color: #64748b;
+  }
+
+  /* CSS 변수 — 라이트 모드 */
+  body.light {
+    --bg-primary:    #f1f5f9;
+    --bg-secondary:  #ffffff;
+    --bg-card:       #f8fafc;
+    --bg-hover:      #eff6ff;
+    --text-primary:  #1e293b;
+    --text-secondary:#475569;
+    --text-muted:    #94a3b8;
+    --border:        #e2e8f0;
+    --header-bg:     #0033A0;
+    --header-border: #0033A0;
+    --map-tile-filter: brightness(1) saturate(1) hue-rotate(0deg);
+    --drawer-bg:     #ffffff;
+    --drawer-text:   #1e293b;
+    --drawer-subtext:#64748b;
+    --drawer-item-hover: #f1f5f9;
+    --drawer-item-active-bg: #eff6ff;
+    --drawer-item-active-text: #0033A0;
+    --drawer-border: #e2e8f0;
+    --drawer-section-color: #94a3b8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,77 +72,223 @@
     font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background .25s, color .25s;
   }
 
-  /* ── Header (News Hub 동일 스타일) ── */
-  /* 다크모드 오버라이드 */
-  html.dark body {
-    background: var(--bg-primary);
-    color: var(--text-primary);
+  /* ══════════════════════════════════════
+     Header
+  ══════════════════════════════════════ */
+  .dash-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border);
+    padding: 0 16px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: background .25s, border-color .25s;
   }
 
-  /* 모바일 드로어 오버레이 */
-  #dash-drawer-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 9998;
-  }
-  #dash-drawer-overlay.open { display: block; }
+  /* 로고 영역 */
+  .header-left { display: flex; align-items: center; gap: 10px; }
 
-  /* 드로어 패널 */
-  #dash-drawer {
-    position: fixed; top: 0; left: -320px;
-    width: 300px; height: 100%;
-    background: #fff;
-    z-index: 9999;
-    padding: 20px 16px;
-    overflow-y: auto;
-    transition: left .3s cubic-bezier(.4,0,.2,1);
-    box-shadow: 4px 0 24px rgba(0,0,0,.15);
+  .hamburger-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 6px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--text-secondary);
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
   }
-  html.dark #dash-drawer {
-    background: #1e2130;
-    color: #e2e8f0;
+  .hamburger-btn:hover { background: rgba(255,255,255,.08); color: var(--text-primary); }
+  body.light .hamburger-btn { color: rgba(255,255,255,.7); }
+  body.light .hamburger-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+  .logo-wrap {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none;
   }
-  #dash-drawer.open { left: 0; }
-  .dash-drawer-nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 10px;
+  .logo-box {
+    background: var(--accent-blue);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px; font-weight: 900;
+    letter-spacing: .05em;
+    flex-shrink: 0;
+  }
+  body.light .logo-box { background: #fff; color: #0033A0; }
+
+  .logo-title {
     font-size: 13px; font-weight: 700;
-    color: #1e293b; text-decoration: none;
-    transition: background .15s;
-    margin-bottom: 2px;
+    color: var(--text-primary);
+    letter-spacing: .03em;
+    white-space: nowrap;
   }
-  .dash-drawer-nav-item:hover { background: #f1f5f9; }
-  .dash-drawer-nav-item.active { background: #eff6ff; color: #0033A0; }
-  html.dark .dash-drawer-nav-item { color: #cbd5e1; }
-  html.dark .dash-drawer-nav-item:hover { background: #252840; }
-  html.dark .dash-drawer-nav-item.active { background: rgba(79,142,247,.12); color: #93c5fd; }
-  .dash-drawer-icon {
+  body.light .logo-title { color: #fff; }
+
+  /* 헤더 우측 */
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  .stats-strip { display: flex; align-items: center; gap: 6px; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 4px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    font-size: 10px; color: var(--text-muted);
+    transition: background .25s, border-color .25s;
+  }
+  .stat-pill b { color: var(--text-primary); font-weight: 600; }
+  body.light .stat-pill { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.7); }
+  body.light .stat-pill b { color: #fff; }
+
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); font-size: 11px; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: all .2s;
+    white-space: nowrap;
+  }
+  .back-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  body.light .back-btn { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.85); }
+  body.light .back-btn:hover { background: rgba(255,255,255,.25); color: #fff; }
+
+  /* 다크/라이트 토글 버튼 */
+  .theme-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 6px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-secondary); cursor: pointer;
+    transition: all .15s; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .theme-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent-blue); }
+  body.light .theme-btn { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.8); }
+  body.light .theme-btn:hover { background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.6); }
+
+  /* ══════════════════════════════════════
+     햄버거 드로어
+  ══════════════════════════════════════ */
+  #drawerOverlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 9998;
+    backdrop-filter: blur(2px);
+  }
+  #drawerOverlay.open { display: block; }
+
+  #sideDrawer {
+    position: fixed; top: 0; left: -300px; bottom: 0;
+    width: 280px;
+    background: var(--drawer-bg);
+    border-right: 1px solid var(--drawer-border);
+    z-index: 9999;
+    padding: 0;
+    overflow-y: auto;
+    transition: left .28s cubic-bezier(.4,0,.2,1), background .25s;
+    box-shadow: 4px 0 32px rgba(0,0,0,.35);
+  }
+  #sideDrawer.open { left: 0; }
+
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--drawer-border);
+    background: var(--bg-secondary);
+  }
+  .drawer-logo { display: flex; align-items: center; gap: 8px; }
+  .drawer-logo-box {
+    background: var(--accent-blue); color: #fff;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 900;
+  }
+  body.light .drawer-logo-box { background: #0033A0; }
+  .drawer-logo-title { font-size: 12px; font-weight: 700; color: var(--drawer-text); }
+
+  .drawer-close-btn {
     width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
-    background: #f1f5f9; border-radius: 7px; flex-shrink: 0;
-    font-size: 14px;
+    border-radius: 6px; border: 1px solid var(--drawer-border);
+    background: var(--bg-card); color: var(--drawer-subtext);
+    cursor: pointer; font-size: 13px; transition: all .15s;
   }
-  html.dark .dash-drawer-icon { background: #2d3148; }
+  .drawer-close-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-  /* ── Period Tabs ── */
+  .drawer-section-label {
+    font-size: 9px; font-weight: 900;
+    letter-spacing: .15em; color: var(--drawer-section-color);
+    text-transform: uppercase;
+    padding: 14px 16px 5px;
+  }
+
+  .drawer-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; margin: 1px 8px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    color: var(--drawer-text);
+    text-decoration: none; cursor: pointer;
+    border: none; background: transparent; width: calc(100% - 16px);
+    text-align: left;
+    transition: background .15s, color .15s;
+  }
+  .drawer-nav-item:hover { background: var(--drawer-item-hover); }
+  .drawer-nav-item.active {
+    background: var(--drawer-item-active-bg);
+    color: var(--drawer-item-active-text);
+  }
+  .drawer-nav-icon {
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-card); border-radius: 6px;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .drawer-badge {
+    margin-left: auto; font-size: 9px; font-weight: 900;
+    padding: 2px 7px; border-radius: 99px;
+    background: var(--bg-hover); color: var(--text-muted);
+  }
+  .active .drawer-badge { background: var(--accent-blue); color: #fff; }
+
+  /* 드로어 구분선 */
+  .drawer-divider {
+    height: 1px; background: var(--drawer-border);
+    margin: 8px 16px;
+  }
+
+  /* 드로어 하단 테마 버튼 */
+  .drawer-theme-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; margin: 1px 8px;
+    border-radius: 8px; font-size: 13px; font-weight: 600;
+    color: var(--drawer-text); cursor: pointer;
+    background: var(--bg-card); border: 1px solid var(--drawer-border);
+    width: calc(100% - 16px); text-align: left;
+    transition: background .15s, color .15s;
+  }
+  .drawer-theme-btn:hover { background: var(--drawer-item-hover); border-color: var(--accent-blue); }
+
+  /* ══════════════════════════════════════
+     Period Tabs
+  ══════════════════════════════════════ */
   .period-bar {
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     padding: 0 20px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    display: flex; align-items: center; gap: 4px;
     height: 44px;
-    z-index: 999;
-    position: relative;
+    z-index: 100; position: relative;
+    transition: background .25s, border-color .25s;
   }
   .period-tab {
     padding: 6px 16px; border-radius: 6px;
     font-size: 13px; font-weight: 500; cursor: pointer;
     color: var(--text-secondary); border: 1px solid transparent;
+    background: transparent;
     transition: all .2s; white-space: nowrap;
   }
   .period-tab:hover { color: var(--text-primary); background: var(--bg-card); }
@@ -122,9 +299,12 @@
   .period-label {
     margin-left: auto; font-size: 11px; color: var(--text-muted);
     padding: 4px 10px; background: var(--bg-card); border-radius: 4px;
+    transition: background .25s;
   }
 
-  /* ── Main Layout ── */
+  /* ══════════════════════════════════════
+     Main Layout
+  ══════════════════════════════════════ */
   .dash-body {
     display: grid;
     grid-template-columns: 300px 1fr 280px;
@@ -138,8 +318,8 @@
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    overflow: hidden;
-    z-index: 10;
+    overflow: hidden; z-index: 10;
+    transition: background .25s, border-color .25s;
   }
   .panel-header {
     padding: 14px 16px 10px;
@@ -153,7 +333,6 @@
   }
   .panel-title i { color: var(--accent-blue); font-size: 11px; }
 
-  /* 브리핑 카테고리 탭 */
   .briefing-cats {
     display: flex; flex-wrap: wrap; gap: 4px;
     padding: 10px 14px;
@@ -169,7 +348,6 @@
   .cat-tab:hover { color: var(--text-primary); border-color: var(--accent-blue); }
   .cat-tab.active { color: #fff; background: var(--accent-blue); border-color: var(--accent-blue); }
 
-  /* 브리핑 스크롤 영역 */
   .briefing-scroll {
     flex: 1; overflow-y: auto; padding: 14px;
   }
@@ -183,15 +361,11 @@
   }
   .briefing-meta .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-teal); }
 
-  .briefing-text {
-    font-size: 12.5px; line-height: 1.8; color: var(--text-secondary);
-  }
+  .briefing-text { font-size: 12.5px; line-height: 1.8; color: var(--text-secondary); }
   .briefing-text b { color: var(--text-primary); font-weight: 600; }
   .briefing-text mark {
-    background: rgba(79,142,247,.18);
-    color: #93c5fd;
-    border-radius: 3px;
-    padding: 1px 3px;
+    background: rgba(79,142,247,.18); color: #93c5fd;
+    border-radius: 3px; padding: 1px 3px;
   }
   .briefing-empty {
     display: flex; flex-direction: column; align-items: center;
@@ -200,75 +374,58 @@
   }
   .briefing-empty i { font-size: 32px; opacity: .3; }
 
-  /* 업데이트 시각 */
   .update-badge {
     margin: 10px 14px 0;
     padding: 6px 10px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 10px; color: var(--text-muted);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 10px; color: var(--text-muted);
     display: flex; align-items: center; gap: 5px;
+    transition: background .25s;
   }
 
   /* ── Center Panel ── */
   .center-panel {
     background: var(--bg-primary);
     display: flex; flex-direction: column;
-    overflow: hidden;
-    position: relative;
+    overflow: hidden; position: relative;
+    transition: background .25s;
   }
-  .map-container {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-  }
+  .map-container { flex: 1; position: relative; overflow: hidden; }
 
-  /* Leaflet 지도 */
-  #leafletMap {
-    width: 100%;
-    height: 100%;
-    background: #0a1628;
-  }
+  #leafletMap { width: 100%; height: 100%; background: #0a1628; }
 
-  /* Leaflet 타일 다크 필터 */
-  .leaflet-tile {
-    filter: brightness(0.45) saturate(0.5) hue-rotate(190deg);
-  }
+  .leaflet-tile { filter: var(--map-tile-filter); }
 
-  /* 지도 범례 */
   .map-legend {
     position: absolute; bottom: 50px; left: 14px;
     display: flex; gap: 10px; align-items: center;
     background: rgba(15,17,23,.9);
     border: 1px solid var(--border);
     border-radius: 6px; padding: 6px 12px;
-    font-size: 10px; color: var(--text-muted);
-    z-index: 500;
+    font-size: 10px; color: var(--text-muted); z-index: 500;
+    transition: background .25s;
   }
+  body.light .map-legend { background: rgba(255,255,255,.9); }
   .legend-item { display: flex; align-items: center; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-  /* 지도 필터 상태 */
   .map-filter-bar {
     padding: 8px 16px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border);
+    background: var(--bg-secondary); border-top: 1px solid var(--border);
     display: flex; align-items: center; gap: 8px;
     font-size: 11px; color: var(--text-muted);
-    min-height: 36px;
-    z-index: 10;
+    min-height: 36px; z-index: 10;
+    transition: background .25s, border-color .25s;
   }
   .filter-chip {
     display: flex; align-items: center; gap: 4px;
     padding: 2px 8px; border-radius: 10px;
     background: var(--accent-blue); color: #fff;
-    font-size: 10px; font-weight: 500;
-    cursor: pointer;
+    font-size: 10px; font-weight: 500; cursor: pointer;
   }
   .filter-chip i { font-size: 9px; }
 
-  /* Leaflet 커스텀 팝업 */
+  /* Leaflet 팝업 */
   .leaflet-popup-content-wrapper {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
@@ -276,9 +433,7 @@
     box-shadow: 0 8px 24px rgba(0,0,0,.6) !important;
     color: var(--text-primary) !important;
   }
-  .leaflet-popup-tip {
-    background: var(--bg-card) !important;
-  }
+  .leaflet-popup-tip { background: var(--bg-card) !important; }
   .leaflet-popup-content {
     margin: 10px 14px !important;
     font-family: 'Pretendard', -apple-system, sans-serif !important;
@@ -289,41 +444,37 @@
   .lf-popup-cats { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 
   /* Leaflet 줌 컨트롤 */
-  .leaflet-control-zoom {
-    border: 1px solid var(--border) !important;
-    border-radius: 6px !important;
-  }
+  .leaflet-control-zoom { border: 1px solid var(--border) !important; border-radius: 6px !important; }
   .leaflet-control-zoom a {
     background: var(--bg-card) !important;
     color: var(--text-secondary) !important;
     border-bottom: 1px solid var(--border) !important;
   }
-  .leaflet-control-zoom a:hover {
-    background: var(--bg-hover) !important;
-    color: var(--text-primary) !important;
+  .leaflet-control-zoom a:hover { background: var(--bg-hover) !important; color: var(--text-primary) !important; }
+
+  /* Leaflet attribution */
+  .leaflet-control-attribution {
+    background: rgba(15,17,23,.7) !important;
+    color: var(--text-muted) !important; font-size: 9px !important;
   }
+  .leaflet-control-attribution a { color: var(--text-muted) !important; }
+  body.light .leaflet-control-attribution { background: rgba(255,255,255,.8) !important; }
 
   /* ── Right Panel ── */
   .right-panel {
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border);
+    background: var(--bg-secondary); border-left: 1px solid var(--border);
     display: flex; flex-direction: column;
-    overflow: hidden;
-    z-index: 10;
+    overflow: hidden; z-index: 10;
+    transition: background .25s, border-color .25s;
   }
   .right-scroll { flex: 1; overflow-y: auto; padding: 10px; }
   .right-scroll::-webkit-scrollbar { width: 4px; }
   .right-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* 카테고리 카드 */
   .cat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: all .2s;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 8px; cursor: pointer; transition: all .2s;
   }
   .cat-card:hover { border-color: var(--accent-blue); background: var(--bg-hover); }
   .cat-card.active { border-color: var(--accent-blue); background: rgba(79,142,247,.08); }
@@ -336,15 +487,10 @@
     display: flex; align-items: center; gap: 6px;
   }
   .cat-icon { font-size: 13px; }
-  .cat-count {
-    font-size: 18px; font-weight: 700; color: var(--accent-blue);
-    line-height: 1;
-  }
+  .cat-count { font-size: 18px; font-weight: 700; color: var(--accent-blue); line-height: 1; }
   .cat-risk-bar {
-    height: 3px; border-radius: 2px;
-    background: var(--border);
-    margin: 6px 0 4px;
-    overflow: hidden;
+    height: 3px; border-radius: 2px; background: var(--border);
+    margin: 6px 0 4px; overflow: hidden;
   }
   .cat-risk-fill {
     height: 100%; border-radius: 2px;
@@ -353,8 +499,7 @@
   }
   .cat-top-title {
     font-size: 10px; color: var(--text-muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    line-height: 1.4;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
   }
   .cat-top-risk {
     display: inline-block; font-size: 9px; font-weight: 600;
@@ -364,17 +509,13 @@
   /* ── Bottom Articles ── */
   .bottom-panel {
     grid-column: 1 / -1;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border);
-    max-height: 240px;
-    display: flex; flex-direction: column;
-    z-index: 10;
+    background: var(--bg-secondary); border-top: 1px solid var(--border);
+    max-height: 240px; display: flex; flex-direction: column; z-index: 10;
+    transition: background .25s, border-color .25s;
   }
   .bottom-header {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    flex-shrink: 0;
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
   }
   .bottom-title {
     font-size: 12px; font-weight: 600; color: var(--text-secondary);
@@ -395,20 +536,13 @@
   .articles-scroll::-webkit-scrollbar-track { background: transparent; }
   .articles-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* 기사 카드 */
   .article-card {
-    flex-shrink: 0;
-    width: 240px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    cursor: pointer;
-    transition: all .2s;
-    scroll-snap-align: start;
+    flex-shrink: 0; width: 240px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; cursor: pointer;
+    transition: all .2s; scroll-snap-align: start;
     display: flex; flex-direction: column; gap: 5px;
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
   .article-card:hover { border-color: var(--accent-blue); transform: translateY(-1px); }
   .article-card::before {
@@ -416,249 +550,156 @@
     width: 3px; height: 100%; border-radius: 2px 0 0 2px;
   }
   .article-card.risk-vh::before { background: #ef4444; }
-  .article-card.risk-h::before { background: var(--accent-orange); }
-  .article-card.risk-m::before { background: var(--accent-yellow); }
-  .article-card.risk-l::before { background: var(--accent-green); }
+  .article-card.risk-h::before  { background: var(--accent-orange); }
+  .article-card.risk-m::before  { background: var(--accent-yellow); }
+  .article-card.risk-l::before  { background: var(--accent-green); }
 
-  .article-meta {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 9px; color: var(--text-muted);
-  }
+  .article-meta { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--text-muted); }
   .risk-badge {
     display: inline-flex; align-items: center;
     padding: 1px 5px; border-radius: 3px;
-    font-size: 9px; font-weight: 700;
-    text-transform: uppercase;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
   }
   .risk-badge.vh { background: rgba(239,68,68,.15); color: #f87171; }
-  .risk-badge.h  { background: rgba(251,146,60,.15); color: #fb923c; }
-  .risk-badge.m  { background: rgba(251,191,36,.15); color: #fbbf24; }
-  .risk-badge.l  { background: rgba(52,211,153,.15); color: #34d399; }
+  .risk-badge.h  { background: rgba(251,146,60,.15);  color: #fb923c; }
+  .risk-badge.m  { background: rgba(251,191,36,.15);  color: #fbbf24; }
+  .risk-badge.l  { background: rgba(52,211,153,.15);  color: #34d399; }
 
   .article-title {
-    font-size: 12px; font-weight: 600; color: var(--text-primary);
-    line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
+    font-size: 12px; font-weight: 600; color: var(--text-primary); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
   .article-summary {
-    font-size: 10px; color: var(--text-muted);
-    line-height: 1.6;
-    display: -webkit-box; -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
+    font-size: 10px; color: var(--text-muted); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .article-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: auto;
-  }
+  .article-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
   .article-cat-tag {
     font-size: 9px; color: var(--accent-teal);
     background: rgba(45,212,191,.1); padding: 1px 6px; border-radius: 3px;
   }
   .article-date { font-size: 9px; color: var(--text-muted); }
 
-  /* ── Stats strip ── */
-  .stats-strip {
-    display: flex; align-items: center; gap: 6px;
-    padding: 0 16px;
-  }
-  .stat-pill {
-    display: flex; align-items: center; gap: 4px;
-    padding: 3px 8px; border-radius: 4px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    font-size: 10px; color: var(--text-muted);
-  }
-  .stat-pill b { color: var(--text-primary); font-weight: 600; }
-
-  /* ── Loading / Empty ── */
+  /* Loading */
   .loading-overlay {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
     background: var(--bg-primary);
-    flex-direction: column; gap: 12px;
-    z-index: 50;
+    flex-direction: column; gap: 12px; z-index: 50;
   }
   .spin {
     width: 32px; height: 32px; border-radius: 50%;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent-blue);
+    border: 3px solid var(--border); border-top-color: var(--accent-blue);
     animation: spin .8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Scrollbar global ── */
+  /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  /* ── No data ── */
   .no-data {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; padding: 30px;
     color: var(--text-muted); gap: 8px; font-size: 12px;
   }
   .no-data i { font-size: 28px; opacity: .3; }
-
-  /* Leaflet 기본 attribution 숨김 처리 */
-  .leaflet-control-attribution {
-    background: rgba(15,17,23,.7) !important;
-    color: var(--text-muted) !important;
-    font-size: 9px !important;
-  }
-  .leaflet-control-attribution a { color: var(--text-muted) !important; }
-
-  /* ── 라이트모드 오버라이드 (다크 기본, light는 html에 dark 없을 때) ── */
-  html:not(.dark) body {
-    background: #f1f5f9;
-    color: #1e293b;
-  }
-  html:not(.dark) .period-bar,
-  html:not(.dark) .left-panel,
-  html:not(.dark) .right-panel,
-  html:not(.dark) .bottom-panel,
-  html:not(.dark) .map-filter-bar {
-    background: #fff;
-    border-color: #e2e8f0;
-    color: #1e293b;
-  }
-  html:not(.dark) .panel-title { color: #64748b; }
-  html:not(.dark) .panel-title i { color: #0033A0; }
-  html:not(.dark) .briefing-scroll { color: #334155; }
-  html:not(.dark) .cat-card { background: #f8fafc; border-color: #e2e8f0; }
-  html:not(.dark) .cat-card:hover { background: #eff6ff; border-color: #93c5fd; }
-  html:not(.dark) .cat-card.active { background: #eff6ff; border-color: #3b82f6; }
-  html:not(.dark) .cat-name { color: #1e293b; }
-  html:not(.dark) .cat-top-title { color: #64748b; }
-  html:not(.dark) .article-card { background: #fff; border-color: #e2e8f0; }
-  html:not(.dark) .article-card:hover { border-color: #3b82f6; }
-  html:not(.dark) .article-title { color: #1e293b; }
-  html:not(.dark) .article-summary { color: #64748b; }
-  html:not(.dark) .period-tab { color: #64748b; }
-  html:not(.dark) .period-tab:hover { color: #1e293b; background: #f1f5f9; }
-  html:not(.dark) .cat-tab { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
-  html:not(.dark) .cat-tab:hover { color: #1e293b; }
-  html:not(.dark) .stat-pill { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
-  html:not(.dark) .stat-pill b { color: #1e293b; }
-  html:not(.dark) .map-legend { background: rgba(255,255,255,.92); border-color: #e2e8f0; }
-  html:not(.dark) .update-badge { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
-  html:not(.dark) .briefing-text { color: #334155; }
-  html:not(.dark) .briefing-meta { color: #94a3b8; }
-  html:not(.dark) .center-panel { background: #e2e8f0; }
-  html:not(.dark) .loading-overlay { background: #f1f5f9; }
-  html:not(.dark) #leafletMap { background: #dbeafe; }
-  html:not(.dark) .leaflet-tile { filter: none !important; }
-  html:not(.dark) .bottom-title { color: #64748b; }
-  html:not(.dark) .article-count-badge { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
-  html:not(.dark) .leaflet-control-zoom a {
-    background: #fff !important; color: #1e293b !important;
-    border-color: #e2e8f0 !important;
-  }
-  html:not(.dark) .leaflet-popup-content-wrapper {
-    background: #fff !important; border-color: #e2e8f0 !important;
-  }
-  html:not(.dark) .lf-popup-name { color: #1e293b; }
-  html:not(.dark) .lf-popup-cats { color: #64748b; }
-  /* 드로어 라이트 모드 경계선 */
-  html:not(.dark) #dash-drawer { border-right: 1px solid #e2e8f0; }
 </style>
 </head>
 <body>
 
-<!-- ============================================================
-     News Hub 동일 헤더
-============================================================ -->
-<header class="bg-[#0033A0] text-white sticky top-0 z-[1000] px-4 h-14 flex items-center justify-between shadow-xl">
-  <div class="flex items-center gap-4">
+<!-- ══════════════════════════════════════════
+     Header
+══════════════════════════════════════════ -->
+<header class="dash-header">
+  <div class="header-left">
     <!-- 햄버거 버튼 -->
-    <button id="dash-menu-btn" onclick="toggleDashDrawer()" aria-label="메뉴 열기" class="p-1 hover:bg-white/10 rounded-md transition-all">
-      <i data-lucide="menu" class="w-5 h-5"></i>
+    <button class="hamburger-btn" onclick="openDrawer()" aria-label="메뉴">
+      <i class="fas fa-bars"></i>
     </button>
     <!-- 로고 -->
-    <a href="index.html" class="flex items-center gap-3 cursor-pointer">
-      <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
-      <h1 class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap hidden sm:block">Purchase Intelligence</h1>
+    <a href="index.html" class="logo-wrap">
+      <div class="logo-box">DA</div>
+      <span class="logo-title">Intelligence Dashboard</span>
     </a>
-    <!-- 데스크탑 네비 -->
-    <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap">
-      <a href="index.html" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">전략 시황</a>
-      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">원자재</a>
-      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">거시/정책</a>
-      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">생산지역</a>
-      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
-      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
-      <a href="wiki/index.html" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">WIKI</a>
-      <span class="text-white border-b-2 border-white py-1 uppercase">DASHBOARD</span>
-    </nav>
   </div>
 
-  <!-- 중앙 통계 -->
-  <div class="flex-1 flex justify-center px-4">
+  <div class="header-right">
+    <!-- 통계 -->
     <div class="stats-strip" id="headerStats"></div>
-  </div>
-
-  <!-- 우측 버튼 -->
-  <div class="flex items-center gap-2">
-    <a href="index.html"
-      class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
-      <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
-      <span class="hidden sm:inline">NEWS HUB</span>
+    <!-- News Hub 이동 -->
+    <a href="index.html" class="back-btn">
+      <i class="fas fa-newspaper"></i> News Hub
     </a>
-    <button onclick="toggleDashDark()"
-      class="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">
-      <i data-lucide="moon" id="dashThemeIcon" class="w-4 h-4"></i>
+    <!-- 다크/라이트 토글 -->
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="테마 변경">
+      🌙
     </button>
   </div>
 </header>
 
-<!-- 드로어 오버레이 -->
-<div id="dash-drawer-overlay" onclick="closeDashDrawer()"></div>
+<!-- ══════════════════════════════════════════
+     햄버거 드로어
+══════════════════════════════════════════ -->
+<div id="drawerOverlay" onclick="closeDrawer()"></div>
 
-<!-- 드로어 패널 -->
-<div id="dash-drawer">
+<div id="sideDrawer">
   <!-- 드로어 헤더 -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div style="background:#0033A0;color:white;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900;text-transform:uppercase;">DA</div>
-      <span style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;">Purchase Intelligence</span>
+  <div class="drawer-head">
+    <div class="drawer-logo">
+      <div class="drawer-logo-box">DA</div>
+      <span class="drawer-logo-title">Purchase Intelligence</span>
     </div>
-    <button onclick="closeDashDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;font-size:18px;">✕</button>
+    <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
   </div>
 
-  <!-- 섹션: 페이지 이동 -->
-  <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;">NAVIGATE</div>
-  <nav style="display:flex;flex-direction:column;">
-    <a href="index.html" class="dash-drawer-nav-item">
-      <span class="dash-drawer-icon">📰</span><span>News Hub</span>
-    </a>
-    <a href="dashboard_mod.html" class="dash-drawer-nav-item active">
-      <span class="dash-drawer-icon">📊</span><span>Dashboard</span>
-      <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;margin-left:auto;">현재</span>
-    </a>
-    <a href="wiki/index.html" class="dash-drawer-nav-item">
-      <span class="dash-drawer-icon">📖</span><span>Product Wiki</span>
-    </a>
-  </nav>
+  <!-- 페이지 이동 -->
+  <div class="drawer-section-label">Navigate</div>
+  <a href="index.html" class="drawer-nav-item">
+    <span class="drawer-nav-icon">📰</span>
+    News Hub
+  </a>
+  <a href="dashboard_mod.html" class="drawer-nav-item active">
+    <span class="drawer-nav-icon">📊</span>
+    Dashboard
+    <span class="drawer-badge">현재</span>
+  </a>
+  <a href="wiki/index.html" class="drawer-nav-item">
+    <span class="drawer-nav-icon">📖</span>
+    Product Wiki
+  </a>
 
-  <!-- 섹션: 기간 필터 -->
-  <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin:16px 0 6px;">PERIOD</div>
-  <nav style="display:flex;flex-direction:column;gap:2px;">
-    <a href="#" onclick="setPeriodDrawer('thisWeek')" id="drawer-period-thisWeek" class="dash-drawer-nav-item active" style="font-size:12px;">이번 주</a>
-    <a href="#" onclick="setPeriodDrawer('lastWeek')" id="drawer-period-lastWeek" class="dash-drawer-nav-item" style="font-size:12px;">지난 주</a>
-    <a href="#" onclick="setPeriodDrawer('thisMonth')" id="drawer-period-thisMonth" class="dash-drawer-nav-item" style="font-size:12px;">이번 달</a>
-    <a href="#" onclick="setPeriodDrawer('lastMonth')" id="drawer-period-lastMonth" class="dash-drawer-nav-item" style="font-size:12px;">지난 달</a>
-  </nav>
+  <div class="drawer-divider"></div>
 
-  <!-- 섹션: 다크모드 토글 -->
-  <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
-    <button onclick="toggleDashDark()" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;border:none;background:#f1f5f9;color:#1e293b;font-size:13px;font-weight:700;cursor:pointer;">
-      <span id="drawerDarkIcon" style="font-size:16px;">🌙</span>
-      <span id="drawerDarkLabel">다크 모드 켜기</span>
+  <!-- 기간 선택 -->
+  <div class="drawer-section-label">Period</div>
+  <button class="drawer-nav-item active" id="dp-thisWeek"  onclick="setPeriodFromDrawer('thisWeek')">
+    <span class="drawer-nav-icon">📅</span> 이번 주
+  </button>
+  <button class="drawer-nav-item" id="dp-lastWeek"  onclick="setPeriodFromDrawer('lastWeek')">
+    <span class="drawer-nav-icon">📅</span> 지난 주
+  </button>
+  <button class="drawer-nav-item" id="dp-thisMonth" onclick="setPeriodFromDrawer('thisMonth')">
+    <span class="drawer-nav-icon">📅</span> 이번 달
+  </button>
+  <button class="drawer-nav-item" id="dp-lastMonth" onclick="setPeriodFromDrawer('lastMonth')">
+    <span class="drawer-nav-icon">📅</span> 지난 달
+  </button>
+
+  <div class="drawer-divider"></div>
+
+  <!-- 테마 토글 -->
+  <div style="padding: 0 8px 16px;">
+    <button class="drawer-theme-btn" onclick="toggleTheme()" id="drawerThemeBtn">
+      <span id="drawerThemeIcon" style="font-size:16px;">🌙</span>
+      <span id="drawerThemeLabel">라이트 모드로 전환</span>
     </button>
   </div>
 </div>
 
 <!-- Period Tabs -->
-<div class="period-bar" style="z-index:100;position:relative;">
+<div class="period-bar">
   <button class="period-tab active" onclick="setPeriod('thisWeek',this)">이번 주</button>
   <button class="period-tab" onclick="setPeriod('lastWeek',this)">지난 주</button>
   <button class="period-tab" onclick="setPeriod('thisMonth',this)">이번 달</button>
@@ -677,7 +718,6 @@
       </div>
       <div id="briefingStatus" style="font-size:10px;color:var(--text-muted)"></div>
     </div>
-    <!-- 카테고리 탭 -->
     <div class="briefing-cats" id="briefingCats">
       <button class="cat-tab active" data-cat="all" onclick="setBriefingCat('all',this)">종합</button>
       <button class="cat-tab" data-cat="원자재" onclick="setBriefingCat('원자재',this)">원자재</button>
@@ -706,7 +746,6 @@
     </div>
     <div class="map-container" id="mapContainer">
       <div id="leafletMap"></div>
-      <!-- 지도 범례 -->
       <div class="map-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Very High</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--accent-orange)"></div> High</div>
@@ -755,21 +794,89 @@
 <script src="assets/js/config.js"></script>
 <script>
 // ════════════════════════════════════════════════
-// DA Intelligence Dashboard v3.0
-// Leaflet.js 평면 세계지도 + AI 브리핑 + 카테고리 패널
+// DA Intelligence Dashboard v3.1
+// Leaflet 평면지도 + 햄버거 드로어 + 다크/라이트 토글
 // ════════════════════════════════════════════════
 
-// ── 상태 ──
+// ── 테마 (기본: 다크) ──────────────────────────
+let _isLight = false; // 기본 다크모드
+
+function toggleTheme() {
+  _isLight = !_isLight;
+  _applyTheme();
+  localStorage.setItem('da_dash_theme', _isLight ? 'light' : 'dark');
+}
+
+function _applyTheme() {
+  if (_isLight) {
+    document.body.classList.add('light');
+  } else {
+    document.body.classList.remove('light');
+  }
+  // 헤더 버튼 아이콘
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = _isLight ? '🌙' : '☀️';
+  // 드로어 버튼
+  const dIcon  = document.getElementById('drawerThemeIcon');
+  const dLabel = document.getElementById('drawerThemeLabel');
+  if (dIcon)  dIcon.textContent  = _isLight ? '🌙' : '☀️';
+  if (dLabel) dLabel.textContent = _isLight ? '다크 모드로 전환' : '라이트 모드로 전환';
+  // Leaflet 타일 필터 (CSS 변수는 자동 반영)
+  if (leafletMap) {
+    document.querySelectorAll('.leaflet-tile').forEach(t => {
+      t.style.filter = _isLight
+        ? 'brightness(1) saturate(1) hue-rotate(0deg)'
+        : 'brightness(0.45) saturate(0.5) hue-rotate(190deg)';
+    });
+  }
+}
+
+// ── 드로어 ──────────────────────────────────────
+function openDrawer() {
+  document.getElementById('sideDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('sideDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+function setPeriodFromDrawer(p) {
+  // period-tab 버튼 동기화
+  const tabMap = { thisWeek:'이번 주', lastWeek:'지난 주', thisMonth:'이번 달', lastMonth:'지난 달' };
+  document.querySelectorAll('.period-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.trim() === tabMap[p]);
+  });
+  // 드로어 항목 활성화
+  ['thisWeek','lastWeek','thisMonth','lastMonth'].forEach(k => {
+    const el = document.getElementById('dp-' + k);
+    if (el) el.classList.toggle('active', k === p);
+  });
+  currentPeriod = p;
+  selectedRegion = null; selectedCat = null;
+  updateFilterBar();
+  renderAll();
+  closeDrawer();
+}
+
+function _syncDrawerPeriod(p) {
+  ['thisWeek','lastWeek','thisMonth','lastMonth'].forEach(k => {
+    const el = document.getElementById('dp-' + k);
+    if (el) el.classList.toggle('active', k === p);
+  });
+}
+
+// ── 상태 ────────────────────────────────────────
 let allNews = [];
 let intelData = null;
 let currentPeriod = 'thisWeek';
 let currentBriefingCat = 'all';
-let selectedRegion = null;   // 국가 코드 (예: 'KR', 'US')
+let selectedRegion = null;
 let selectedCat = null;
 let leafletMap = null;
 let markersLayer = null;
 
-// ── 기간 날짜 계산 ──
+// ── 기간 계산 ────────────────────────────────────
 function getPeriodRange(period) {
   const now = new Date();
   const dow = now.getDay();
@@ -779,13 +886,12 @@ function getPeriodRange(period) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-  const map = {
-    thisWeek:  { start: startOfWeek,     end: now,           label: '이번 주' },
-    lastWeek:  { start: startOfLastWeek, end: endOfLastWeek, label: '지난 주' },
-    thisMonth: { start: startOfMonth,    end: now,           label: '이번 달' },
-    lastMonth: { start: startOfLastMonth,end: endOfLastMonth,label: '지난 달' },
-  };
-  return map[period];
+  return {
+    thisWeek:  { start: startOfWeek,      end: now,            label: '이번 주' },
+    lastWeek:  { start: startOfLastWeek,  end: endOfLastWeek,  label: '지난 주' },
+    thisMonth: { start: startOfMonth,     end: now,            label: '이번 달' },
+    lastMonth: { start: startOfLastMonth, end: endOfLastMonth, label: '지난 달' },
+  }[period];
 }
 
 function parseDate(d) {
@@ -800,15 +906,9 @@ function filterByPeriod(news, period) {
   return news.filter(n => { const d = parseDate(n.Date); return d >= start && d <= end; });
 }
 
-// ── 카테고리 정규화 ──
-const CAT_ICON = {
-  '원자재': '⛏️', '거시경제': '📊', '생산지역': '🏭',
-  '경쟁사': '🏢', '신기술동향': '💡', '신기술': '💡', 'AI기술': '🤖', '기타': '📌'
-};
-const CAT_COLOR = {
-  '원자재': '#fb923c', '거시경제': '#4f8ef7', '생산지역': '#34d399',
-  '경쟁사': '#f87171', '신기술동향': '#a78bfa', '신기술': '#a78bfa', 'AI기술': '#2dd4bf'
-};
+// ── 카테고리 ────────────────────────────────────
+const CAT_ICON = { '원자재':'⛏️','거시경제':'📊','생산지역':'🏭','경쟁사':'🏢','신기술동향':'💡','신기술':'💡','AI기술':'🤖','기타':'📌' };
+const CAT_COLOR = { '원자재':'#fb923c','거시경제':'#4f8ef7','생산지역':'#34d399','경쟁사':'#f87171','신기술동향':'#a78bfa','신기술':'#a78bfa','AI기술':'#2dd4bf' };
 const CAT_MAIN = ['원자재','거시경제','생산지역','경쟁사','신기술동향'];
 
 function normalizeCat(raw) {
@@ -819,68 +919,55 @@ function normalizeCat(raw) {
   return '기타';
 }
 
-// ── 리스크 ──
-const RISK_SCORE = { 'Very High': 4, 'High': 3, 'Med': 2, 'Low': 1 };
+// ── 리스크 ──────────────────────────────────────
+const RISK_SCORE = { 'Very High':4, 'High':3, 'Med':2, 'Low':1 };
 function riskClass(r) {
   if (!r) return 'l';
   const s = r.toLowerCase().replace(' ','');
-  if (s === 'veryhigh') return 'vh';
-  if (s === 'high') return 'h';
-  if (s === 'med') return 'm';
-  return 'l';
+  if (s==='veryhigh') return 'vh'; if (s==='high') return 'h'; if (s==='med') return 'm'; return 'l';
 }
 function riskColor(r) {
-  const c = { vh:'#ef4444', h:'#fb923c', m:'#fbbf24', l:'#34d399' };
-  return c[riskClass(r)] || '#64748b';
+  return ({ vh:'#ef4444', h:'#fb923c', m:'#fbbf24', l:'#34d399' })[riskClass(r)] || '#64748b';
 }
 
-// ── 지역 → 좌표 & 국가 코드 ──
+// ── 지역 좌표 ────────────────────────────────────
 const REGION_COORDS = {
-  'South Korea': { lat: 36.5, lng: 127.5, code: 'KR', name: '한국' },
-  'Korea':       { lat: 36.5, lng: 127.5, code: 'KR', name: '한국' },
-  'USA':         { lat: 38.0, lng: -97.0, code: 'US', name: '미국' },
-  'United States': { lat: 38.0, lng: -97.0, code: 'US', name: '미국' },
-  'China':       { lat: 35.0, lng: 105.0, code: 'CN', name: '중국' },
-  'Japan':       { lat: 36.0, lng: 138.0, code: 'JP', name: '일본' },
-  'Vietnam':     { lat: 16.0, lng: 107.0, code: 'VN', name: '베트남' },
-  'Poland':      { lat: 52.0, lng: 20.0,  code: 'PL', name: '폴란드' },
-  'Mexico':      { lat: 23.0, lng: -102.0,code: 'MX', name: '멕시코' },
-  'India':       { lat: 20.0, lng: 78.0,  code: 'IN', name: '인도' },
-  'Brazil':      { lat: -14.0, lng: -51.0,code: 'BR', name: '브라질' },
-  'Egypt':       { lat: 26.0, lng: 30.0,  code: 'EG', name: '이집트' },
-  'EU':          { lat: 50.0, lng: 15.0,  code: 'EU', name: 'EU' },
-  'SE Asia':     { lat: 5.0,  lng: 115.0, code: 'SEA',name: '동남아' },
-  'Global':      { lat: 20.0, lng: 0.0,   code: 'GL', name: '글로벌' },
-  'Asia-Pacific':{ lat: 30.0, lng: 130.0, code: 'AP', name: '아시아태평양' },
-  'Middle East': { lat: 25.0, lng: 45.0,  code: 'ME', name: '중동' },
-  'MEA':         { lat: 15.0, lng: 30.0,  code: 'MEA',name: 'MEA' },
+  'South Korea': { lat:36.5,  lng:127.5,  code:'KR',  name:'한국' },
+  'Korea':       { lat:36.5,  lng:127.5,  code:'KR',  name:'한국' },
+  'USA':         { lat:38.0,  lng:-97.0,  code:'US',  name:'미국' },
+  'United States':{ lat:38.0, lng:-97.0,  code:'US',  name:'미국' },
+  'China':       { lat:35.0,  lng:105.0,  code:'CN',  name:'중국' },
+  'Japan':       { lat:36.0,  lng:138.0,  code:'JP',  name:'일본' },
+  'Vietnam':     { lat:16.0,  lng:107.0,  code:'VN',  name:'베트남' },
+  'Poland':      { lat:52.0,  lng:20.0,   code:'PL',  name:'폴란드' },
+  'Mexico':      { lat:23.0,  lng:-102.0, code:'MX',  name:'멕시코' },
+  'India':       { lat:20.0,  lng:78.0,   code:'IN',  name:'인도' },
+  'Brazil':      { lat:-14.0, lng:-51.0,  code:'BR',  name:'브라질' },
+  'Egypt':       { lat:26.0,  lng:30.0,   code:'EG',  name:'이집트' },
+  'EU':          { lat:50.0,  lng:15.0,   code:'EU',  name:'EU' },
+  'SE Asia':     { lat:5.0,   lng:115.0,  code:'SEA', name:'동남아' },
+  'Global':      { lat:20.0,  lng:0.0,    code:'GL',  name:'글로벌' },
+  'Asia-Pacific':{ lat:30.0,  lng:130.0,  code:'AP',  name:'아시아태평양' },
+  'Middle East': { lat:25.0,  lng:45.0,   code:'ME',  name:'중동' },
+  'MEA':         { lat:15.0,  lng:30.0,   code:'MEA', name:'MEA' },
 };
 
-// 국가 코드 역매핑 (코드 → 지역명 배열)
 function getRegionsByCode(code) {
-  return Object.entries(REGION_COORDS)
-    .filter(([, v]) => v.code === code)
-    .map(([k]) => k);
+  return Object.entries(REGION_COORDS).filter(([,v]) => v.code === code).map(([k]) => k);
 }
 
-// ── 데이터 로드 ──
+// ── 데이터 로드 ──────────────────────────────────
 async function loadData() {
   try {
     const curKey = _curMonthKey;
     const curRes = await fetch(getNewsUrl(curKey)).then(r => r.json()).catch(() => []);
-
     const now = new Date();
     const prevKey = `${now.getFullYear()}-M${String(now.getMonth()).padStart(2,'0')}`;
-    const prevRes = prevKey !== curKey
-      ? await fetch(getNewsUrl(prevKey)).then(r => r.json()).catch(() => [])
-      : [];
-
+    const prevRes = prevKey !== curKey ? await fetch(getNewsUrl(prevKey)).then(r => r.json()).catch(() => []) : [];
     allNews = [...(Array.isArray(curRes) ? curRes : []), ...(Array.isArray(prevRes) ? prevRes : [])];
     allNews.forEach((n, i) => { n._uid = `n${i}`; });
-
     const intelUrl = 'https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/intel_report.json';
     intelData = await fetch(intelUrl).then(r => r.json()).catch(() => null);
-
     document.getElementById('mapLoading').style.display = 'none';
     renderAll();
   } catch(e) {
@@ -889,7 +976,7 @@ async function loadData() {
   }
 }
 
-// ── 전체 렌더 ──
+// ── 전체 렌더 ────────────────────────────────────
 function renderAll() {
   updatePeriodLabel();
   renderHeaderStats();
@@ -899,23 +986,17 @@ function renderAll() {
   renderArticles();
 }
 
-// ── 기간 라벨 ──
 function updatePeriodLabel() {
   const { start, end, label } = getPeriodRange(currentPeriod);
   const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
   const periodNews = filterByPeriod(allNews, currentPeriod);
-  document.getElementById('periodLabel').textContent =
-    `${label} ${fmt(start)} ~ ${fmt(end)} · ${periodNews.length}건`;
+  document.getElementById('periodLabel').textContent = `${label} ${fmt(start)} ~ ${fmt(end)} · ${periodNews.length}건`;
 }
 
-// ── 헤더 통계 ──
 function renderHeaderStats() {
   const periodNews = filterByPeriod(allNews, currentPeriod);
   let vh=0, h=0;
-  periodNews.forEach(n => {
-    if(n.Risk==='Very High') vh++;
-    else if(n.Risk==='High') h++;
-  });
+  periodNews.forEach(n => { if(n.Risk==='Very High') vh++; else if(n.Risk==='High') h++; });
   document.getElementById('headerStats').innerHTML = `
     <div class="stat-pill"><b style="color:#ef4444">${vh}</b> Very High</div>
     <div class="stat-pill"><b style="color:#fb923c">${h}</b> High</div>
@@ -923,98 +1004,58 @@ function renderHeaderStats() {
   `;
 }
 
-// ── AI 브리핑 ──
 function renderBriefing() {
   const content = document.getElementById('briefingContent');
   const badge = document.getElementById('updateBadge');
   const status = document.getElementById('briefingStatus');
-
   if (!intelData) {
-    content.innerHTML = `<div class="briefing-empty">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>브리핑 데이터가 없습니다</span>
-      <span style="font-size:10px;color:var(--text-muted)">앵커 브리핑 생성 후 GitHub 배포 필요</span>
-    </div>`;
+    content.innerHTML = `<div class="briefing-empty"><i class="fas fa-exclamation-circle"></i><span>브리핑 데이터 없음</span><span style="font-size:10px;color:var(--text-muted)">앵커 브리핑 생성 후 배포 필요</span></div>`;
     return;
   }
-
   badge.style.display = 'flex';
   document.getElementById('updateTime').textContent = '업데이트: ' + (intelData.last_updated || '-');
-
-  const scripts = intelData.scripts || {};
-  const periodScripts = scripts[currentPeriod] || {};
-  const script = periodScripts[currentBriefingCat];
-
+  const script = (intelData.scripts || {})[currentPeriod]?.[currentBriefingCat];
   if (!script) {
-    content.innerHTML = `<div class="briefing-empty">
-      <i class="fas fa-file-alt"></i>
-      <span>해당 기간/카테고리 브리핑 없음</span>
-      <span style="font-size:10px;color:var(--text-muted)">앵커 브리핑 재생성 후 배포하세요</span>
-    </div>`;
-    status.textContent = '없음';
-    return;
+    content.innerHTML = `<div class="briefing-empty"><i class="fas fa-file-alt"></i><span>해당 기간/카테고리 브리핑 없음</span></div>`;
+    status.textContent = '없음'; return;
   }
-
   status.textContent = '✓';
-  const clean = script
-    .replace(/\[[\d,\s]+\]/g, '')
-    .replace(/\*\*/g, '')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
-
+  const clean = script.replace(/\[[\d,\s]+\]/g,'').replace(/\*\*/g,'').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  const periodLabel = { thisWeek:'이번 주', lastWeek:'지난 주', thisMonth:'이번 달', lastMonth:'지난 달' }[currentPeriod];
   content.innerHTML = `
-    <div class="briefing-meta">
-      <div class="dot"></div>
-      ${currentPeriod === 'thisWeek' ? '이번 주' : currentPeriod === 'lastWeek' ? '지난 주' : currentPeriod === 'thisMonth' ? '이번 달' : '지난 달'}
-      ·
-      ${currentBriefingCat === 'all' ? '종합' : currentBriefingCat}
-    </div>
-    <div class="briefing-text">${clean}</div>
-  `;
+    <div class="briefing-meta"><div class="dot"></div>${periodLabel} · ${currentBriefingCat === 'all' ? '종합' : currentBriefingCat}</div>
+    <div class="briefing-text">${clean}</div>`;
 }
 
-// ── Leaflet 지도 초기화 ──
+// ── Leaflet 지도 ─────────────────────────────────
 function initLeafletMap() {
   if (leafletMap) return;
-
-  leafletMap = L.map('leafletMap', {
-    center: [25, 10],
-    zoom: 2,
-    minZoom: 1,
-    maxZoom: 8,
-    zoomControl: true,
-    attributionControl: true,
-    worldCopyJump: false,
-  });
-
-  // OpenStreetMap 타일 (다크 필터 CSS 적용)
+  leafletMap = L.map('leafletMap', { center:[25,10], zoom:2, minZoom:1, maxZoom:8, worldCopyJump:false });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    subdomains: 'abc',
-    maxZoom: 19,
+    subdomains: 'abc', maxZoom: 19,
   }).addTo(leafletMap);
-
   markersLayer = L.layerGroup().addTo(leafletMap);
+  // 타일 로드 후 테마 필터 적용
+  leafletMap.on('tileload', () => {
+    document.querySelectorAll('.leaflet-tile').forEach(t => {
+      t.style.filter = _isLight
+        ? 'brightness(1) saturate(1) hue-rotate(0deg)'
+        : 'brightness(0.45) saturate(0.5) hue-rotate(190deg)';
+    });
+  });
 }
 
-// ── 마커 렌더 ──
 function renderMapMarkers() {
   if (!leafletMap) initLeafletMap();
   markersLayer.clearLayers();
-
   const periodNews = filterByPeriod(allNews, currentPeriod);
-
-  // 지역별 집계
   const regionData = {};
   periodNews.forEach(n => {
-    const r = String(n.Region || n.Region_en || '');
-    r.split(',').map(x => x.trim()).forEach(region => {
-      const info = REGION_COORDS[region];
-      if (!info) return;
+    String(n.Region || n.Region_en || '').split(',').map(x => x.trim()).forEach(region => {
+      const info = REGION_COORDS[region]; if (!info) return;
       const key = info.code;
-      if (!regionData[key]) {
-        regionData[key] = { count: 0, risks: [], cats: [], name: info.name, lat: info.lat, lng: info.lng, regions: [] };
-      }
+      if (!regionData[key]) regionData[key] = { count:0, risks:[], cats:[], name:info.name, lat:info.lat, lng:info.lng, regions:[] };
       regionData[key].count++;
       if (n.Risk) regionData[key].risks.push(n.Risk);
       const cat = normalizeCat(n.Category);
@@ -1022,184 +1063,101 @@ function renderMapMarkers() {
       if (!regionData[key].regions.includes(region)) regionData[key].regions.push(region);
     });
   });
-
   window._regionData = regionData;
 
-  // 마커 생성
   Object.entries(regionData).forEach(([code, d]) => {
-    const maxRisk = d.risks.reduce((a, b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
+    const maxRisk = d.risks.reduce((a,b) => (RISK_SCORE[b]||0) > (RISK_SCORE[a]||0) ? b : a, 'Low');
     const color = riskColor(maxRisk);
     const isSelected = selectedRegion === code;
-
-    // 버블 크기
     const radius = Math.min(8 + d.count * 2.5, 40);
 
-    const circleMarker = L.circleMarker([d.lat, d.lng], {
-      radius: radius,
-      fillColor: color,
+    const cm = L.circleMarker([d.lat, d.lng], {
+      radius, fillColor: color,
       color: isSelected ? '#fff' : color,
-      weight: isSelected ? 3 : 1.5,
-      opacity: 1,
+      weight: isSelected ? 3 : 1.5, opacity: 1,
       fillOpacity: isSelected ? 0.85 : 0.55,
     });
-
-    // 팝업
-    const riskLabel = { vh: 'Very High', h: 'High', m: 'Med', l: 'Low' };
-    const rc = riskClass(maxRisk);
-    circleMarker.bindPopup(`
+    cm.bindPopup(`
       <div class="lf-popup-name">${d.name}</div>
       <div class="lf-popup-count">${d.count}건</div>
       <div class="lf-popup-risk">최고 리스크: <b style="color:${color}">${maxRisk}</b></div>
       <div class="lf-popup-cats">${d.cats.join(', ')}</div>
-    `, { closeButton: false, offset: [0, -5] });
+    `, { closeButton:false, offset:[0,-5] });
+    cm.on('click', () => toggleRegion(code));
+    cm.on('mouseover', function(){ this.openPopup(); });
+    cm.on('mouseout',  function(){ this.closePopup(); });
+    markersLayer.addLayer(cm);
 
-    circleMarker.on('click', () => {
-      toggleRegion(code);
-    });
-
-    circleMarker.on('mouseover', function() { this.openPopup(); });
-    circleMarker.on('mouseout', function() { this.closePopup(); });
-
-    markersLayer.addLayer(circleMarker);
-
-    // 카운트 레이블 (5건 이상)
     if (d.count >= 3) {
       const icon = L.divIcon({
-        html: `<div style="
-          background:transparent;
-          color:#fff;
-          font-size:${d.count >= 10 ? '10' : '9'}px;
-          font-weight:700;
-          text-align:center;
-          line-height:${radius*2}px;
-          width:${radius*2}px;
-          height:${radius*2}px;
-          margin-left:-${radius}px;
-          margin-top:-${radius}px;
-          pointer-events:none;
-          text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        ">${d.count}</div>`,
-        className: '',
-        iconSize: [radius*2, radius*2],
-        iconAnchor: [radius, radius],
+        html: `<div style="background:transparent;color:#fff;font-size:${d.count>=10?'10':'9'}px;font-weight:700;text-align:center;line-height:${radius*2}px;width:${radius*2}px;height:${radius*2}px;margin-left:-${radius}px;margin-top:-${radius}px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.8);">${d.count}</div>`,
+        className:'', iconSize:[radius*2,radius*2], iconAnchor:[radius,radius],
       });
-      const labelMarker = L.marker([d.lat, d.lng], { icon, interactive: false });
-      markersLayer.addLayer(labelMarker);
+      markersLayer.addLayer(L.marker([d.lat, d.lng], { icon, interactive:false }));
     }
   });
 }
 
-// ── 지역 선택/해제 ──
 function toggleRegion(code) {
-  if (selectedRegion === code) {
-    selectedRegion = null;
-  } else {
-    selectedRegion = code;
-  }
-  updateFilterBar();
-  renderMapMarkers();
-  renderCategoryCards();
-  renderArticles();
+  selectedRegion = selectedRegion === code ? null : code;
+  updateFilterBar(); renderMapMarkers(); renderCategoryCards(); renderArticles();
 }
-
 function getSelectedRegionLabel() {
-  if (!selectedRegion) return null;
   const d = (window._regionData || {})[selectedRegion];
   return d ? d.name : selectedRegion;
 }
-
 function updateFilterBar() {
   const bar = document.getElementById('filterStatus');
   if (!selectedRegion) {
-    bar.innerHTML = '<span style="color:var(--text-muted)">지도의 국가/마커를 클릭해 필터링하세요</span>';
-    return;
+    bar.innerHTML = '<span style="color:var(--text-muted)">지도의 국가/마커를 클릭해 필터링하세요</span>'; return;
   }
   const name = getSelectedRegionLabel();
   bar.innerHTML = `
-    <div class="filter-chip" onclick="toggleRegion('${selectedRegion}')">
-      <i class="fas fa-times"></i> ${name} 필터 해제
-    </div>
-    <span style="color:var(--text-secondary)">${name} 관련 기사 표시 중</span>
-  `;
+    <div class="filter-chip" onclick="toggleRegion('${selectedRegion}')"><i class="fas fa-times"></i> ${name} 필터 해제</div>
+    <span style="color:var(--text-secondary)">${name} 관련 기사 표시 중</span>`;
 }
 
-// ── 필터된 뉴스 ──
 function getFilteredNews() {
   let news = filterByPeriod(allNews, currentPeriod);
   if (selectedRegion) {
-    const validRegions = getRegionsByCode(selectedRegion);
-    news = news.filter(n => {
-      const r = String(n.Region || n.Region_en || '');
-      return validRegions.some(vr => r.includes(vr));
-    });
+    const vr = getRegionsByCode(selectedRegion);
+    news = news.filter(n => vr.some(r => String(n.Region||n.Region_en||'').includes(r)));
   }
-  if (selectedCat) {
-    news = news.filter(n => normalizeCat(n.Category) === selectedCat);
-  }
+  if (selectedCat) news = news.filter(n => normalizeCat(n.Category) === selectedCat);
   return news;
 }
 
-// ── 카테고리 카드 ──
 function renderCategoryCards() {
-  const periodNews = filterByPeriod(allNews, currentPeriod);
-  let base = periodNews;
+  let base = filterByPeriod(allNews, currentPeriod);
   if (selectedRegion) {
-    const validRegions = getRegionsByCode(selectedRegion);
-    base = base.filter(n => {
-      const r = String(n.Region || n.Region_en || '');
-      return validRegions.some(vr => r.includes(vr));
-    });
+    const vr = getRegionsByCode(selectedRegion);
+    base = base.filter(n => vr.some(r => String(n.Region||n.Region_en||'').includes(r)));
   }
-
   const container = document.getElementById('categoryCards');
-  if (base.length === 0) {
-    container.innerHTML = `<div class="no-data"><i class="fas fa-inbox"></i><span>해당 기간 기사 없음</span></div>`;
-    return;
-  }
-
-  const catGroups = {};
-  CAT_MAIN.forEach(c => catGroups[c] = []);
-  base.forEach(n => {
-    const c = normalizeCat(n.Category);
-    if (catGroups[c]) catGroups[c].push(n);
-  });
-
+  if (base.length === 0) { container.innerHTML = `<div class="no-data"><i class="fas fa-inbox"></i><span>해당 기간 기사 없음</span></div>`; return; }
+  const catGroups = {}; CAT_MAIN.forEach(c => catGroups[c] = []);
+  base.forEach(n => { const c = normalizeCat(n.Category); if (catGroups[c]) catGroups[c].push(n); });
   container.innerHTML = CAT_MAIN.map(cat => {
     const items = catGroups[cat];
     const count = items.length;
     const topItem = items.sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0))[0];
-    const riskRatio = items.length > 0
-      ? items.filter(n => n.Risk === 'Very High' || n.Risk === 'High').length / Math.max(items.length, 1)
-      : 0;
-    const color = CAT_COLOR[cat] || '#64748b';
-    const icon = CAT_ICON[cat] || '📌';
-    const isActive = selectedCat === cat;
-
-    return `<div class="cat-card ${isActive ? 'active' : ''}" onclick="toggleCat('${cat}')">
+    const riskRatio = items.length ? items.filter(n => n.Risk==='Very High'||n.Risk==='High').length / Math.max(items.length,1) : 0;
+    const color = CAT_COLOR[cat]||'#64748b';
+    return `<div class="cat-card ${selectedCat===cat?'active':''}" onclick="toggleCat('${cat}')">
       <div class="cat-card-header">
-        <div class="cat-name">
-          <span class="cat-icon">${icon}</span>
-          ${cat}
-        </div>
+        <div class="cat-name"><span class="cat-icon">${CAT_ICON[cat]||'📌'}</span>${cat}</div>
         <div class="cat-count" style="color:${color}">${count}</div>
       </div>
-      <div class="cat-risk-bar">
-        <div class="cat-risk-fill" style="width:${Math.round(riskRatio*100)}%"></div>
-      </div>
-      <div class="cat-top-title">
-        ${topItem ? `<span class="cat-top-risk" style="background:${riskColor(topItem.Risk)}22;color:${riskColor(topItem.Risk)}">${topItem.Risk||'Low'}</span>${topItem.Title||''}` : '기사 없음'}
-      </div>
+      <div class="cat-risk-bar"><div class="cat-risk-fill" style="width:${Math.round(riskRatio*100)}%"></div></div>
+      <div class="cat-top-title">${topItem?`<span class="cat-top-risk" style="background:${riskColor(topItem.Risk)}22;color:${riskColor(topItem.Risk)}">${topItem.Risk||'Low'}</span>${topItem.Title||''}`:'기사 없음'}</div>
     </div>`;
   }).join('');
 }
 
 function toggleCat(cat) {
   selectedCat = selectedCat === cat ? null : cat;
-  renderCategoryCards();
-  renderArticles();
-  updateActiveFiltersLabel();
+  renderCategoryCards(); renderArticles(); updateActiveFiltersLabel();
 }
-
 function updateActiveFiltersLabel() {
   const parts = [];
   if (selectedRegion) parts.push(getSelectedRegionLabel());
@@ -1207,33 +1165,26 @@ function updateActiveFiltersLabel() {
   document.getElementById('activeFiltersLabel').textContent = parts.length ? `— ${parts.join(' · ')}` : '';
 }
 
-// ── 기사 카드 ──
 function renderArticles() {
   const filtered = getFilteredNews();
-  const sorted = filtered.sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0)).slice(0,30);
+  const sorted = [...filtered].sort((a,b) => (RISK_SCORE[b.Risk]||0) - (RISK_SCORE[a.Risk]||0)).slice(0,30);
   document.getElementById('articleCountBadge').textContent = `${filtered.length}건`;
   updateActiveFiltersLabel();
-
   const container = document.getElementById('articlesContainer');
   if (sorted.length === 0) {
     container.innerHTML = `<div class="no-data" style="width:100%;justify-content:center;flex-direction:row;gap:8px"><i class="fas fa-inbox"></i><span>조건에 맞는 기사가 없습니다</span></div>`;
     return;
   }
-
   container.innerHTML = sorted.map(n => {
     const rc = riskClass(n.Risk);
     const cat = normalizeCat(n.Category);
-    const color = CAT_COLOR[cat] || '#64748b';
+    const color = CAT_COLOR[cat]||'#64748b';
     const dateStr = String(n.Date||'').replace(/T.+/,'');
     const summary = String(n.Summary||n.Summary_en||'').replace(/<[^>]+>/g,'').slice(0,80);
-
     return `<div class="article-card risk-${rc}" onclick="openArticle('${(n.URL||'').split('\n')[0].trim()}')">
-      <div class="article-meta">
-        <span class="risk-badge ${rc}">${n.Risk||'Low'}</span>
-        <span>${dateStr}</span>
-      </div>
+      <div class="article-meta"><span class="risk-badge ${rc}">${n.Risk||'Low'}</span><span>${dateStr}</span></div>
       <div class="article-title">${n.Title||n.Title_en||'제목 없음'}</div>
-      ${summary ? `<div class="article-summary">${summary}...</div>` : ''}
+      ${summary?`<div class="article-summary">${summary}...</div>`:''}
       <div class="article-footer">
         <span class="article-cat-tag" style="color:${color};background:${color}18">${cat}</span>
         <span class="article-date">${n.Region||''}</span>
@@ -1242,79 +1193,16 @@ function renderArticles() {
   }).join('');
 }
 
-function openArticle(url) {
-  if (url && url.startsWith('http')) window.open(url, '_blank');
-}
+function openArticle(url) { if (url && url.startsWith('http')) window.open(url, '_blank'); }
 
-// ── 드로어 / 다크모드 ──
-function toggleDashDrawer() {
-  document.getElementById('dash-drawer').classList.toggle('open');
-  document.getElementById('dash-drawer-overlay').classList.toggle('open');
-}
-function closeDashDrawer() {
-  document.getElementById('dash-drawer').classList.remove('open');
-  document.getElementById('dash-drawer-overlay').classList.remove('open');
-}
-
-let _isDark = false;
-function toggleDashDark() {
-  _isDark = !_isDark;
-  document.documentElement.classList.toggle('dark', _isDark);
-  localStorage.setItem('da_dash_dark', _isDark ? '1' : '0');
-  _applyDarkUI();
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-function _applyDarkUI() {
-  const icon = document.getElementById('dashThemeIcon');
-  const dIcon = document.getElementById('drawerDarkIcon');
-  const dLabel = document.getElementById('drawerDarkLabel');
-  const btn = dIcon && dIcon.closest('button');
-  if (icon) {
-    icon.setAttribute('data-lucide', _isDark ? 'sun' : 'moon');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  }
-  if (dIcon) dIcon.textContent = _isDark ? '☀️' : '🌙';
-  if (dLabel) dLabel.textContent = _isDark ? '라이트 모드 켜기' : '다크 모드 켜기';
-  if (btn) {
-    btn.style.background = _isDark ? '#2d3148' : '#f1f5f9';
-    btn.style.color = _isDark ? '#e2e8f0' : '#1e293b';
-  }
-  // Leaflet 지도 타일 필터 동적 적용
-  const style = document.getElementById('leafletDarkStyle') || (() => {
-    const s = document.createElement('style'); s.id='leafletDarkStyle'; document.head.appendChild(s); return s;
-  })();
-  style.textContent = _isDark
-    ? '.leaflet-tile { filter: brightness(0.45) saturate(0.5) hue-rotate(190deg); }'
-    : '.leaflet-tile { filter: brightness(0.85) saturate(0.7); }';
-}
-
-// 드로어에서 기간 선택
-function setPeriodDrawer(p) {
-  currentPeriod = p;
-  // 상단 탭 동기화
-  document.querySelectorAll('.period-tab').forEach(t => {
-    const map = { thisWeek:'이번 주', lastWeek:'지난 주', thisMonth:'이번 달', lastMonth:'지난 달' };
-    t.classList.toggle('active', t.textContent.trim() === map[p]);
-  });
-  // 드로어 활성 항목 동기화
-  ['thisWeek','lastWeek','thisMonth','lastMonth'].forEach(k => {
-    const el = document.getElementById('drawer-period-' + k);
-    if (el) el.classList.toggle('active', k === p);
-  });
-  selectedRegion = null; selectedCat = null;
-  updateFilterBar();
-  renderAll();
-  closeDashDrawer();
-}
-
-// ── 이벤트 핸들러 ──
+// ── Period 이벤트 ────────────────────────────────
 function setPeriod(p, el) {
   currentPeriod = p;
   document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  _syncDrawerPeriod(p);
   selectedRegion = null; selectedCat = null;
-  updateFilterBar();
-  renderAll();
+  updateFilterBar(); renderAll();
 }
 
 function setBriefingCat(cat, el) {
@@ -1324,15 +1212,12 @@ function setBriefingCat(cat, el) {
   renderBriefing();
 }
 
-// ── 초기화 ──
+// ── 초기화 ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // 다크모드 복원
-  _isDark = localStorage.getItem('da_dash_dark') === '1';
-  document.documentElement.classList.toggle('dark', _isDark);
-  _applyDarkUI();
-
-  // Lucide 아이콘 렌더
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+  // 저장된 테마 복원 (없으면 다크 기본)
+  const saved = localStorage.getItem('da_dash_theme');
+  _isLight = saved === 'light';   // 기본값 dark
+  _applyTheme();
 
   initLeafletMap();
   loadData();
