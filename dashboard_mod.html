@@ -4,9 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DA Intelligence Dashboard</title>
+<!-- 다크모드 플리커 방지: 저장된 테마 즉시 적용 -->
+<script>(function(){if(localStorage.getItem('da_dash_dark')==='1')document.documentElement.classList.add('dark');else document.documentElement.classList.add('dark');}());</script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: "class" };</script>
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <!-- Leaflet.js -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -38,34 +43,58 @@
     overflow-x: hidden;
   }
 
-  /* ── Header ── */
-  .dash-header {
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+  /* ── Header (News Hub 동일 스타일) ── */
+  /* 다크모드 오버라이드 */
+  html.dark body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
   }
-  .dash-header .logo {
+
+  /* 모바일 드로어 오버레이 */
+  #dash-drawer-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 9998;
+  }
+  #dash-drawer-overlay.open { display: block; }
+
+  /* 드로어 패널 */
+  #dash-drawer {
+    position: fixed; top: 0; left: -320px;
+    width: 300px; height: 100%;
+    background: #fff;
+    z-index: 9999;
+    padding: 20px 16px;
+    overflow-y: auto;
+    transition: left .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.15);
+  }
+  html.dark #dash-drawer {
+    background: #1e2130;
+    color: #e2e8f0;
+  }
+  #dash-drawer.open { left: 0; }
+  .dash-drawer-nav-item {
     display: flex; align-items: center; gap: 10px;
-    font-size: 15px; font-weight: 700; color: var(--text-primary);
-    text-decoration: none;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 13px; font-weight: 700;
+    color: #1e293b; text-decoration: none;
+    transition: background .15s;
+    margin-bottom: 2px;
   }
-  .dash-header .logo span { color: var(--accent-blue); }
-  .header-right { display: flex; align-items: center; gap: 12px; }
-  .back-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 12px; border-radius: 6px;
-    background: var(--bg-card); border: 1px solid var(--border);
-    color: var(--text-secondary); font-size: 12px; cursor: pointer;
-    text-decoration: none; transition: all .2s;
+  .dash-drawer-nav-item:hover { background: #f1f5f9; }
+  .dash-drawer-nav-item.active { background: #eff6ff; color: #0033A0; }
+  html.dark .dash-drawer-nav-item { color: #cbd5e1; }
+  html.dark .dash-drawer-nav-item:hover { background: #252840; }
+  html.dark .dash-drawer-nav-item.active { background: rgba(79,142,247,.12); color: #93c5fd; }
+  .dash-drawer-icon {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    background: #f1f5f9; border-radius: 7px; flex-shrink: 0;
+    font-size: 14px;
   }
-  .back-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  html.dark .dash-drawer-icon { background: #2d3148; }
 
   /* ── Period Tabs ── */
   .period-bar {
@@ -477,26 +506,159 @@
     font-size: 9px !important;
   }
   .leaflet-control-attribution a { color: var(--text-muted) !important; }
+
+  /* ── 라이트모드 오버라이드 (다크 기본, light는 html에 dark 없을 때) ── */
+  html:not(.dark) body {
+    background: #f1f5f9;
+    color: #1e293b;
+  }
+  html:not(.dark) .period-bar,
+  html:not(.dark) .left-panel,
+  html:not(.dark) .right-panel,
+  html:not(.dark) .bottom-panel,
+  html:not(.dark) .map-filter-bar {
+    background: #fff;
+    border-color: #e2e8f0;
+    color: #1e293b;
+  }
+  html:not(.dark) .panel-title { color: #64748b; }
+  html:not(.dark) .panel-title i { color: #0033A0; }
+  html:not(.dark) .briefing-scroll { color: #334155; }
+  html:not(.dark) .cat-card { background: #f8fafc; border-color: #e2e8f0; }
+  html:not(.dark) .cat-card:hover { background: #eff6ff; border-color: #93c5fd; }
+  html:not(.dark) .cat-card.active { background: #eff6ff; border-color: #3b82f6; }
+  html:not(.dark) .cat-name { color: #1e293b; }
+  html:not(.dark) .cat-top-title { color: #64748b; }
+  html:not(.dark) .article-card { background: #fff; border-color: #e2e8f0; }
+  html:not(.dark) .article-card:hover { border-color: #3b82f6; }
+  html:not(.dark) .article-title { color: #1e293b; }
+  html:not(.dark) .article-summary { color: #64748b; }
+  html:not(.dark) .period-tab { color: #64748b; }
+  html:not(.dark) .period-tab:hover { color: #1e293b; background: #f1f5f9; }
+  html:not(.dark) .cat-tab { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+  html:not(.dark) .cat-tab:hover { color: #1e293b; }
+  html:not(.dark) .stat-pill { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+  html:not(.dark) .stat-pill b { color: #1e293b; }
+  html:not(.dark) .map-legend { background: rgba(255,255,255,.92); border-color: #e2e8f0; }
+  html:not(.dark) .update-badge { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+  html:not(.dark) .briefing-text { color: #334155; }
+  html:not(.dark) .briefing-meta { color: #94a3b8; }
+  html:not(.dark) .center-panel { background: #e2e8f0; }
+  html:not(.dark) .loading-overlay { background: #f1f5f9; }
+  html:not(.dark) #leafletMap { background: #dbeafe; }
+  html:not(.dark) .leaflet-tile { filter: none !important; }
+  html:not(.dark) .bottom-title { color: #64748b; }
+  html:not(.dark) .article-count-badge { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+  html:not(.dark) .leaflet-control-zoom a {
+    background: #fff !important; color: #1e293b !important;
+    border-color: #e2e8f0 !important;
+  }
+  html:not(.dark) .leaflet-popup-content-wrapper {
+    background: #fff !important; border-color: #e2e8f0 !important;
+  }
+  html:not(.dark) .lf-popup-name { color: #1e293b; }
+  html:not(.dark) .lf-popup-cats { color: #64748b; }
+  /* 드로어 라이트 모드 경계선 */
+  html:not(.dark) #dash-drawer { border-right: 1px solid #e2e8f0; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="dash-header">
-  <a href="index.html" class="logo">
-    <i class="fas fa-shield-alt" style="color:var(--accent-blue)"></i>
-    DA <span>Intelligence</span> Dashboard
-  </a>
-  <div class="header-right">
-    <div class="stats-strip" id="headerStats"></div>
-    <a href="index.html" class="back-btn">
-      <i class="fas fa-newspaper"></i> News Hub
+<!-- ============================================================
+     News Hub 동일 헤더
+============================================================ -->
+<header class="bg-[#0033A0] text-white sticky top-0 z-[1000] px-4 h-14 flex items-center justify-between shadow-xl">
+  <div class="flex items-center gap-4">
+    <!-- 햄버거 버튼 -->
+    <button id="dash-menu-btn" onclick="toggleDashDrawer()" aria-label="메뉴 열기" class="p-1 hover:bg-white/10 rounded-md transition-all">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+    <!-- 로고 -->
+    <a href="index.html" class="flex items-center gap-3 cursor-pointer">
+      <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+      <h1 class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap hidden sm:block">Purchase Intelligence</h1>
     </a>
+    <!-- 데스크탑 네비 -->
+    <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap">
+      <a href="index.html" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">전략 시황</a>
+      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">원자재</a>
+      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">거시/정책</a>
+      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">생산지역</a>
+      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
+      <a href="index.html#" onclick="" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
+      <a href="wiki/index.html" class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">WIKI</a>
+      <span class="text-white border-b-2 border-white py-1 uppercase">DASHBOARD</span>
+    </nav>
+  </div>
+
+  <!-- 중앙 통계 -->
+  <div class="flex-1 flex justify-center px-4">
+    <div class="stats-strip" id="headerStats"></div>
+  </div>
+
+  <!-- 우측 버튼 -->
+  <div class="flex items-center gap-2">
+    <a href="index.html"
+      class="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
+      <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+      <span class="hidden sm:inline">NEWS HUB</span>
+    </a>
+    <button onclick="toggleDashDark()"
+      class="p-2 hover:bg-white/10 rounded-full transition-all text-white/80 hover:text-white">
+      <i data-lucide="moon" id="dashThemeIcon" class="w-4 h-4"></i>
+    </button>
   </div>
 </header>
 
+<!-- 드로어 오버레이 -->
+<div id="dash-drawer-overlay" onclick="closeDashDrawer()"></div>
+
+<!-- 드로어 패널 -->
+<div id="dash-drawer">
+  <!-- 드로어 헤더 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="background:#0033A0;color:white;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:900;text-transform:uppercase;">DA</div>
+      <span style="font-weight:700;font-size:13px;color:#0033A0;text-transform:uppercase;">Purchase Intelligence</span>
+    </div>
+    <button onclick="closeDashDrawer()" style="background:none;border:none;cursor:pointer;padding:4px;font-size:18px;">✕</button>
+  </div>
+
+  <!-- 섹션: 페이지 이동 -->
+  <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin-bottom:6px;">NAVIGATE</div>
+  <nav style="display:flex;flex-direction:column;">
+    <a href="index.html" class="dash-drawer-nav-item">
+      <span class="dash-drawer-icon">📰</span><span>News Hub</span>
+    </a>
+    <a href="dashboard_mod.html" class="dash-drawer-nav-item active">
+      <span class="dash-drawer-icon">📊</span><span>Dashboard</span>
+      <span style="font-size:9px;font-weight:900;padding:2px 7px;border-radius:99px;background:#e2e8f0;color:#64748b;margin-left:auto;">현재</span>
+    </a>
+    <a href="wiki/index.html" class="dash-drawer-nav-item">
+      <span class="dash-drawer-icon">📖</span><span>Product Wiki</span>
+    </a>
+  </nav>
+
+  <!-- 섹션: 기간 필터 -->
+  <div style="font-size:9px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;padding:0 4px;margin:16px 0 6px;">PERIOD</div>
+  <nav style="display:flex;flex-direction:column;gap:2px;">
+    <a href="#" onclick="setPeriodDrawer('thisWeek')" id="drawer-period-thisWeek" class="dash-drawer-nav-item active" style="font-size:12px;">이번 주</a>
+    <a href="#" onclick="setPeriodDrawer('lastWeek')" id="drawer-period-lastWeek" class="dash-drawer-nav-item" style="font-size:12px;">지난 주</a>
+    <a href="#" onclick="setPeriodDrawer('thisMonth')" id="drawer-period-thisMonth" class="dash-drawer-nav-item" style="font-size:12px;">이번 달</a>
+    <a href="#" onclick="setPeriodDrawer('lastMonth')" id="drawer-period-lastMonth" class="dash-drawer-nav-item" style="font-size:12px;">지난 달</a>
+  </nav>
+
+  <!-- 섹션: 다크모드 토글 -->
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
+    <button onclick="toggleDashDark()" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;border:none;background:#f1f5f9;color:#1e293b;font-size:13px;font-weight:700;cursor:pointer;">
+      <span id="drawerDarkIcon" style="font-size:16px;">🌙</span>
+      <span id="drawerDarkLabel">다크 모드 켜기</span>
+    </button>
+  </div>
+</div>
+
 <!-- Period Tabs -->
-<div class="period-bar">
+<div class="period-bar" style="z-index:100;position:relative;">
   <button class="period-tab active" onclick="setPeriod('thisWeek',this)">이번 주</button>
   <button class="period-tab" onclick="setPeriod('lastWeek',this)">지난 주</button>
   <button class="period-tab" onclick="setPeriod('thisMonth',this)">이번 달</button>
@@ -1084,6 +1246,67 @@ function openArticle(url) {
   if (url && url.startsWith('http')) window.open(url, '_blank');
 }
 
+// ── 드로어 / 다크모드 ──
+function toggleDashDrawer() {
+  document.getElementById('dash-drawer').classList.toggle('open');
+  document.getElementById('dash-drawer-overlay').classList.toggle('open');
+}
+function closeDashDrawer() {
+  document.getElementById('dash-drawer').classList.remove('open');
+  document.getElementById('dash-drawer-overlay').classList.remove('open');
+}
+
+let _isDark = false;
+function toggleDashDark() {
+  _isDark = !_isDark;
+  document.documentElement.classList.toggle('dark', _isDark);
+  localStorage.setItem('da_dash_dark', _isDark ? '1' : '0');
+  _applyDarkUI();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+function _applyDarkUI() {
+  const icon = document.getElementById('dashThemeIcon');
+  const dIcon = document.getElementById('drawerDarkIcon');
+  const dLabel = document.getElementById('drawerDarkLabel');
+  const btn = dIcon && dIcon.closest('button');
+  if (icon) {
+    icon.setAttribute('data-lucide', _isDark ? 'sun' : 'moon');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+  if (dIcon) dIcon.textContent = _isDark ? '☀️' : '🌙';
+  if (dLabel) dLabel.textContent = _isDark ? '라이트 모드 켜기' : '다크 모드 켜기';
+  if (btn) {
+    btn.style.background = _isDark ? '#2d3148' : '#f1f5f9';
+    btn.style.color = _isDark ? '#e2e8f0' : '#1e293b';
+  }
+  // Leaflet 지도 타일 필터 동적 적용
+  const style = document.getElementById('leafletDarkStyle') || (() => {
+    const s = document.createElement('style'); s.id='leafletDarkStyle'; document.head.appendChild(s); return s;
+  })();
+  style.textContent = _isDark
+    ? '.leaflet-tile { filter: brightness(0.45) saturate(0.5) hue-rotate(190deg); }'
+    : '.leaflet-tile { filter: brightness(0.85) saturate(0.7); }';
+}
+
+// 드로어에서 기간 선택
+function setPeriodDrawer(p) {
+  currentPeriod = p;
+  // 상단 탭 동기화
+  document.querySelectorAll('.period-tab').forEach(t => {
+    const map = { thisWeek:'이번 주', lastWeek:'지난 주', thisMonth:'이번 달', lastMonth:'지난 달' };
+    t.classList.toggle('active', t.textContent.trim() === map[p]);
+  });
+  // 드로어 활성 항목 동기화
+  ['thisWeek','lastWeek','thisMonth','lastMonth'].forEach(k => {
+    const el = document.getElementById('drawer-period-' + k);
+    if (el) el.classList.toggle('active', k === p);
+  });
+  selectedRegion = null; selectedCat = null;
+  updateFilterBar();
+  renderAll();
+  closeDashDrawer();
+}
+
 // ── 이벤트 핸들러 ──
 function setPeriod(p, el) {
   currentPeriod = p;
@@ -1103,6 +1326,14 @@ function setBriefingCat(cat, el) {
 
 // ── 초기화 ──
 document.addEventListener('DOMContentLoaded', () => {
+  // 다크모드 복원
+  _isDark = localStorage.getItem('da_dash_dark') === '1';
+  document.documentElement.classList.toggle('dark', _isDark);
+  _applyDarkUI();
+
+  // Lucide 아이콘 렌더
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
   initLeafletMap();
   loadData();
 });
