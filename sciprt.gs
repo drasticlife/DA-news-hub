@@ -8,6 +8,7 @@
 var GITHUB_OWNER = "drasticlife";
 var GITHUB_REPO = "DA-news-hub";
 var GITHUB_BRANCH = "main";
+var RECIPIENT_EMAILS = ["jsman.moon@samsung.com", "drasticlife@gmail.com"];
 
 var FOLDER_ID = "11OsMn-4WoNhg9QfxgraLQSJtkmG7PXTj";
 var SAFE_TIME_LIMIT = 240000; // 4분 안전장치 (구글 6분 강제종료 방어용)
@@ -48,6 +49,7 @@ function onOpen() {
     .addItem("5. 🧹 Summary 텍스트 정제 (출처·찌꺼기 제거)", "cleanSummaryColumn")
     .addSeparator()
     .addItem("파일 권한 수정", "fixExistingImagePermissions")
+    .addItem("📬 Daily News 이메일 발송", "sendDailyNewsEmail")
     .addSeparator()
     .addItem("🛠️ 사용자 승인 드롭다운 설정", "setupUserValidation")
     .addToUi();
@@ -204,6 +206,10 @@ function getSpecificSheetDataAsJson(sheetName) {
         obj[header] = val instanceof Date ? val.toISOString() : val;
       }
     });
+    // [신규] 고유 ID 생성 (제목 + 날짜 조합의 간단한 해시)
+    var rawIdStr = (obj["Title"] || "") + (obj["Date"] || "");
+    obj["_uId"] = "n-" + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawIdStr)).replace(/=/g, "");
+    
     return obj;
   });
 }
@@ -625,6 +631,9 @@ function runAllProcesses(includeAnchor) {
     SpreadsheetApp.getActiveSpreadsheet().toast(includeAnchor ? "앵커 브리핑 생성이 완료되었습니다." : "최신 앵커 브리핑(기존 데이터)을 유지합니다.", "진행 중", 3);
     
     pushToGitHub();
+    SpreadsheetApp.flush();
+    
+    sendDailyNewsEmail();
     SpreadsheetApp.getActiveSpreadsheet().toast("모든 프로세스가 성공적으로 완료되었습니다.", "완료");
   } catch (err) {
     ui.alert("프로세스 중 오류 발생: " + err.toString());
@@ -632,7 +641,8 @@ function runAllProcesses(includeAnchor) {
 }
 
 function cleanPastedData() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idxI = headers.indexOf("Image");
@@ -965,3 +975,145 @@ function cleanInsightSheet() {
   }
   SpreadsheetApp.getActiveSpreadsheet().toast("정비 완료: 헤더 삭제 " + deletedCount + "건, 대본 정제 " + cleanedCount + "건", "완료");
 }
+
+/**
+ * [신규] 오늘 업데이트된 기사를 카테고리별로 묶어 이메일 발송
+ */
+function sendDailyNewsEmail() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+
+  var headers = data[0];
+  var idxDate = headers.indexOf("Date");
+  var idxTitle = headers.indexOf("Title");
+  var idxCategory = headers.indexOf("Category") !== -1 ? headers.indexOf("Category") : headers.indexOf("카테고리");
+  var idxRisk = headers.indexOf("Risk");
+  var idxSummary = headers.indexOf("Summary");
+  var idxUrl = headers.indexOf("URL");
+  var idxImage = headers.indexOf("Image");
+
+  // 시트에 있는 모든 날짜 중 가장 최신 날짜 찾기
+  var allDates = data.slice(1).map(row => String(row[idxDate])).filter(d => d && d !== "");
+  if (allDates.length === 0) return;
+
+  // 날짜 형식 통일 및 정렬 (YYYY.MM.DD 또는 YYYY-MM-DD)
+  allDates = allDates.map(d => d.replace(/\./g, "-"));
+  allDates.sort().reverse();
+  var latestDateStr = allDates[0]; // 가장 최신 날짜
+  var latestDateStrDot = latestDateStr.replace(/-/g, "."); // 표시용 (YYYY.MM.DD)
+
+  // 최신 날짜 기사 필터링 및 카테고리별 그룹화
+  var categorizedToday = {};
+  var foundCount = 0;
+
+  for (var i = 1; i < data.length; i++) {
+    var dateVal = String(data[i][idxDate]).replace(/\./g, "-");
+    if (dateVal === latestDateStr) {
+      var cat = String(data[i][idxCategory] || "기타").trim();
+      if (!categorizedToday[cat]) categorizedToday[cat] = [];
+      
+      // 고유 ID 생성 (JSON 저장 방식과 동일하게)
+      var dateStr = data[i][idxDate];
+      if (dateStr instanceof Date) {
+        var tz = new Date(dateStr.getTime() + 9 * 60 * 60 * 1000);
+        dateStr = tz.getUTCFullYear() + "." + String(tz.getUTCMonth() + 1).padStart(2, "0") + "." + String(tz.getUTCDate()).padStart(2, "0");
+      }
+      var rawIdStr = (data[i][idxTitle] || "") + dateStr;
+      var uId = "n-" + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawIdStr)).replace(/=/g, "");
+      
+      categorizedToday[cat].push({
+        title: data[i][idxTitle],
+        risk: data[i][idxRisk],
+        summary: String(data[i][idxSummary] || "").substring(0, 200) + "...",
+        url: data[i][idxUrl],
+        image: data[i][idxImage] || DEFAULT_IMAGE_URL,
+        uId: uId
+      });
+      foundCount++;
+    }
+  }
+
+  if (foundCount === 0) {
+    SpreadsheetApp.getActiveSpreadsheet().toast("시트에서 기사를 찾을 수 없습니다.", "알림");
+    return;
+  }
+
+  // HTML 메일 본문 생성 (Premium UI)
+  var htmlBody = `
+    <div style="font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; background-color: #f8fafc; padding: 40px 20px; color: #1e293b;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background-color: #0033A0; padding: 32px; text-align: center;">
+          <div style="display: inline-block; background-color: #ffffff; color: #0033A0; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 900; margin-bottom: 12px;">DA PROCUREMENT</div>
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">Daily Insight Hub</h1>
+          <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0 0; font-size: 14px;">${latestDateStrDot} 업데이트 리포트</p>
+        </div>
+
+        <div style="padding: 32px;">
+          <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6;">안녕하세요, <b>Samsung DA News Hub</b>입니다. 오늘 업데이트된 주요 소식을 카테고리별로 전달해 드립니다.</p>
+  `;
+
+  var riskColors = {
+    "High": "#ef4444",
+    "Med": "#f97316",
+    "Low": "#3b82f6",
+    "Very High": "#7f1d1d"
+  };
+
+  for (var cat in categorizedToday) {
+    htmlBody += `
+      <div style="margin-bottom: 40px;">
+        <h2 style="font-size: 18px; font-weight: 800; color: #0033A0; border-left: 4px solid #0033A0; padding-left: 12px; margin-bottom: 20px; text-transform: uppercase;">${cat}</h2>
+    `;
+
+    categorizedToday[cat].forEach(function(item) {
+      var rColor = riskColors[item.risk] || "#94a3b8";
+      htmlBody += `
+        <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 16px; shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+          <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+              <div style="display: inline-block; background-color: ${rColor}15; color: ${rColor}; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">RISK: ${item.risk}</div>
+              <h3 style="margin: 0; font-size: 16px; font-weight: 700; line-height: 1.4; color: #0f172a;">${item.title}</h3>
+            </div>
+            <img src="${item.image}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; flex-shrink: 0;" />
+          </div>
+          <p style="margin: 0 0 16px 0; font-size: 13px; line-height: 1.6; color: #64748b;">${item.summary}</p>
+          <div style="display: flex; gap: 8px;">
+            <a href="https://drasticlife.github.io/DA-news-hub/?targetId=${item.uId}" style="display: inline-block; background-color: #0033A0; color: #ffffff; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 700;">News Hub에서 보기</a>
+          </div>
+        </div>
+      `;
+    });
+
+    htmlBody += `</div>`;
+  }
+
+  htmlBody += `
+          <!-- Footer -->
+          <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid #e2e8f0; text-align: center;">
+            <a href="https://drasticlife.github.io/DA-news-hub/" style="display: inline-block; background-color: #0033A0; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 14px; font-weight: 800; shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">News Hub 대시보드 방문하기</a>
+            <p style="margin: 24px 0 0 0; font-size: 12px; color: #94a3b8;">본 메일은 Samsung DA News Hub 자동 시스템에 의해 발송되었습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 이메일 발송
+  RECIPIENT_EMAILS.forEach(function(email) {
+    try {
+      MailApp.sendEmail({
+        to: email,
+        subject: "[DA News Hub] " + latestDateStrDot + " 리포트 (" + foundCount + "건)",
+        htmlBody: htmlBody
+      });
+      console.log("메일 발송 완료: " + email);
+    } catch (e) {
+      console.error("메일 발송 실패 (" + email + "): " + e.toString());
+    }
+  });
+
+  SpreadsheetApp.getActiveSpreadsheet().toast(latestDateStrDot + " 소식 메일이 성공적으로 발송되었습니다. (" + foundCount + "건)", "완료");
+}

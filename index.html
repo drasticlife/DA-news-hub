@@ -1522,8 +1522,8 @@
         fetchAllMonths().then(allData => {
           if (allData && allData.length > allNews.length) {
             allNews = allData;
-            // 고유 ID 재부여
-            allNews.forEach((n, i) => { n._uId = `news-${i}`; });
+            // 고유 ID 재부여 (기존 ID가 있으면 유지)
+            allData.forEach((n, i) => { if(!n._uId) n._uId = `news-${i}`; });
             currentFilteredNews = [...allNews];
             // 캘린더/태그/지도만 조용히 업데이트 (피드는 현재 페이지 유지)
             renderCalendar(allNews);
@@ -1572,9 +1572,9 @@
 
     // fetchNews 성공 후 공통 처리 (기존 로직 그대로 유지)
     function _onFetchSuccess() {
-      // 고유 ID 부여 (Deterministic ID for dashboard linkage)
+      // 고유 ID 부여 (기존 ID가 있으면 유지 - GAS/JSON에서 생길 수 있음)
       allNews.forEach((n, i) => {
-        n._uId = `news-${i}`;
+        if(!n._uId) n._uId = `news-${i}`;
       });
 
       currentFilteredNews = [...allNews];
