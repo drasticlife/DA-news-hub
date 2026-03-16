@@ -987,22 +987,55 @@ function sendDailyNewsEmail() {
 
   var headers = data[0];
   var idxDate = headers.indexOf("Date");
+  if (idxDate === -1) idxDate = headers.indexOf("날짜");
+  if (idxDate === -1) idxDate = 0; // 최후의 수단으로 첫 번째 열 시도
+
   var idxTitle = headers.indexOf("Title");
+  if (idxTitle === -1) idxTitle = headers.indexOf("제목");
+  
   var idxCategory = headers.indexOf("Category") !== -1 ? headers.indexOf("Category") : headers.indexOf("카테고리");
   var idxRisk = headers.indexOf("Risk");
   var idxSummary = headers.indexOf("Summary");
   var idxUrl = headers.indexOf("URL");
   var idxImage = headers.indexOf("Image");
 
-  // 시트에 있는 모든 날짜 중 가장 최신 날짜 찾기
-  var allDates = data.slice(1).map(row => String(row[idxDate])).filter(d => d && d !== "");
-  if (allDates.length === 0) return;
+  // 날짜 정규화 헬퍼 (YYYY-MM-DD)
+  function getNormalizedDateString(d) {
+    if (!d) return "";
+    var y, m, day;
+    if (d instanceof Date) {
+      y = d.getFullYear();
+      m = d.getMonth() + 1;
+      day = d.getDate();
+    } else {
+      // 숫자만 추출하여 YYYY, MM, DD 분리 (2026.03.15, 2026-03-15 등 대응)
+      var s = String(d).trim();
+      var match = s.match(/(\d{4})[./-]\s?(\d{1,2})[./-]\s?(\d{1,2})/);
+      if (match) {
+        y = parseInt(match[1], 10);
+        m = parseInt(match[2], 10);
+        day = parseInt(match[3], 10);
+      } else {
+        return "";
+      }
+    }
+    // 정렬이 가능하도록 YYYY-MM-DD (패딩 포함) 형식으로 반환
+    return y + "-" + String(m).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+  }
 
-  // 날짜 형식 통일 및 정렬 (YYYY.MM.DD 또는 YYYY-MM-DD)
-  allDates = allDates.map(d => d.replace(/\./g, "-"));
-  allDates.sort().reverse();
-  var latestDateStr = allDates[0]; // 가장 최신 날짜
-  var latestDateStrDot = latestDateStr.replace(/-/g, "."); // 표시용 (YYYY.MM.DD)
+  // 시트에 있는 모든 날짜 중 가장 최신 날짜 찾기
+  var normalizedDates = data.slice(1).map(row => getNormalizedDateString(row[idxDate])).filter(s => s && s !== "");
+  if (normalizedDates.length === 0) {
+    SpreadsheetApp.getUi().alert("날짜 데이터를 찾을 수 없습니다. 'Date' 또는 '날짜' 열을 확인해 주세요.");
+    return;
+  }
+
+  normalizedDates.sort().reverse();
+  var latestDateStr = normalizedDates[0]; // 가장 최신 날짜 (YYYY-MM-DD)
+  var latestDateStrDot = latestDateStr.replace(/-/g, "."); // 표시용
+  
+  // 디버깅 메시지
+  SpreadsheetApp.getActiveSpreadsheet().toast(latestDateStrDot + " 데이터로 뉴스레터를 생성합니다.", "이메일 준비 중");
 
   // 최신 날짜 기사 필터링 및 카테고리별 그룹화
   var categorizedToday = {};
