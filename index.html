@@ -232,21 +232,22 @@
       </div>
       <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap">
         <a href="#" onclick="resetFilters()" id="nav-all"
-          class="text-white border-b-2 border-white py-1 transition-all uppercase">전략 시황</a>
+          class="text-white py-1 transition-all uppercase active-nav">전략 시황</a>
         <a href="#" onclick="filterNews('원자재')"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">원자재</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">원자재</a>
         <a href="#" onclick="filterNews('거시경제')"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">거시/정책</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">거시/정책</a>
         <a href="#" onclick="filterNews('생산지역')"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">생산지역</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">생산지역</a>
         <a href="#" onclick="filterNews('경쟁사')"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">경쟁사</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">경쟁사</a>
         <a href="#" onclick="filterNews('신기술동향')"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">신기술동향</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">신기술동향</a>
         <a href="wiki/index.html"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">WIKI</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">WIKI</a>
         <a href="indices.html"
-          class="text-white/60 border-b-2 border-transparent hover:text-white py-1 transition-all uppercase">INDEX</a>
+          class="text-white/60 hover:text-white py-1 transition-all uppercase">INDEX</a>
+        <div id="nav-indicator"></div>
       </nav>
     </div>
 
@@ -713,6 +714,55 @@
       document.getElementById('mobile-drawer-overlay').classList.remove('open');
       document.body.style.overflow = '';
     }
+
+    /* ===== Navigation Underline Indicator Logic ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      const nav = document.querySelector('header nav');
+      const indicator = document.getElementById('nav-indicator');
+      const navLinks = nav.querySelectorAll('a');
+
+      function moveIndicator(target) {
+        if (!target) {
+          indicator.style.opacity = '0';
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const navRect = nav.getBoundingClientRect();
+        
+        indicator.style.width = `${rect.width}px`;
+        indicator.style.left = `${rect.left - navRect.left}px`;
+        indicator.style.opacity = '1';
+      }
+
+      function resetToActive() {
+        const activeLink = Array.from(navLinks).find(link => 
+          link.classList.contains('active-nav')
+        );
+        if (activeLink) {
+          moveIndicator(activeLink);
+        } else {
+          indicator.style.opacity = '0';
+        }
+      }
+
+      navLinks.forEach(link => {
+        link.addEventListener('mouseenter', (e) => moveIndicator(e.target));
+      });
+
+      nav.addEventListener('mouseleave', () => {
+        resetToActive();
+      });
+
+      // Initialize
+      setTimeout(resetToActive, 500);
+
+      // Re-init on resize
+      window.addEventListener('resize', resetToActive);
+      
+      // Update on category changes
+      window.addEventListener('filterChanged', resetToActive);
+    });
+
     function goToLogin() {
       closeMobileDrawer();
       isDashboardActive = false;
@@ -2394,8 +2444,7 @@
         a.classList.remove(
           "text-white",
           "text-white/60",
-          "border-white",
-          "border-transparent",
+          "active-nav",
         );
 
         const isAll =
@@ -2413,11 +2462,14 @@
               a.innerText === t.nav_macro));
 
         if (isAll || isMatch) {
-          a.classList.add("text-white", "border-white");
+          a.classList.add("text-white", "active-nav");
         } else {
-          a.classList.add("text-white/60", "border-transparent");
+          a.classList.add("text-white/60");
         }
       });
+      
+      // dispatch event for indicator
+      window.dispatchEvent(new CustomEvent('filterChanged'));
 
       const breadcrumbs = [];
 
