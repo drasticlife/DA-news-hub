@@ -92,6 +92,9 @@
             <span id="auth-switch-text">Don't have an account?</span>
             <button onclick="toggleAuthMode()"
               class="text-blue-400 hover:text-blue-300 font-bold ml-1 transition-colors hover:underline underline-offset-2">Register</button>
+            <span class="mx-2 text-white/20">|</span>
+            <button onclick="openFindAuthModal()"
+              class="text-slate-400 hover:text-white font-medium transition-colors hover:underline underline-offset-2">ID/PW 찾기</button>
           </p>
         </div>
       </div>
@@ -109,6 +112,60 @@
     </div>
 
     <div id="globeViz"></div>
+
+    <!-- Find ID/PW Modal -->
+    <div id="findAuthModal"
+      class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[1000] transition-all duration-300 opacity-0 scale-95">
+      <div class="bg-[#0f172a]/90 border border-white/10 w-full max-w-[400px] rounded-[32px] shadow-2xl overflow-hidden relative">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-600/20 to-indigo-600/20">
+          <h3 class="font-bold text-white text-lg">ID/PW 찾기</h3>
+          <button onclick="closeFindAuthModal()" class="text-white/50 hover:text-white transition-colors p-1">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+        <div class="p-8">
+          <!-- Tabs -->
+          <div class="flex gap-4 mb-8 border-b border-white/10 pb-4">
+            <button onclick="switchFindTab('id')" id="tab-find-id" class="text-white font-black text-sm border-b-2 border-blue-500 pb-2 transition-all">ID 찾기</button>
+            <button onclick="switchFindTab('pw')" id="tab-find-pw" class="text-white/40 font-bold text-sm hover:text-white pb-2 transition-all">PW 재설정</button>
+          </div>
+
+          <!-- Find ID Section -->
+          <div id="section-find-id" class="space-y-4">
+            <p class="text-white/60 text-xs mb-4">가입 시 입력한 이름을 입력하시면 등록된 이메일을 찾아드립니다.</p>
+            <div>
+              <label class="block text-[10px] text-white/50 font-bold mb-1 ml-1 uppercase tracking-widest">Name</label>
+              <input type="text" id="find-name"
+                class="w-full bg-black/30 border border-white/10 text-white placeholder-white/30 px-4 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                placeholder="이름 (사내 ID)">
+            </div>
+            <button onclick="handleFindId()" id="find-id-btn"
+              class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg mt-4">
+              ID 찾기
+            </button>
+            <div id="find-id-result" class="hidden p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+              <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Registered Email</p>
+              <p id="found-email" class="text-white font-bold text-sm select-all"></p>
+            </div>
+          </div>
+
+          <!-- Find PW Section -->
+          <div id="section-find-pw" class="hidden space-y-4">
+            <p class="text-white/60 text-xs mb-4">이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.</p>
+            <div>
+              <label class="block text-[10px] text-white/50 font-bold mb-1 ml-1 uppercase tracking-widest">Email</label>
+              <input type="email" id="reset-email"
+                class="w-full bg-black/30 border border-white/10 text-white placeholder-white/30 px-4 py-3.5 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                placeholder="Email Address">
+            </div>
+            <button onclick="handleResetPw()" id="reset-pw-btn"
+              class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg mt-4">
+              재설정 메일 발송
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1099,11 +1156,129 @@
           || session.user.email.split('@')[0],
         email: session.user.email
       };
+
+      // profiles 테이블에 최신 정보(이메일 포함) 업데이트/저장
+      try {
+        await supabaseClient.from('profiles').upsert({
+          id: session.user.id,
+          full_name: userObj.userName,
+          email: userObj.email,
+          status: profile?.status || 'active'
+        });
+      } catch (upsertErr) {
+        console.warn("[onAuthStateChange] profiles upsert 실패:", upsertErr);
+      }
+
       currentUser = userObj;
       localStorage.setItem("da_user", JSON.stringify(currentUser));
       console.log("[onAuthStateChange] 정상 진입:", userObj.email);
       doEnterHubUI();
     });
+
+    // --- ID/PW 찾기 관련 함수 ---
+    function openFindAuthModal() {
+      const modal = document.getElementById('findAuthModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.add('opacity-100', 'scale-100');
+        modal.classList.remove('opacity-0', 'scale-95');
+      }, 10);
+      lucide.createIcons();
+    }
+
+    function closeFindAuthModal() {
+      const modal = document.getElementById('findAuthModal');
+      modal.classList.add('opacity-0', 'scale-95');
+      modal.classList.remove('opacity-100', 'scale-100');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+      
+      // 초기화
+      document.getElementById('find-id-result').classList.add('hidden');
+      document.getElementById('find-name').value = '';
+      document.getElementById('reset-email').value = '';
+    }
+
+    function switchFindTab(tab) {
+      const idTab = document.getElementById('tab-find-id');
+      const pwTab = document.getElementById('tab-find-pw');
+      const idSec = document.getElementById('section-find-id');
+      const pwSec = document.getElementById('section-find-pw');
+
+      if (tab === 'id') {
+        idTab.classList.add('border-b-2', 'border-blue-500', 'text-white');
+        idTab.classList.remove('text-white/40');
+        pwTab.classList.remove('border-b-2', 'border-blue-500', 'text-white');
+        pwTab.classList.add('text-white/40');
+        idSec.classList.remove('hidden');
+        pwSec.classList.add('hidden');
+      } else {
+        pwTab.classList.add('border-b-2', 'border-blue-500', 'text-white');
+        pwTab.classList.remove('text-white/40');
+        idTab.classList.remove('border-b-2', 'border-blue-500', 'text-white');
+        idTab.classList.add('text-white/40');
+        pwSec.classList.remove('hidden');
+        idSec.classList.add('hidden');
+      }
+    }
+
+    async function handleFindId() {
+      const name = document.getElementById('find-name').value.trim();
+      if (!name) return showToast("이름을 입력해주세요.");
+
+      const btn = document.getElementById('find-id-btn');
+      const originalText = btn.innerText;
+      btn.innerText = "Searching...";
+      btn.disabled = true;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('email')
+          .eq('full_name', name)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data && data.email) {
+          document.getElementById('found-email').innerText = data.email;
+          document.getElementById('find-id-result').classList.remove('hidden');
+        } else {
+          showToast("해당 이름으로 등록된 정보를 찾을 수 없습니다.");
+        }
+      } catch (err) {
+        console.error("Find ID error:", err);
+        showToast("정보 조회 중 오류가 발생했습니다.");
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function handleResetPw() {
+      const email = document.getElementById('reset-email').value.trim();
+      if (!email) return showToast("이메일을 입력해주세요.");
+
+      const btn = document.getElementById('reset-pw-btn');
+      const originalText = btn.innerText;
+      btn.innerText = "Sending...";
+      btn.disabled = true;
+
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname,
+        });
+
+        if (error) throw error;
+        showToast("비밀번호 재설정 메일이 발송되었습니다. 이메일을 확인해주세요.", false);
+        setTimeout(() => closeFindAuthModal(), 3000);
+      } catch (err) {
+        console.error("Reset PW error:", err);
+        showToast("재설정 메일 발송에 실패했습니다. 이메일을 확인해주세요.");
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    }
 
     function doEnterHubUI() {
       const intro = document.getElementById('intro-title');

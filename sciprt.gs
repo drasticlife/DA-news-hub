@@ -46,12 +46,14 @@ function onOpen() {
     .addItem("2. 영문 번역 실행", "translateEmptyEnglishFields")
     .addItem("3. 🎤 앵커 브리핑 생성 및 배포", "runAnchorBotAutomation")
     .addItem("4. Insight 시트 정비 (중복 제거 및 정제)", "cleanInsightSheet")
-    .addItem("5. 🧹 Summary 텍스트 정제 (출처·찌꺼기 제거)", "cleanSummaryColumn")
+    .addItem("5. 🧹 데이터 정제 (제목·요약 찌꺼기 제거)", "cleanDataColumns")
     .addSeparator()
     .addItem("파일 권한 수정", "fixExistingImagePermissions")
     .addItem("📬 Daily News 이메일 발송", "sendDailyNewsEmail")
     .addSeparator()
     .addItem("🛠️ 사용자 승인 드롭다운 설정", "setupUserValidation")
+    .addSeparator()
+    .addItem("🔄 기존 사용자 Supabase 마이그레이션", "migrateUsersToSupabase")
     .addToUi();
 }
 
@@ -590,6 +592,38 @@ function createBoardSheet(ss) {
   return sheet;
 }
 
+/**
+ * 기존 가입자 정보를 Supabase profiles 테이블로 마이그레이션합니다.
+ */
+function migrateUsersToSupabase() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var userSheet = ss.getSheetByName("Users");
+  if (!userSheet) return Browser.msgBox("Users 시트가 없습니다.");
+
+  var props = PropertiesService.getScriptProperties();
+  var url = props.getProperty("SUPABASE_URL");
+  var key = props.getProperty("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!url || !key) return Browser.msgBox("스크립트 속성에 SUPABASE_URL과 SUPABASE_SERVICE_ROLE_KEY를 설정해주세요.");
+
+  var data = userSheet.getDataRange().getValues();
+  var success = 0;
+  for (var i = 1; i < data.length; i++) {
+    var email = data[i][0], name = data[i][1];
+    if (!email || !name) continue;
+    try {
+      var res = UrlFetchApp.fetch(url + "/rest/v1/profiles", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + key, "apikey": key, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates" },
+        payload: JSON.stringify({ full_name: name, email: email, status: 'approved' }),
+        muteHttpExceptions: true
+      });
+      if (res.getResponseCode() < 300) success++;
+    } catch (e) {}
+  }
+  Browser.msgBox("마이그레이션 완료: " + success + "건 성공");
+}
+
 function getMonthlyStatsJson() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("MonthlyStats");
@@ -648,6 +682,7 @@ function cleanPastedData() {
   var idxI = headers.indexOf("Image");
   var idxD = headers.indexOf("Date");
   var idxS = headers.indexOf("Summary");
+  var idxT = headers.indexOf("Title");
 
   if (idxD === -1) return;
 
@@ -657,12 +692,23 @@ function cleanPastedData() {
       sheet.deleteRow(i + 1);
     } else {
       if (idxI !== -1 && String(data[i][idxI]).trim() === "-") { sheet.getRange(i + 1, idxI + 1).clearContent(); }
+      if (idxT !== -1 && data[i][idxT]) {
+        var cleanedTitle = cleanTitleText(String(data[i][idxT]));
+        if (cleanedTitle !== String(data[i][idxT])) { sheet.getRange(i + 1, idxT + 1).setValue(cleanedTitle); }
+      }
       if (idxS !== -1 && data[i][idxS]) {
         var cleaned = cleanSummaryText(String(data[i][idxS]));
         if (cleaned !== String(data[i][idxS])) { sheet.getRange(i + 1, idxS + 1).setValue(cleaned); }
       }
     }
   }
+}
+
+function cleanTitleText(text) {
+  if (!text) return text;
+  // Remove source info like tomsguide+2 or people+2
+  text = text.replace(/\s*[a-zA-Z][a-zA-Z0-9\.\-]*\+\d+/g, '');
+  return text.trim();
 }
 
 function cleanSummaryText(text) {
@@ -676,24 +722,57 @@ function cleanSummaryText(text) {
   text = text.replace(/\s*(시사점\s*:)\s*/g, '\n\n시사점: \n');
   text = text.replace(/\s*([①②③④⑤⑥⑦⑧⑨⑩])/g, '\n  $1');
   text = text.replace(/[ \t]{2,}/g, ' ');
+  text = text.replace(/(\(우선순위:[^)]+기한:[^)]+\))[^①②③④⑤⑥⑦⑧⑨⑩\n]*/g, '$1');
   text = text.replace(/\n{3,}/g, '\n\n');
   return text.trim();
 }
 
-function cleanSummaryColumn() {
+function cleanDataColumns() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idxS = headers.indexOf("Summary");
-  if (idxS === -1) { SpreadsheetApp.getUi().alert("'Summary' 컬럼을 찾을 수 없습니다."); return; }
-  var count = 0;
-  for (var i = 1; i < data.length; i++) {
-    var original = String(data[i][idxS]);
-    if (!original || original === "") continue;
-    var cleaned = cleanSummaryText(original);
-    if (cleaned !== original) { sheet.getRange(i + 1, idxS + 1).setValue(cleaned); count++; }
+  var idxT = headers.indexOf("Title");
+  
+  if (idxS === -1 && idxT === -1) { 
+    SpreadsheetApp.getUi().alert("'Summary' 또는 'Title' 컬럼을 찾을 수 없습니다."); 
+    return; 
   }
-  SpreadsheetApp.getActiveSpreadsheet().toast(count + "건의 Summary를 정제했습니다.", "✅ 완료", 4);
+  
+  var countS = 0;
+  var countT = 0;
+  
+  for (var i = 1; i < data.length; i++) {
+    // Title 정제
+    if (idxT !== -1 && data[i][idxT]) {
+      var originalT = String(data[i][idxT]);
+      var cleanedT = cleanTitleText(originalT);
+      if (cleanedT !== originalT) {
+        sheet.getRange(i + 1, idxT + 1).setValue(cleanedT);
+        countT++;
+      }
+    }
+    
+    // Summary 정제
+    if (idxS !== -1 && data[i][idxS]) {
+      var originalS = String(data[i][idxS]);
+      var cleanedS = cleanSummaryText(originalS);
+      if (cleanedS !== originalS) {
+        sheet.getRange(i + 1, idxS + 1).setValue(cleanedS);
+        countS++;
+      }
+    }
+  }
+  
+  var msg = "";
+  if (countT > 0) msg += "제목 " + countT + "건, ";
+  if (countS > 0) msg += "요약 " + countS + "건";
+  
+  if (msg === "") {
+    SpreadsheetApp.getActiveSpreadsheet().toast("정제할 데이터가 없습니다.", "✅ 완료");
+  } else {
+    SpreadsheetApp.getActiveSpreadsheet().toast(msg + "을 정제했습니다.", "✅ 완료", 4);
+  }
 }
 
 function handleGetBoardPosts(ss) {
@@ -1042,8 +1121,8 @@ function sendDailyNewsEmail() {
   var foundCount = 0;
 
   for (var i = 1; i < data.length; i++) {
-    var dateVal = String(data[i][idxDate]).replace(/\./g, "-");
-    if (dateVal === latestDateStr) {
+    var rowDateStr = getNormalizedDateString(data[i][idxDate]);
+    if (rowDateStr === latestDateStr) {
       var cat = String(data[i][idxCategory] || "기타").trim();
       if (!categorizedToday[cat]) categorizedToday[cat] = [];
       
