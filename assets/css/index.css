@@ -1285,3 +1285,65 @@ nav { position: relative; }
   z-index: 10;
   opacity: 0;
 }
+
+/* ================================================================
+   모바일 반응형 최적화 (768px 이하)
+   ================================================================ */
+@media (max-width: 768px) {
+  /* 1. 로그인(인증) 창: 중앙/하단 배치 및 너비 조정 */
+  #auth-container {
+    width: 90% !important;
+    right: 5% !important;
+    left: 5% !important;
+    bottom: 30px !important; /* 모바일 하단 여백 */
+  }
+  
+  /* 2. 인트로 타이틀: 폰트 크기 축소 및 위치 조정 (잘림 방지) */
+  #intro-title {
+    left: 20px !important;
+    bottom: 40% !important; /* 로그인창 위로 배치 */
+  }
+  #intro-h1 {
+    font-size: 3.5rem !important; /* 기존 대형 폰트 축소 */
+    line-height: 1.1 !important;
+  }
+  #intro-label {
+    font-size: 9px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* 3. 뉴스 허브 (News Hub) 컨텐츠 최적화 */
+  #summaryGrid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important; /* 요약 카드 1열 */
+    gap: 16px !important;
+  }
+  
+  .sidebar {
+    display: none !important; /* 모바일에서는 고정 사이드바 숨김 */
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 20px 16px !important;
+    margin-top: 56px !important;
+  }
+  
+  /* 뉴스 기사 가독성 향상 */
+  .news-item {
+    padding: 16px 0 !important;
+  }
+  
+  .summary-text {
+    -webkit-line-clamp: 4 !important; /* 모바일에서 조금 더 긴 요약 제공 */
+  }
+
+  /* 헤더 버튼 조정 */
+  header .md\:flex {
+    display: none !important;
+  }
+  
+  /* 드로어 관련 스타일 보강 */
+  #mobile-drawer.open {
+    transform: translateX(0);
+  }
+}
