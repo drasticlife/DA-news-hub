@@ -60,6 +60,69 @@
       </button>
     </div>
   </header>
+    
+  <!-- ============================================================
+       글로벌 네비게이션 드로어 (모든 페이지 공용)
+  ============================================================ -->
+  <!-- 오버레이 -->
+  <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/50 z-[200] hidden backdrop-blur-sm" onclick="closeMobileDrawer()"></div>
+
+  <!-- 드로어 패널 -->
+  <div id="mobile-drawer" class="fixed top-0 -left-full w-72 h-full bg-white dark:bg-[#25282c] z-[300] transition-all duration-300 shadow-2xl p-4 overflow-y-auto">
+    <!-- 헤더 -->
+    <div class="flex justify-between items-center mb-5 pb-4 border-b dark:border-gray-700">
+      <div class="flex items-center gap-2">
+        <div class="bg-[#0033A0] text-white px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+        <span class="font-bold text-[13px] text-[#0033A0] dark:text-blue-400 uppercase">Purchase Intelligence</span>
+      </div>
+      <button onclick="closeMobileDrawer()" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- 섹션: 페이지 이동 -->
+    <div class="text-[9px] font-black tracking-[0.18em] text-slate-400 uppercase px-1 mb-2">NAVIGATE</div>
+    <nav class="flex flex-col gap-1">
+      <a href="index.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📰</span>
+        <span class="flex-1">전략 시황 (News Hub)</span>
+      </a>
+      <a href="dashboard_mod.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📊</span>
+        <span class="flex-1">Dashboard</span>
+      </a>
+      <a href="dashboard_3d.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">🌐</span>
+        <span class="flex-1">3D Globe Briefing</span>
+      </a>
+      <a href="wiki/index.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📖</span>
+        <span class="flex-1">Product Wiki</span>
+      </a>
+      <a href="indices.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold bg-blue-50 text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg">📈</span>
+        <span class="flex-1">Market Indices</span>
+        <span class="text-[9px] font-black px-2 py-0.5 bg-slate-200 text-slate-500 rounded-full">현재</span>
+      </a>
+    </nav>
+
+    <!-- 섹션: 검색 -->
+    <div class="mt-6 pt-6 border-t dark:border-gray-700">
+      <div class="flex items-center bg-slate-50 dark:bg-slate-800 rounded-full px-4 py-2 gap-3 border dark:border-gray-700">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+        <input type="text" placeholder="키워드 검색..." onkeyup="if(event.key === 'Enter') { location.href='index.html?search=' + this.value; }"
+          class="bg-transparent border-none text-xs font-bold w-full outline-none dark:text-white">
+      </div>
+    </div>
+
+    <!-- 섹션: 푸터 -->
+    <div class="mt-6 pt-6 border-t dark:border-gray-700 flex flex-col gap-2">
+      <button onclick="location.href='index.html'" class="flex items-center gap-3 w-full p-2.5 rounded-xl text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 transition-all text-left">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>로그아웃 (메인 이동)</span>
+      </button>
+    </div>
+  </div>
 
   <div class="flex">
     <!-- Sidebar -->
@@ -126,6 +189,29 @@
         document.getElementById('btn-nonferrous').classList.add('sidebar-item-active');
         document.getElementById('btn-fx').classList.add('text-slate-600');
       }
+    }
+
+    /* ===== 글로벌 네비게이션 드로어 제어 (Mobile Menu) ===== */
+    function toggleMobileDrawer() {
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      const isOpen = drawer.style.left === '0px';
+
+      if (isOpen) {
+        closeMobileDrawer();
+      } else {
+        drawer.style.left = '0px';
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeMobileDrawer() {
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      drawer.style.left = '-100%';
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
     }
 
     // Initialize Lucide Icons
