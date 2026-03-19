@@ -70,7 +70,9 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
         { name: "모터·인버터", fileName: "모터·인버터", icon: "🔄" },
         { name: "냉매", fileName: "냉매", icon: "⚗" },
         { name: "밸브(Valve)", fileName: "밸브(Valve)", icon: "🚰" },
-        { name: "PCB 및 PBA", fileName: "PCB 및 PBA", icon: "🧠" },
+        { name: "가전 원가와 원자재 시황", fileName: "가전 원가와 원자재 시황 연동", icon: "💹" },
+        { name: "전력 반도체/공급망", fileName: "전력 반도체와 공급망 리스크", icon: "🧠" },
+        { name: "PCB 및 PBA", fileName: "PCB 및 PBA", icon: "🔌" },
         { name: "사출(Injection)", fileName: "사출(Injection)", icon: "🏗️" },
         { name: "프레스(Press)", fileName: "프레스(Press)", icon: "⚒️" },
         { name: "PCM·강판 소재", fileName: "PCM·강판 소재", icon: "◈" },
@@ -80,6 +82,9 @@ const DAWikiSidebar: QuartzComponent = ({ fileData, allFiles }: QuartzComponentP
     {
       label: "규제·인증·정책",
       items: [
+        { name: "유럽 에너지 등급 전략", fileName: "유럽 에너지 등급 규제와 전략", icon: "🥇" },
+        { name: "글로벌 인증/무역장벽", fileName: "글로벌 인증 및 무역 장벽", icon: "🚧" },
+        { name: "ESG 소재 채택 논리", fileName: "ESG 소재 채택의 비즈니스 논리", icon: "♻️" },
         { name: "ESG 규제/인증", fileName: "ESG 규제 및 인증", icon: "🌍" },
         { name: "인도 BIS 인증", fileName: "인도 BIS 인증", icon: "📜" },
       ],
