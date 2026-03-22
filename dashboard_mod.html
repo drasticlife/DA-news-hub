@@ -613,6 +613,298 @@
     color: var(--text-muted); gap: 8px; font-size: 12px;
   }
   .no-data i { font-size: 28px; opacity: .3; }
+
+  /* ══════════════════════════════════════
+     Article Modal — 2026 뉴스 리더 스타일
+  ══════════════════════════════════════ */
+
+  /* 배경 오버레이 */
+  #articleModal {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 9000;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeInOverlay .2s ease;
+  }
+  #articleModal.open { display: flex; }
+  @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+  /* 모달 카드 */
+  .modal-card {
+    position: relative;
+    width: 100%; max-width: 720px;
+    max-height: 90vh;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0,0,0,.6);
+    animation: slideUpCard .25s cubic-bezier(.34,1.2,.64,1);
+  }
+  @keyframes slideUpCard {
+    from { transform: translateY(28px) scale(.97); opacity: 0; }
+    to   { transform: translateY(0)    scale(1);   opacity: 1; }
+  }
+  body.light .modal-card { background: #fff; border-color: #e2e8f0; }
+
+  /* 읽기 진행 바 */
+  #readProgress {
+    position: absolute; top: 0; left: 0;
+    height: 3px; width: 0%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-teal));
+    border-radius: 0 3px 3px 0;
+    z-index: 10;
+    transition: width .1s linear;
+  }
+
+  /* 히어로 이미지 영역 */
+  .modal-hero {
+    position: relative;
+    width: 100%; height: 220px;
+    overflow: hidden; flex-shrink: 0;
+    background: var(--bg-card);
+  }
+  .modal-hero img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+    transition: transform .4s ease;
+  }
+  .modal-hero img:hover { transform: scale(1.03); }
+  /* 히어로 그라데이션 오버레이 */
+  .modal-hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 30%,
+      rgba(0,0,0,0.7) 100%
+    );
+    pointer-events: none;
+  }
+  /* 히어로 위 메타 (리스크 뱃지) */
+  .modal-hero-meta {
+    position: absolute; top: 14px; left: 16px; right: 16px;
+    display: flex; align-items: center; gap: 6px;
+    z-index: 2;
+  }
+  /* 히어로 위 닫기 버튼 */
+  .modal-close-hero {
+    position: absolute; top: 14px; right: 14px;
+    z-index: 10;
+    width: 32px; height: 32px;
+    border-radius: 50%; border: none; cursor: pointer;
+    background: rgba(0,0,0,.5); color: #fff;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+  }
+  .modal-close-hero:hover { background: rgba(0,0,0,.8); }
+  /* 이미지 없을 때 placeholder */
+  .modal-hero.no-image {
+    height: 80px;
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+  }
+  .modal-hero.no-image img { display: none; }
+
+  /* 스크롤 바디 */
+  .modal-body {
+    flex: 1; overflow-y: auto;
+    padding: 24px 32px 28px;
+    scroll-behavior: smooth;
+  }
+  .modal-body::-webkit-scrollbar { width: 4px; }
+  .modal-body::-webkit-scrollbar-track { background: transparent; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* 카테고리 + 날짜 pill 행 */
+  .modal-meta-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .modal-pill {
+    font-size: 10px; font-weight: 700; padding: 3px 9px;
+    border-radius: 99px; border: 1px solid var(--border);
+    color: var(--text-muted); background: var(--bg-card);
+    white-space: nowrap;
+    transition: background .25s;
+  }
+  body.light .modal-pill { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+  .modal-pill.risk-pill { border: none; }
+
+  /* 제목 */
+  .modal-title {
+    font-size: 22px; font-weight: 800;
+    color: var(--text-primary); line-height: 1.4;
+    margin-bottom: 8px; letter-spacing: -.02em;
+  }
+  body.light .modal-title { color: #0f172a; }
+
+  /* 지역 태그 */
+  .modal-region-row {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-bottom: 18px;
+  }
+  .modal-region-tag {
+    font-size: 10px; color: var(--accent-teal);
+    background: rgba(45,212,191,.1);
+    padding: 2px 8px; border-radius: 4px;
+    font-weight: 600;
+  }
+
+  /* 구분선 */
+  .modal-divider {
+    height: 1px; background: var(--border);
+    margin: 16px 0;
+    transition: background .25s;
+  }
+
+  /* AI 요약 섹션 */
+  .modal-summary-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    color: var(--accent-teal); text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 10px;
+  }
+  .modal-summary-label::before {
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-teal);
+  }
+  .modal-summary-text {
+    font-size: 14px; line-height: 1.85;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent-teal);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-bottom: 4px;
+    transition: background .25s;
+  }
+  body.light .modal-summary-text { background: #f0fdf4; border-left-color: #2dd4bf; color: #334155; }
+  .modal-summary-text b { color: var(--text-primary); font-weight: 700; }
+  body.light .modal-summary-text b { color: #0f172a; }
+  .modal-summary-text mark {
+    background: rgba(79,142,247,.18); color: #93c5fd;
+    border-radius: 3px; padding: 1px 3px;
+  }
+  body.light .modal-summary-text mark { background: rgba(79,142,247,.12); color: #2563eb; }
+
+  /* AI 브리핑 (BOT) */
+  .modal-bot-text {
+    font-size: 13px; line-height: 1.85; color: var(--text-secondary);
+    margin-top: 12px; padding: 14px 18px;
+    background: rgba(79,142,247,.06);
+    border: 1px solid rgba(79,142,247,.15);
+    border-radius: 8px;
+    transition: background .25s;
+  }
+  body.light .modal-bot-text { background: #eff6ff; border-color: #bfdbfe; color: #334155; }
+  .modal-bot-text b { color: var(--text-primary); font-weight: 700; }
+  body.light .modal-bot-text b { color: #0f172a; }
+  .modal-bot-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    color: var(--accent-blue); text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 10px;
+  }
+  .modal-bot-label::before {
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-blue);
+  }
+
+  /* 태그 행 */
+  .modal-tags {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-top: 4px;
+  }
+  .modal-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 4px;
+    background: var(--bg-hover); color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-weight: 500;
+    transition: background .25s;
+  }
+  body.light .modal-tag { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+
+  /* 출처 카드 섹션 */
+  .modal-sources-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    color: var(--text-muted); text-transform: uppercase;
+    margin-bottom: 10px; margin-top: 4px;
+  }
+  .modal-source-cards {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .modal-source-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; text-decoration: none;
+    transition: all .2s; cursor: pointer;
+  }
+  .modal-source-card:hover {
+    border-color: var(--accent-blue);
+    background: var(--bg-hover);
+    transform: translateX(3px);
+  }
+  body.light .modal-source-card { background: #f8fafc; border-color: #e2e8f0; }
+  body.light .modal-source-card:hover { background: #eff6ff; border-color: #93c5fd; }
+  .source-favicon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--bg-hover); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; overflow: hidden;
+  }
+  .source-favicon img { width: 16px; height: 16px; object-fit: contain; }
+  .source-info { flex: 1; min-width: 0; }
+  .source-domain {
+    font-size: 11px; font-weight: 700; color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  body.light .source-domain { color: #1e293b; }
+  .source-url {
+    font-size: 10px; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .source-arrow {
+    color: var(--text-muted); font-size: 11px; flex-shrink: 0;
+    transition: color .2s, transform .2s;
+  }
+  .modal-source-card:hover .source-arrow { color: var(--accent-blue); transform: translateX(2px); }
+
+  /* 모달 푸터 */
+  .modal-footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; gap: 10px;
+    background: var(--bg-card);
+    transition: background .25s, border-color .25s;
+  }
+  body.light .modal-footer { background: #f8fafc; border-color: #e2e8f0; }
+  .modal-impact-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 6px;
+    background: var(--bg-hover); color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .modal-close-footer {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border-radius: 8px;
+    background: var(--bg-hover); border: 1px solid var(--border);
+    color: var(--text-secondary); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .modal-close-footer:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
 </style>
 </head>
 <body>
@@ -807,6 +1099,64 @@
 </div>
 
 <script src="assets/js/config.js"></script>
+
+<!-- ══════════════════════════════════════════
+     Article Reader Modal
+══════════════════════════════════════════ -->
+<div id="articleModal" onclick="handleModalBgClick(event)">
+  <div class="modal-card" id="modalCard">
+    <!-- 읽기 진행 바 -->
+    <div id="readProgress"></div>
+
+    <!-- 히어로 이미지 -->
+    <div class="modal-hero" id="modalHero">
+      <img id="modalHeroImg" src="" alt="기사 이미지" onerror="this.parentElement.classList.add('no-image')">
+      <div class="modal-hero-meta" id="modalHeroMeta"></div>
+      <button class="modal-close-hero" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- 스크롤 바디 -->
+    <div class="modal-body" id="modalBody">
+      <!-- 메타 pill 행 -->
+      <div class="modal-meta-row" id="modalMetaRow"></div>
+      <!-- 제목 -->
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <!-- 지역 태그 -->
+      <div class="modal-region-row" id="modalRegionRow"></div>
+
+      <div class="modal-divider"></div>
+
+      <!-- AI 요약 -->
+      <div class="modal-summary-label">AI 요약</div>
+      <div class="modal-summary-text" id="modalSummary"></div>
+
+      <!-- AI 인사이트 브리핑 (BOT) -->
+      <div id="modalBotWrap" style="display:none; margin-top:16px;">
+        <div class="modal-bot-label">AI 인사이트</div>
+        <div class="modal-bot-text" id="modalBot"></div>
+      </div>
+
+      <div class="modal-divider"></div>
+
+      <!-- 태그 -->
+      <div class="modal-tags" id="modalTags"></div>
+
+      <div class="modal-divider"></div>
+
+      <!-- 출처 링크 -->
+      <div class="modal-sources-label"><i class="fas fa-link" style="margin-right:5px"></i>출처</div>
+      <div class="modal-source-cards" id="modalSources"></div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="modal-footer">
+      <span class="modal-impact-badge" id="modalImpact"></span>
+      <button class="modal-close-footer" onclick="closeModal()">
+        <i class="fas fa-times"></i> 닫기
+      </button>
+    </div>
+  </div>
+</div>
 <script>
 // ════════════════════════════════════════════════
 // DA Intelligence Dashboard v3.1
@@ -1196,7 +1546,8 @@ function renderArticles() {
     const color = CAT_COLOR[cat]||'#64748b';
     const dateStr = String(n.Date||'').replace(/T.+/,'');
     const summary = String(n.Summary||n.Summary_en||'').replace(/<[^>]+>/g,'').slice(0,80);
-    return `<div class="article-card risk-${rc}" onclick="openArticle('${(n.URL||'').split('\n')[0].trim()}')">
+    // uid를 이스케이프 없이 안전하게 전달
+    return `<div class="article-card risk-${rc}" onclick="openArticleModal('${n._uid}')">
       <div class="article-meta"><span class="risk-badge ${rc}">${n.Risk||'Low'}</span><span>${dateStr}</span></div>
       <div class="article-title">${n.Title||n.Title_en||'제목 없음'}</div>
       ${summary?`<div class="article-summary">${summary}...</div>`:''}
@@ -1209,6 +1560,140 @@ function renderArticles() {
 }
 
 function openArticle(url) { if (url && url.startsWith('http')) window.open(url, '_blank'); }
+
+// ── 기사 팝업 모달 ──────────────────────────────
+// allNews에서 _uid로 기사 찾아 모달 오픈
+function openArticleModal(uid) {
+  const n = allNews.find(a => a._uid === uid);
+  if (!n) return;
+
+  // ── 히어로 이미지 ──
+  const heroEl  = document.getElementById('modalHero');
+  const heroImg = document.getElementById('modalHeroImg');
+  heroEl.classList.remove('no-image');
+  if (n.Image && n.Image.startsWith('http')) {
+    heroImg.src = n.Image;
+    heroImg.style.display = 'block';
+  } else {
+    heroEl.classList.add('no-image');
+  }
+
+  // ── 히어로 위 리스크 뱃지 ──
+  const rc = riskClass(n.Risk);
+  const riskLabelMap = { vh:'Very High', h:'High', m:'Med', l:'Low' };
+  const riskColorMap = { vh:'#ef4444', h:'#fb923c', m:'#fbbf24', l:'#34d399' };
+  document.getElementById('modalHeroMeta').innerHTML = `
+    <span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:800;
+      background:${riskColorMap[rc]};color:#fff;letter-spacing:.04em;">
+      ${n.Risk || 'Low'}
+    </span>`;
+
+  // ── 메타 pill 행 ──
+  const cat = normalizeCat(n.Category);
+  const catColor = CAT_COLOR[cat] || '#64748b';
+  const dateStr = String(n.Date || '').replace(/T.+/, '').replace(/\./g, '-');
+  document.getElementById('modalMetaRow').innerHTML = `
+    <span class="modal-pill" style="color:${catColor};background:${catColor}18;border-color:${catColor}35;">
+      ${CAT_ICON[cat] || '📌'} ${cat}
+    </span>
+    <span class="modal-pill">${dateStr}</span>
+    ${n.Impact ? `<span class="modal-pill" style="color:var(--accent-yellow);background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.2);">📈 ${n.Impact}</span>` : ''}
+  `;
+
+  // ── 제목 ──
+  document.getElementById('modalTitle').textContent = n.Title || n.Title_en || '제목 없음';
+
+  // ── 지역 태그 ──
+  const regions = String(n.Region || n.Region_en || '').split(',').map(r => r.trim()).filter(Boolean);
+  document.getElementById('modalRegionRow').innerHTML = regions
+    .map(r => `<span class="modal-region-tag"><i class="fas fa-map-marker-alt" style="font-size:9px;margin-right:3px"></i>${r}</span>`)
+    .join('');
+
+  // ── AI 요약 ──
+  const summary = n.Summary || n.Summary_en || '요약 정보가 없습니다.';
+  document.getElementById('modalSummary').innerHTML = summary;
+
+  // ── AI 브리핑 (BOT) ──
+  const bot = n.BOT || n['BOT(eng)'] || '';
+  const botWrap = document.getElementById('modalBotWrap');
+  if (bot && bot.trim()) {
+    document.getElementById('modalBot').innerHTML = bot
+      .replace(/\*\*/g, '')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+    botWrap.style.display = 'block';
+  } else {
+    botWrap.style.display = 'none';
+  }
+
+  // ── 태그 ──
+  const tags = String(n.Tag || n.Tag_en || '').split(',').map(t => t.trim()).filter(Boolean);
+  document.getElementById('modalTags').innerHTML = tags
+    .slice(0, 10)
+    .map(t => `<span class="modal-tag"># ${t}</span>`)
+    .join('');
+
+  // ── 출처 카드 ──
+  const rawUrls = String(n.URL || '').split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+  const sourcesEl = document.getElementById('modalSources');
+  if (rawUrls.length === 0) {
+    sourcesEl.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">출처 링크가 없습니다.</div>`;
+  } else {
+    sourcesEl.innerHTML = rawUrls.slice(0, 3).map((url, i) => {
+      let domain = '';
+      try { domain = new URL(url).hostname.replace('www.', ''); } catch(e) { domain = url; }
+      const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+      const srcLabel = i === 0 ? '주요 출처' : `출처 ${i + 1}`;
+      return `
+        <a class="modal-source-card" href="${url}" target="_blank" rel="noopener">
+          <div class="source-favicon">
+            <img src="${faviconUrl}" alt="${domain}" onerror="this.parentElement.textContent='🔗'">
+          </div>
+          <div class="source-info">
+            <div class="source-domain">${domain}</div>
+            <div class="source-url">${url.length > 60 ? url.slice(0, 60) + '…' : url}</div>
+          </div>
+          <i class="fas fa-arrow-right source-arrow"></i>
+        </a>`;
+    }).join('');
+  }
+
+  // ── 푸터 Impact ──
+  document.getElementById('modalImpact').textContent = n.Impact
+    ? `영향도: ${n.Impact}`
+    : `카테고리: ${cat}`;
+
+  // ── 진행바 리셋 ──
+  document.getElementById('readProgress').style.width = '0%';
+
+  // ── 모달 오픈 ──
+  const modal = document.getElementById('articleModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // 스크롤 진행 트래킹
+  const body = document.getElementById('modalBody');
+  body.scrollTop = 0;
+  body.onscroll = () => {
+    const pct = body.scrollHeight <= body.clientHeight
+      ? 100
+      : Math.min(100, Math.round(body.scrollTop / (body.scrollHeight - body.clientHeight) * 100));
+    document.getElementById('readProgress').style.width = pct + '%';
+  };
+}
+
+function closeModal() {
+  document.getElementById('articleModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// 배경 클릭 시 닫기
+function handleModalBgClick(e) {
+  if (e.target === document.getElementById('articleModal')) closeModal();
+}
+
+// ESC 키로 닫기
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ── Period 이벤트 ────────────────────────────────
 function setPeriod(p, el) {
