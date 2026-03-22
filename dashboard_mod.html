@@ -860,6 +860,25 @@
   }
   body.light .modal-summary-text mark { background: rgba(79,142,247,.12); color: #2563eb; }
 
+  /* News Hub 스타일 강조 키워드 */
+  .summary-keyword {
+    color: #93c5fd !important;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+  body.light .summary-keyword {
+    color: #1428a0 !important;
+  }
+  .modal-summary-text b, .modal-summary-text strong,
+  .modal-bot-text b, .modal-bot-text strong {
+    color: #93c5fd !important;
+    font-weight: 800;
+  }
+  body.light .modal-summary-text b, body.light .modal-summary-text strong,
+  body.light .modal-bot-text b, body.light .modal-bot-text strong {
+    color: #1428a0 !important;
+  }
+
   /* Impact 하이라이트 카드 */
   .modal-impact-card {
     display: flex; align-items: center; gap: 12px;
@@ -1716,6 +1735,22 @@ function renderArticles() {
 
 function openArticle(url) { if (url && url.startsWith('http')) window.open(url, '_blank'); }
 
+// News Hub와 동일한 포맷팅 로직
+function formatSummary(text) {
+  if (!text) return '';
+  let s = String(text);
+  // **굵게** → <strong>
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // ==하이라이트== → <mark>
+  s = s.replace(/==(.+?)==/g, '<mark>$1</mark>');
+  // 액션: / 시사점: / 해결책: 등 키워드 강조
+  s = s.replace(/(액션\s*:|시사점\s*:|해결책\s*:|배경\s*:)/g, '<strong class="summary-keyword">$1</strong>');
+  // \n → <br>
+  s = s.replace(/\n\n/g, '<br><br>');
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
 // ── 기사 팝업 모달 ──────────────────────────────
 // allNews에서 _uid로 기사 찾아 모달 오픈
 function openArticleModal(uid) {
@@ -1776,7 +1811,7 @@ function openArticleModal(uid) {
 
   // ── AI 요약 ──
   const summary = n.Summary || n.Summary_en || '요약 정보가 없습니다.';
-  document.getElementById('modalSummary').innerHTML = summary;
+  document.getElementById('modalSummary').innerHTML = formatSummary(summary);
 
   // ── Impact 강조 카드 ──
   const impactCard = document.getElementById('modalImpactCard');
@@ -1798,10 +1833,7 @@ function openArticleModal(uid) {
   const bot = n.BOT || n['BOT(eng)'] || '';
   const botWrap = document.getElementById('modalBotWrap');
   if (bot && bot.trim()) {
-    document.getElementById('modalBot').innerHTML = bot
-      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')   // **볼드** → <b>
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>');
+    document.getElementById('modalBot').innerHTML = formatSummary(bot);
     botWrap.style.display = 'block';
   } else {
     botWrap.style.display = 'none';
