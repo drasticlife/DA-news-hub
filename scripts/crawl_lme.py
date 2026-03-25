@@ -113,7 +113,6 @@ def main():
         total_pages = 290
         new_count = 0
         for page in range(total_pages, 0, -1):
-            print(f"  페이지 {page}/{total_pages} 수집 중 (누적 신규: {new_count}건)...", end="\r")
             rows = fetch_page(session, page)
             added_in_page = 0
             if rows:
@@ -123,6 +122,10 @@ def main():
                         existing_dates.add(row["date"])
                         new_count += 1
                         added_in_page += 1
+            
+            # 10페이지마다 로그 출력 (GitHub Actions에서 진행 상황 확인용)
+            if page % 10 == 0 or page == 1:
+                print(f"  [진행상황] {page}/{total_pages} 페이지 완료 (신규 수집: {new_count}건)")
             
             # 5페이지마다 중간 저장 (혹시 모를 중단 대비)
             if page % 5 == 0 and added_in_page > 0:
