@@ -39,7 +39,7 @@ def parse_html(html):
             if cell_text:
                 cells.append(cell_text)
 
-        # Valid data row: 7 cells, first cell starts with a 4-digit year
+    # Valid data row: 7 cells, first cell starts with a 4-digit year
         if len(cells) >= 7 and len(cells[0]) >= 4 and cells[0][:4].isdigit():
             try:
                 rows.append({
@@ -57,72 +57,95 @@ def parse_html(html):
 
 
 def fetch_page(session, page):
-    """Fetch and parse a single page. Returns list of row dicts."""
+    """Fetch and parse a single page with retries."""
     url = BASE_URL.format(page)
-    try:
-        resp = session.get(url, timeout=20)
-        resp.raise_for_status()
-        return parse_html(resp.text)
-    except Exception as exc:
-        print(f"  ⚠️  Page {page} error: {exc}")
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            resp = session.get(url, timeout=30)
+            resp.raise_for_status()
+            return parse_html(resp.text)
+        except Exception as exc:
+            if attempt < max_retries - 1:
+                wait = (attempt + 1) * 5
+                print(f"\n  ⚠️  Page {page} error: {exc}. {wait}초 후 재시도 ({attempt+1}/{max_retries})...")
+                time.sleep(wait)
+            else:
+                print(f"\n  ❌ Page {page} failed after {max_retries} attempts.")
+                return []
 
 
 def load_existing():
     """Load existing JSON data if it exists."""
     if os.path.exists(DATA_PATH):
-        with open(DATA_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(DATA_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return []
     return []
 
 
 def save(all_data):
-    """Save all data sorted by date."""
-    all_data.sort(key=lambda x: x["date"])
+    """Save all data sorted by date, removing duplicates."""
+    # Remove duplicates by date
+    unique_data = {item["date"]: item for item in all_data}
+    sorted_list = sorted(unique_data.values(), key=lambda x: x["date"])
+    
     os.makedirs("data", exist_ok=True)
     with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(all_data, f, ensure_ascii=False, indent=2)
+        json.dump(sorted_list, f, ensure_ascii=False, indent=2)
 
 
 def main():
     full_mode = "--full" in sys.argv
 
     # Load what we already have
-    existing_data = load_existing()
-    existing_dates = {item["date"] for item in existing_data}
-    print(f"기존 데이터: {len(existing_data)}건")
+    all_data = load_existing()
+    existing_dates = {item["date"] for item in all_data}
+    print(f"기존 데이터: {len(all_data)}건")
 
     session = requests.Session()
     session.headers.update(HEADERS)
 
-    new_rows = []
-
     if full_mode:
         print("📚 전체 이력 수집 모드 (최대 290페이지)...")
-        # Find total pages first (page 1 shows navigation)
         total_pages = 290
+        new_count = 0
         for page in range(total_pages, 0, -1):
-            print(f"  페이지 {page}/{total_pages} 수집 중...", end="\r")
+            print(f"  페이지 {page}/{total_pages} 수집 중 (누적 신규: {new_count}건)...", end="\r")
             rows = fetch_page(session, page)
-            for row in reversed(rows):
-                if row["date"] not in existing_dates:
-                    new_rows.append(row)
-                    existing_dates.add(row["date"])
-            time.sleep(0.3)  # 서버 부하 방지
+            added_in_page = 0
+            if rows:
+                for row in reversed(rows):
+                    if row["date"] not in existing_dates:
+                        all_data.append(row)
+                        existing_dates.add(row["date"])
+                        new_count += 1
+                        added_in_page += 1
+            
+            # 5페이지마다 중간 저장 (혹시 모를 중단 대비)
+            if page % 5 == 0 and added_in_page > 0:
+                save(all_data)
+            
+            time.sleep(1.5)  # 간격 늘림 (서버 차단 방지)
         print()
     else:
-        print("📅 일일 업데이트 모드 (최신 1~2 페이지)...")
-        for page in [1, 2]:  # 최근 2페이지 확인 (주말/휴일 대비)
+        print("📅 일일 업데이트 모드 (최근 1~3 페이지)...")
+        new_count = 0
+        for page in [1, 2, 3]:
             rows = fetch_page(session, page)
-            for row in reversed(rows):
-                if row["date"] not in existing_dates:
-                    new_rows.append(row)
-                    existing_dates.add(row["date"])
+            if rows:
+                for row in reversed(rows):
+                    if row["date"] not in existing_dates:
+                        all_data.append(row)
+                        existing_dates.add(row["date"])
+                        new_count += 1
+            time.sleep(1.0)
 
-    if new_rows:
-        all_data = existing_data + new_rows
+    if new_count > 0:
         save(all_data)
-        print(f"✅ {len(new_rows)}건 신규 추가 → 전체 {len(all_data)}건 저장 완료")
+        print(f"✅ {new_count}건 신규 추가 → 전체 {len(all_data)}건 저장 완료")
     else:
         print("ℹ️  신규 데이터 없음 (이미 최신 상태)")
 
