@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-24 17:56:41",
+  "last_updated": "2026-03-25 21:17:54",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
     "script": "<b>금주(3/22~23) 종합 브리핑</b>입니다. 금주 공급망 전반에서 가장 중요한 이슈는 <b>미국 10% 글로벌 추가 관세</b> 지속과 <b>원/달러 1,500원대</b> 환율 급등의 이중 충격으로, DA 대미 수출 원가 부담이 <b>+3~5%</b> 수준까지 추가 상승하고 있다는 점입니다. 원자재 측면에서는 냉매 R32·R454B 구조적 강세와 HRC <b>1,064달러/톤(+10%)</b> 강세가 세탁기·에어컨 BOM에 직접적인 상방 압력을 가하고 있습니다. 생산지역에서는 중국 전략 금속 수출통제 강화와 이집트 통화 급락이 공급망 불안을 높이고 있으며, 태국·베트남·한국의 인건비·전기료 인상도 누적 부담 요인입니다. 경쟁사 측면에서는 Whirlpool의 멕시코 생산 이전 가속화가 SEDAM과의 현지 경쟁 구도를 재편할 가능성이 있어 주시가 필요합니다. 신기술 분야에서는 GE의 AI 비전 냉장고·오븐과 Roborock의 차세대 AI 로봇청소기가 경쟁 기술 위협으로 부상하고 있어, 삼성 DA의 AI 탑재 로드맵 재검토가 시급합니다. <mark>금주의 핵심 리스크는 관세+환율+원자재의 3중 원가 압박이며, 즉각적인 헤징 강화, HS코드별 관세 면제 점검, 대체 공급선 확보가 병행되어야 합니다.</mark> 우선순위 액션: ① 10% 관세 적용 품목 HS코드 매핑 완료, ② 달러 결제분 헤지 비중 단계적 확대, ③ 중국 수출통제 영향 긴급 점검."
@@ -311,6 +311,27 @@
             "LikeCount": ""
           },
           {
+            "Date": "2026.03.24",
+            "Title": "미, 중국·EU 등 대상 신규 관세 조사…대중 MFN 박탈 시 관세 10~50% 가능성",
+            "Category": "거시경제:통상정책",
+            "Summary": "미국 행정부가 중국과 EU를 포함한 주요 교역국을 대상으로 <b>‘과잉 생산능력’</b>을 이유로 하는 신규 관세 조사를 시작하면서, 향후 광범위한 품목에 대해 추가 관세가 부과될 수 있는 환경이 조성되고 있어요.news.bloombergtax​ Everstream 분석에 따르면, EU는 일부 품목에 대해 미국의 <b>15% 관세</b> 적용에서 예외를 요구하고 있고, 중국의 최혜국 대우(MFN)가 철회될 경우 현재 약 <b>2.5%</b> 수준인 관세가 품목별로 <b>10~50%</b>까지 올라갈 수 있다는 시나리오도 거론됩니다.everstream​\n\n시사점: \n미국의 관세 재부과·확대 움직임은 중국·EU·한국에서 미국으로 수출되는 철강·가전·부품류에 직격탄이 될 수 있어요. 특히 트럼프 2.0 관세 트래커 기준으로 한국산 자동차·주방가구·철강 관련 품목에 <b>15~25%</b> 수준의 관세 인상 또는 위협이 존재해, 미국향 DA 완제품·부품 공급망(철판, 모터, 컴프레서, 판넬 등)에도 <mark>이중·삼중의 관세 비용이 중첩될 수 있는 리스크</mark>가 커지고 있습니다.\n\n액션:\n ① 미국향 DA 수출 물량 기준으로 중국·EU·한국 등 국가별 관세 시나리오(현행, +10%, +25%, MFN 박탈 시 10~50%)에 따른 매출총이익(GP) 민감도 분석 (우선순위: 상, 기한: 2026-04-05)\n ② 미국 현지 생산 비중 확대, 멕시코 등 제3국 우회 조달, 미국 내 부품 소싱 확대 등 3가지 대안별 원가·관세·리드타임 영향 비교 (우선순위: 상, 기한: 2026-04-15)\n ③ 대미 수출 비중이 큰 핵심 협력사(철강, 플라스틱, 모터 등) 대상 관세 변화 시 단가 조정 공식(Formula) 재협상 준비 (우선순위: 중, 기한: 2026-04-10)",
+            "URL": "https://www.everstream.ai/risk-centers/tariff-tracker-update-for-18-march-2026/\nhttps://news.bloombergtax.com/daily-tax-report/us-starts-trade-probe-into-china-eu-as-trump-revives-duties-1\nhttps://www.namm.org/policy/business-compliance/executive-orders-calling-tariffs-explained",
+            "Risk": "High",
+            "Impact": "C",
+            "Image": "https://bwrite-static.bloombergindustry.com/dims4/default/8c51cd7/2147483647/strip/false/crop/3994x1539+3+678/resize/960x370!/quality/90/?url=https%3A%2F%2Fbloomberg-bna-brightspot.s3.us-east-1.amazonaws.com%2F0a%2Fd9%2F4719605b48b6a1c174e1aa7dca13%2Fgettyimages-1232559926.jpg",
+            "Region": "Global",
+            "Tag": "관세,미국무역정책,Trump2.0,중국/EU,수입가상승,DA부품,Global",
+            "BOT": "",
+            "Title_en": "U.S. Launches New Tariff Investigation Targeting China, EU, and Others… 10–50% Tariffs Possible if China's MFN Revocation",
+            "Summary_en": "As the U.S. administration initiates new tariff investigations targeting major trading partners, including China and the EU, citing \"overcapacity,\" an environment is being created where additional tariffs could be imposed on a wide range of items in the future. According to an analysis by Everstream, the EU is requesting exceptions to the U.S. 15% tariff on certain items, and scenarios are being discussed where tariffs, currently at around 2.5%, could rise to 10–50% depending on the item if China’s Most Favored Nation (MFN) status is withdrawn.\n\nImplications: The U.S. move to reimpose and expand tariffs could deal a direct blow to steel, home appliances, and parts exported from China, the EU, and Korea to the United States. In particular, based on the Trump 2.0 Tariff Tracker, there is a threat or increase in tariffs of 15–25% on Korean automobiles, kitchen furniture, and steel-related items, which is increasing the risk of double or triple tariff costs overlapping in the U.S.-bound DA finished product and parts supply chain (steel plates, motors, compressors, panels, etc.). Action:\n\n① Analysis of Gross Profit (GP) Sensitivity Based on Country-Specific Tariff Scenarios (Current, +10%, +25%, 10–50% upon Revocation of MFN) Based on DA Export Volumes to the U.S. (Priority: High, Deadline: 2026-04-05)\n\n② Comparison of Cost, Tariff, and Lead Time Impacts for Three Alternatives: Increasing Local Production in the U.S., Procurement via Third Countries such as Mexico, and Expanding Domestic Parts Sourcing in the U.S. (Priority: High, Deadline: 2026-04-15)\n\n③ Preparation for Renegotiating Unit Price Adjustment Formulas in the Event of Tariff Changes with Key Suppliers (Steel, Plastics, Motors, etc.) with a High Share of Exports to the U.S. (Priority: Medium, Deadline: 2026-04-10)",
+            "Category_en": "Macroeconomics: Trade Policy",
+            "Tag_en": "Tariffs, US Trade Policy, Trump 2.0, China/EU, Rising Import Prices, DA Parts, Global",
+            "Region_en": "Global",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026.03.22",
             "Title": "원·달러 환율 1500원대 유지, 한 달 새 4% 넘게 급등",
             "Category": "거시경제:환율",
@@ -348,27 +369,6 @@
             "Category_en": "Macroeconomics: Interest Rates",
             "Tag_en": "Fed, FOMC, base rate freeze, 3.50~3.75%, strong dollar, exchange rate risk, DA cost",
             "Region_en": "USA, Global",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026.03.23",
-            "Title": "Fed, 기준금리 3.50~3.75% 동결·인플레 우려로 완화 지연",
-            "Category": "거시경제:금리",
-            "Summary": "지난주 FOMC에서 Fed는 기준금리를 <b>3.50~3.75%</b> 구간에 동결했고, 위원 12명 중 1명(미런)이 0.25% 인하를 주장한 것을 제외하면 매파적 컨센서스가 유지됐어요. 최신 점도표와 경제전망에서는 2026년에 단 한 차례 0.25% 인하, 2027년에 추가 0.25% 인하만 반영하면서, 2026년 말 핵심 PCE 인플레이션을 <b>2.7%</b> 수준으로 상향 조정했어요. 주간 경제·시장 코멘터리에서도 ‘인플레이션 정체·에너지 가격 상승’을 이유로 올해 상반기 내 인하 가능성을 낮게 보는 시각이 확산되고 있어요.\n\n시사점: \n금리 인하 기대가 뒤로 밀리면 달러 금리 메리트가 유지돼 <b>USD/KRW 상단(1,500원 이상)</b>이 당분간 굳어질 수 있고, <mark>DA 수입 원자재와 해외 생산 CAPEX의 원화 환산 비용이 높게 고착될 가능성이 커요</mark>. 미국 실업률이 2월 기준 <b>4.4%</b>까지 올라오는 등 고용은 둔화되지만, Fed가 여전히 인플레이션 리스크를 더 크게 보면서 당분간 ‘고금리·달러 강세 리스크’를 감수하겠다는 신호로 해석됩니다.\n\n액션:\n ① 2~3분기 환율·금리 베이스 시나리오를 ‘고금리·1,480~1,550원 박스’로 업데이트하고 손익 시뮬레이션 재산출 (우선순위: 상, 기한: 2026-03-27)\n ② 금리 연동 장기 계약(설비·물류 등)에 대해 USD 고정·변동 비율 재검토 (우선순위: 중, 기한: 2026-04-05)\n ③ Fed·미국 인플레 지표(고용, PCE) 모니터링 주기를 주간 단위로 상향 조정 (우선순위: 중, 기한: 상시)",
-            "URL": "https://www.cnbc.com/2026/03/18/fed-interest-rate-decision-march-2026.htmlcnbc​\nhttps://finance.yahoo.com/news/live/fed-meeting-live-updates-federal-reserve-holds-rates-steady-forecasts-1-rate-cut-in-2026-180\nhttps://investorseurope.com/blog/us-weeklyreport-23march",
-            "Risk": "Med",
-            "Impact": "B(+0~1%)",
-            "Image": "https://framerusercontent.com/images/guBS92FGGKUZT9Jq5X3VVxM4WmQ.png",
-            "Region": "USA",
-            "Tag": "Fed,기준금리,3.50~3.75%,인플레이션,달러강세,고금리",
-            "BOT": "",
-            "Title_en": "Fed freezes benchmark interest rate at 3.50–3.75% and delays easing due to inflation concerns",
-            "Summary_en": "At last week's FOMC meeting, the Fed kept the benchmark interest rate unchanged in the 3.50–3.75% range, and a hawkish consensus was maintained, with the exception of one of the 12 members (Mirren) who advocated for a 0.25% cut. The latest dot plot and economic outlook reflect only a single 0.25% cut in 2026 and an additional 0.25% cut in 2027, while raising the core PCE inflation target for the end of 2026 to 2.7%. In weekly economic and market commentary as well, the view that the likelihood of a rate cut in the first half of this year is low is spreading, citing reasons such as \"inflation stagnation and rising energy prices.\" Implications: If expectations for interest rate cuts are pushed back, the attractiveness of dollar rates will be maintained, potentially solidifying the upper limit of the USD/KRW exchange rate (above 1,500 KRW) for the time being, and there is a high likelihood that the cost of converting imported raw materials and overseas production CAPEX into Korean Won will remain entrenched at a high level. Although employment is slowing, with the U.S. unemployment rate rising to 4.4% as of February, this is interpreted as a signal that the Fed intends to tolerate the risks of high interest rates and a strong dollar for the time being, as it still views inflation risks as more significant. Action:\n\n① Update the Q2-Q3 exchange rate and interest rate base scenarios to the ‘High Interest Rate/1,480–1,550 KRW Box’ and recalculate profit and loss simulations (Priority: High, Deadline: 2026-03-27)\n\n② Review USD fixed and variable ratios for interest rate-linked long-term contracts (equipment, logistics, etc.) (Priority: Medium, Deadline: 2026-04-05)\n\n③ Increase the monitoring cycle for Fed and U.S. inflation indicators (employment, PCE) to weekly (Priority: Medium, Deadline: Ongoing)",
-            "Category_en": "Macroeconomics: Interest Rates",
-            "Tag_en": "Fed, base interest rate, 3.50~3.75%, inflation, strong dollar, high interest rates",
-            "Region_en": "USA",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
@@ -1215,7 +1215,7 @@
             "Tag_en": "Refrigerator, AI Vision, Gemini, Food Recognition, Recipe Recommendation, Differentiation, Global",
             "Region_en": "Global, South Korea, USA",
             "BOT(eng)": "",
-            "ViewCount": "",
+            "ViewCount": 2,
             "LikeCount": ""
           },
           {
@@ -1236,7 +1236,7 @@
             "Tag_en": "Washing machine, AI washing, energy efficiency, UV sterilization, combo washer-dryer, technological threat, Global",
             "Region_en": "Global, USA, EU",
             "BOT(eng)": "",
-            "ViewCount": "",
+            "ViewCount": 1,
             "LikeCount": ""
           }
         ],
@@ -1560,7 +1560,7 @@
         "Tag_en": "Refrigerator, AI Vision, Gemini, Food Recognition, Recipe Recommendation, Differentiation, Global",
         "Region_en": "Global, South Korea, USA",
         "BOT(eng)": "",
-        "ViewCount": "",
+        "ViewCount": 2,
         "LikeCount": ""
       }
     ],
