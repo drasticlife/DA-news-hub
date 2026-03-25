@@ -248,13 +248,26 @@
             else if (range === '1Y') filtered = rawData.slice(-264);
 
             chart.updateSeries([
-                { data: filtered.map(d => ({ x: d.date, y: d.cu })) },
-                { data: filtered.map(d => ({ x: d.date, y: d.al })) },
-                { data: filtered.map(d => ({ x: d.date, y: d.zn })) },
-                { data: filtered.map(d => ({ x: d.date, y: d.pb })) },
-                { data: filtered.map(d => ({ x: d.date, y: d.ni })) },
-                { data: filtered.map(d => ({ x: d.date, y: d.sn })) }
+                { name: 'Copper', data: filtered.map(d => ({ x: d.date, y: d.cu })) },
+                { name: 'Aluminum', data: filtered.map(d => ({ x: d.date, y: d.al })) },
+                { name: 'Zinc', data: filtered.map(d => ({ x: d.date, y: d.zn })) },
+                { name: 'Lead', data: filtered.map(d => ({ x: d.date, y: d.pb })) },
+                { name: 'Nickel', data: filtered.map(d => ({ x: d.date, y: d.ni })) },
+                { name: 'Tin', data: filtered.map(d => ({ x: d.date, y: d.sn })) }
             ]);
+
+            // Re-apply visibility based on current checkbox states to prevent unhiding
+            setTimeout(() => {
+                const cbs = document.querySelectorAll('input[type="checkbox"]');
+                if (cbs.length >= 6) {
+                    if(!cbs[0].checked) chart.hideSeries('Copper');
+                    if(!cbs[1].checked) chart.hideSeries('Aluminum');
+                    if(!cbs[2].checked) chart.hideSeries('Zinc');
+                    if(!cbs[3].checked) chart.hideSeries('Lead');
+                    if(!cbs[4].checked) chart.hideSeries('Nickel');
+                    if(!cbs[5].checked) chart.hideSeries('Tin');
+                }
+            }, 50);
         }
 
         fetchData();
