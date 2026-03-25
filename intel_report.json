@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-25 21:17:54",
+  "last_updated": "2026-03-26 08:10:58",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
     "script": "<b>금주(3/22~23) 종합 브리핑</b>입니다. 금주 공급망 전반에서 가장 중요한 이슈는 <b>미국 10% 글로벌 추가 관세</b> 지속과 <b>원/달러 1,500원대</b> 환율 급등의 이중 충격으로, DA 대미 수출 원가 부담이 <b>+3~5%</b> 수준까지 추가 상승하고 있다는 점입니다. 원자재 측면에서는 냉매 R32·R454B 구조적 강세와 HRC <b>1,064달러/톤(+10%)</b> 강세가 세탁기·에어컨 BOM에 직접적인 상방 압력을 가하고 있습니다. 생산지역에서는 중국 전략 금속 수출통제 강화와 이집트 통화 급락이 공급망 불안을 높이고 있으며, 태국·베트남·한국의 인건비·전기료 인상도 누적 부담 요인입니다. 경쟁사 측면에서는 Whirlpool의 멕시코 생산 이전 가속화가 SEDAM과의 현지 경쟁 구도를 재편할 가능성이 있어 주시가 필요합니다. 신기술 분야에서는 GE의 AI 비전 냉장고·오븐과 Roborock의 차세대 AI 로봇청소기가 경쟁 기술 위협으로 부상하고 있어, 삼성 DA의 AI 탑재 로드맵 재검토가 시급합니다. <mark>금주의 핵심 리스크는 관세+환율+원자재의 3중 원가 압박이며, 즉각적인 헤징 강화, HS코드별 관세 면제 점검, 대체 공급선 확보가 병행되어야 합니다.</mark> 우선순위 액션: ① 10% 관세 적용 품목 HS코드 매핑 완료, ② 달러 결제분 헤지 비중 단계적 확대, ③ 중국 수출통제 영향 긴급 점검."
@@ -332,6 +332,27 @@
             "LikeCount": ""
           },
           {
+            "Date": "2026.03.25",
+            "Title": "미국 10~15% 글로벌 관세·한미 15% 관세, 25% 재인상 리스크",
+            "Category": "거시경제:통상정책",
+            "Summary": "미 연방대법원이 IEEPA 기반 글로벌 관세를 위헌으로 보면서, 트럼프 행정부는 무역법 122조를 근거로 <b>전 국가 대상 10% 글로벌 관세</b>를 새로 부과했고, 의회 승인 여부에 따라 <b>15%까지 인상 가능한 구조</b>를 만들어두었어요. 동시에 한국은 2025년 미국과의 협상으로 대미 수출품 관세를 <b>25%→15%</b>로 낮추는 대신, <b>3,500억달러(선박 1,500억달러 포함)</b> 대규모 미국 투자 약정을 체결한 상태입니다.\n\n시사점: \n최근까지 트럼프 대통령이 투자 이행 지연을 이유로 한국에 대한 <b>25% 관세 복원</b> 가능성을 거론해 왔고, 현재는 한국 국회가 관련 법안을 통과시키며 15% 유지 쪽으로 방향을 잡는 모습이에요. <mark>DA 기준으로 보면, 미국향 완제품·부품에 부과되는 15% 관세는 이미 상당한 원가 상단을 형성하고 있고, 25%로 재인상될 경우 미국 수입원가가 대략 9% 안팎 추가 상승</mark>하는 셈이라, 미국 내 판매 가격·현지 생산 비중·부품 소싱 전략을 전면 재설계해야 하는 수준이에요.\n\n액션:\n ① 미국향 주요 DA 제품(세탁기·냉장고 등)에 대해 관세 15%·25% 각각을 가정한 FOB 기준 원가·도착 원가·소비자 판매가 시나리오 정교화 (우선순위: 상, 기한: 2026-04-10)\n ② 미국 내 생산·조립 비중을 늘릴 경우, 관세 15% 수준에서의 총 landed cost vs. 한국/제3국 직수출 시나리오 비교 (우선순위: 상, 기한: 2026-04-15)\n ③ 관세 25% 재인상 리스크가 높은 품목(철강·알루미늄·캐비닛 등)에 대해 미국·제3국 대체 공급선 및 현지 조달 확대 방안 검토 (우선순위: 상, 기한: 2026-04-15)",
+            "URL": "https://www.bakermckenzie.com/en/insight/publications/resources/us-trade-enforcement-strategy\nhttps://www.hklaw.com/en/insights/publications/2026/02/supreme-court-strikes-down-ieepa-tariffs\nhttps://apnews.com/article/south-korea-us-investments-tariffs-3bf0f709d9066d62b1b8f6e36e48638e",
+            "Risk": "High",
+            "Impact": "C",
+            "Image": "https://www.bakermckenzie.com/en/-/media/images/insight/events/2026/2026-global-trade-and-supply-chain-webinar-series/2026-global-trade-and-supply-chain-webinar-series-thumb-385x385.jpeg?rev=1ac960b48abc4749818dfd6c24a8ffc7&amp;sc_lang=en",
+            "Region": "Global",
+            "Tag": "관세,글로벌10~15%,미국관세,한국15%,25%위협,대미수출,원가기회비용",
+            "BOT": "",
+            "Title_en": "US 10–15% Global Tariffs, Korea-US 15% Tariff, Risk of Re-raising to 25%",
+            "Summary_en": "With the U.S. Supreme Court deeming global tariffs based on the IEEPA unconstitutional, the Trump administration imposed a new 10% global tariff on all nations under Section 122 of the Trade Act, establishing a structure that allows for raising it to 15% depending on congressional approval. At the same time, South Korea has signed a large-scale investment commitment of $350 billion (including $150 billion in ships) with the U.S. through negotiations to lower tariffs on exports to the U.S. from 25% to 15% by 2025.\n\nImplications: Until recently, President Trump had raised the possibility of restoring the 25% tariff on South Korea due to delays in investment implementation; however, the South Korean National Assembly appears to be shifting toward maintaining the 15% rate as it passes relevant legislation. <mark>From a DA perspective, the 15% tariff imposed on finished goods and parts destined for the U.S. already forms a significant upper limit on costs, and if it is raised again to 25%, it amounts to an additional increase of approximately 9% in U.S. import costs.</mark> This necessitates a complete redesign of U.S. domestic sales prices, local production ratios, and parts sourcing strategies.\n\nAction:\n\n① Refine scenarios for FOB-based costs, cost to destination, and retail prices for major U.S.-bound DA products (washing machines, refrigerators, etc.) assuming tariffs of 15% and 25%, respectively. (Priority: High, Deadline: 2026-04-10)\n\n② If the proportion of domestic production and assembly in the U.S. is increased, the total landed cost at the 15% tariff level vs. Comparison of Direct Export Scenarios between Korea and Third Countries (Priority: High, Deadline: 2026-04-15)\n\n③ Review of Measures to Expand Alternative Supply Sources in the U.S. and Third Countries, as well as Local Procurement, for Items with a High Risk of Re-increasing Tariffs to 25% (Steel, Aluminum, Cabinets, etc.) (Priority: High, Deadline: 2026-04-15)",
+            "Category_en": "Macroeconomics: Trade Policy",
+            "Tag_en": "Tariffs, Global 10~15%, US Tariffs, Korea 15%, 25% Threat, Exports to the US, Cost Opportunity Cost",
+            "Region_en": "Global",
+            "BOT(eng)": "",
+            "ViewCount": "",
+            "LikeCount": ""
+          },
+          {
             "Date": "2026.03.22",
             "Title": "원·달러 환율 1500원대 유지, 한 달 새 4% 넘게 급등",
             "Category": "거시경제:환율",
@@ -348,27 +369,6 @@
             "Category_en": "Macroeconomics: Exchange Rate",
             "Tag_en": "USD/KRW, exchange rate, 1500 won range, weak won, +4.25%, import cost, hedging",
             "Region_en": "South Korea, USA, Global",
-            "BOT(eng)": "",
-            "ViewCount": "",
-            "LikeCount": ""
-          },
-          {
-            "Date": "2026.03.22",
-            "Title": "Fed, 기준금리 3.50~3.75% 동결·올해 1회 인하 전망 유지",
-            "Category": "거시경제:금리",
-            "Summary": "미 연준(Fed)은 3월 FOMC에서 기준금리를 <b>3.50~3.75%</b>로 두 번째 연속 동결했고, 점도표상 <b>올해 1회(0.25%p)</b> 인하 전망을 유지하면서 성장·물가 전망치는 소폭 상향 조정했습니다. 이는 인플레이션와 중동발 고유가 리스크를 이유로 고금리 기조를 더 오래 유지하겠다는 시그널로, 달러 강세와 함께 원·달러 환율의 <b>1500원대 상단 유지 또는 추가 상승</b> 가능성을 키우는 요인입니다. <mark>고금리·강달러 장기화는 향후 6~12개월 동안 삼성전자 DA의 미달러 표시 부품·원재료 조달비를 구조적으로 끌어올릴 수 있어, 단순 단가협상보다 환율·금리 연동형 계약 구조와 헤지 전략을 병행해야 합니다.</mark>\n\n액션:\n ① 2026~2027년 환율·금리 시나리오(기준/상방) 업데이트 후 DA 원가 계획 재산출 (우선순위: 상, 기한: 2026-03-29)\n ② 대형 공급사와 가격 조정 시 연준 금리·환율 연동 조항 포함 가능성 검토 (우선순위: 중, 기한: 2026-04-10)\n ③ 미달러 차입·채권 비중을 재무팀과 공유해 DA 관점의 조달·헤지 정책 의견 제출 (우선순위: 중, 기한: 2026-04-05)",
-            "URL": "https://www.schwab.com/learn/story/fomc-meeting\nhttps://www.nuveen.com/en-us/insights/investment-outlook/fed-update\nhttps://www.cnbc.com/2026/03/18/fed-interest-rate-decision-march-2026.html",
-            "Risk": "Med",
-            "Impact": "A",
-            "Image": "https://image.cnbcfm.com/api/v1/image/108279848-1773860521242-108279848-1773860029127-gettyimages-2266698061-POWELL_FOMC.jpeg?v=1773860536&amp;w=1920&amp;h=1080",
-            "Region": "USA,Global",
-            "Tag": "Fed,FOMC,기준금리동결,3.50~3.75%,강달러,환율리스크,DA원가",
-            "BOT": "",
-            "Title_en": "Fed keeps benchmark interest rate frozen at 3.50–3.75% and maintains outlook for one rate cut this year",
-            "Summary_en": "At the March FOMC meeting, the U.S. Federal Reserve kept the benchmark interest rate unchanged for the second consecutive time at 3.50–3.75%, and while maintaining its forecast for one rate cut (0.25%p) this year on the dot plot, it slightly raised its growth and inflation forecasts. This signals that the Fed intends to maintain a high-interest rate stance for a longer period due to inflation and the risk of high oil prices originating from the Middle East, and along with the strengthening dollar, it is a factor that increases the possibility of the won-dollar exchange rate maintaining the upper end of the 1,500 won range or rising further. <mark>Prolonged high interest rates and a strong dollar could structurally drive up the procurement costs of US dollar-denominated components and raw materials for Samsung Electronics' DA over the next 6 to 12 months; therefore, it is necessary to combine exchange rate and interest rate-linked contract structures with hedging strategies rather than relying solely on unit price negotiations.</mark>\n\nAction:\n\n① Recalculate DA cost plans after updating 2026–2027 exchange rate and interest rate scenarios (baseline/upward) (Priority: High, Deadline: 2026-03-29)\n\n② Review the possibility of including Fed interest rate and exchange rate-linked clauses when adjusting prices with major suppliers (Priority: Medium, Deadline: 2026-04-10)\n\n③ Share the proportion of US dollar borrowings and bonds with the Finance Team and submit opinions on procurement and hedging policies from a DA perspective (Priority: Medium, Deadline: 2026-04-05)",
-            "Category_en": "Macroeconomics: Interest Rates",
-            "Tag_en": "Fed, FOMC, base rate freeze, 3.50~3.75%, strong dollar, exchange rate risk, DA cost",
-            "Region_en": "USA, Global",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
