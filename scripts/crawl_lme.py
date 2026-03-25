@@ -109,9 +109,10 @@ def main():
     session.headers.update(HEADERS)
 
     if full_mode:
-        print("📚 전체 이력 수집 모드 (최대 290페이지)...")
+        print("📚 전체 이력 수집 모드 (최대 290페이지)...", flush=True)
         total_pages = 290
         new_count = 0
+        print(f"  🚀 수집을 시작합니다. (대상: {total_pages}페이지)", flush=True)
         for page in range(total_pages, 0, -1):
             rows = fetch_page(session, page)
             added_in_page = 0
@@ -125,7 +126,7 @@ def main():
             
             # 10페이지마다 로그 출력 (GitHub Actions에서 진행 상황 확인용)
             if page % 10 == 0 or page == 1:
-                print(f"  [진행상황] {page}/{total_pages} 페이지 완료 (신규 수집: {new_count}건)")
+                print(f"  [진행상황] {page}/{total_pages} 페이지 완료 (신규 수집: {new_count}건)", flush=True)
             
             # 5페이지마다 중간 저장 (혹시 모를 중단 대비)
             if page % 5 == 0 and added_in_page > 0:
@@ -134,7 +135,7 @@ def main():
             time.sleep(1.5)  # 간격 늘림 (서버 차단 방지)
         print()
     else:
-        print("📅 일일 업데이트 모드 (최근 1~3 페이지)...")
+        print("📅 일일 업데이트 모드 (최근 1~3 페이지)...", flush=True)
         new_count = 0
         for page in [1, 2, 3]:
             rows = fetch_page(session, page)
@@ -148,9 +149,9 @@ def main():
 
     if new_count > 0:
         save(all_data)
-        print(f"✅ {new_count}건 신규 추가 → 전체 {len(all_data)}건 저장 완료")
+        print(f"✅ {new_count}건 신규 추가 → 전체 {len(all_data)}건 저장 완료", flush=True)
     else:
-        print("ℹ️  신규 데이터 없음 (이미 최신 상태)")
+        print("ℹ️  신규 데이터 없음 (이미 최신 상태)", flush=True)
 
 
 if __name__ == "__main__":
