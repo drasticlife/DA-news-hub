@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LME Metal Price Dashboard | SEC DA Purchase Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <script src="assets/js/config.js"></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .dark { background-color: #0f172a; color: #f1f5f9; }
+        .dark .glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .metal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .metal-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1); }
+        .range-btn.active { background-color: #0033A0; color: white; border-color: #0033A0; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-[#0033A0] text-white px-6 h-16 flex items-center justify-between shadow-lg sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <button onclick="window.history.back()" class="hover:bg-white/10 p-2 rounded-full transition-all">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-[#0033A0] px-2 py-0.5 rounded-sm text-[11px] font-black uppercase">DA</div>
+                <h1 class="font-bold text-lg tracking-tight uppercase">LME Metal Intelligence</h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-bold">
+            <span id="lastUpdated" class="opacity-70">Updating...</span>
+            <button onclick="fetchData()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-all flex items-center gap-2">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> REFRESH
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-[1400px] mx-auto p-6 space-y-6">
+        <!-- Stats Overview -->
+        <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- Stats cards will be injected here -->
+        </div>
+
+        <!-- Chart Section -->
+        <div class="glass rounded-[24px] p-8 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-blue-600"></i>
+                        Price Trends Comparison
+                    </h2>
+                    <p class="text-slate-500 text-sm font-medium">Historical LME spot prices in USD per ton</p>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="updateRange('1W')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1W</button>
+                    <button onclick="updateRange('1M')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1M</button>
+                    <button onclick="updateRange('6M')" class="range-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">6M</button>
+                    <button onclick="updateRange('1Y')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1Y</button>
+                    <button onclick="updateRange('ALL')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">ALL</button>
+                </div>
+            </div>
+
+            <!-- Metal Filters -->
+            <div class="flex flex-wrap gap-3 mb-6">
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-blue-300 transition-all">
+                    <input type="checkbox" checked onchange="toggleSeries('cu')" class="w-4 h-4 rounded text-blue-600">
+                    <span class="text-xs font-bold text-slate-700">Copper (Cu)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-emerald-300 transition-all opacity-70 hover:opacity-100">
+                    <input type="checkbox" onchange="toggleSeries('al')" class="w-4 h-4 rounded text-emerald-600">
+                    <span class="text-xs font-bold text-slate-700">Aluminum (Al)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-amber-300 transition-all opacity-70 hover:opacity-100">
+                    <input type="checkbox" onchange="toggleSeries('zn')" class="w-4 h-4 rounded text-amber-600">
+                    <span class="text-xs font-bold text-slate-700">Zinc (Zn)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-purple-300 transition-all opacity-70 hover:opacity-100">
+                    <input type="checkbox" onchange="toggleSeries('pb')" class="w-4 h-4 rounded text-purple-600">
+                    <span class="text-xs font-bold text-slate-700">Lead (Pb)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-rose-300 transition-all opacity-70 hover:opacity-100">
+                    <input type="checkbox" onchange="toggleSeries('ni')" class="w-4 h-4 rounded text-rose-600">
+                    <span class="text-xs font-bold text-slate-700">Nickel (Ni)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full border shadow-sm hover:border-cyan-300 transition-all opacity-70 hover:opacity-100">
+                    <input type="checkbox" onchange="toggleSeries('sn')" class="w-4 h-4 rounded text-cyan-600">
+                    <span class="text-xs font-bold text-slate-700">Tin (Sn)</span>
+                </label>
+            </div>
+
+            <div id="mainChart" class="min-h-[500px] w-full"></div>
+        </div>
+    </main>
+
+    <script>
+        const DATA_URL = typeof GITHUB_LME_DATA_URL !== 'undefined' ? GITHUB_LME_DATA_URL : "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data/lme_prices.json";
+        let rawData = [];
+        let chart = null;
+
+        async function fetchData() {
+            try {
+                const res = await fetch(DATA_URL + "?v=" + new Date().getTime());
+                rawData = await res.json();
+                
+                // Sort by date (ascending for chart)
+                rawData.sort((a, b) => new Date(a.date.replace(/\s/g, '')) - new Date(b.date.replace(/\s/g, '')));
+                
+                updateUI();
+                initChart();
+            } catch (e) {
+                console.error("Fetch Error:", e);
+                // Fallback for demo if data file doesn't exist yet
+                rawData = [
+                    { date: "2026. 03. 18", cu: 12503, al: 3400, zn: 3124, pb: 1880, ni: 16990, sn: 46295 },
+                    { date: "2026. 03. 19", cu: 11826, al: 3200, zn: 3010, pb: 1828, ni: 16290, sn: 41700 },
+                    { date: "2026. 03. 20", cu: 12021.5, al: 3329, zn: 3065.5, pb: 1861, ni: 16770, sn: 43700 },
+                    { date: "2026. 03. 23", cu: 11891, al: 3251.5, zn: 3040, pb: 1861, ni: 16900, sn: 43425 },
+                    { date: "2026. 03. 24", cu: 11878.5, al: 3242.5, zn: 3037, pb: 1850, ni: 16830, sn: 43750 }
+                ];
+                updateUI();
+                initChart();
+            }
+        }
+
+        function updateUI() {
+            if (rawData.length === 0) return;
+            const latest = rawData[rawData.length - 1];
+            const prev = rawData[rawData.length - 2] || latest;
+            
+            document.getElementById('lastUpdated').textContent = "Last Updated: " + latest.date;
+            
+            const metals = [
+                { id: 'cu', name: 'Copper', color: 'blue' },
+                { id: 'al', name: 'Aluminum', color: 'emerald' },
+                { id: 'zn', name: 'Zinc', color: 'amber' },
+                { id: 'pb', name: 'Lead', color: 'purple' },
+                { id: 'ni', name: 'Nickel', color: 'rose' },
+                { id: 'sn', name: 'Tin', color: 'cyan' }
+            ];
+
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = '';
+            
+            metals.forEach(m => {
+                const diff = latest[m.id] - prev[m.id];
+                const pct = ((diff / prev[m.id]) * 100).toFixed(2);
+                const isUp = diff >= 0;
+                
+                const card = document.createElement('div');
+                card.className = "metal-card glass p-5 rounded-[20px] shadow-sm";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">${m.name}</span>
+                        <span class="text-[10px] font-black ${isUp ? 'text-red-500' : 'text-blue-500'} bg-white px-2 py-0.5 rounded-full border">
+                            ${isUp ? '▲' : '▼'} ${Math.abs(pct)}%
+                        </span>
+                    </div>
+                    <div class="text-2xl font-black text-slate-800 tracking-tight">$${latest[m.id].toLocaleString()}</div>
+                    <div class="text-[10px] font-bold text-slate-400 mt-1">US$/TON</div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function initChart() {
+            // Default load exactly 6 Months (approx 132 business days)
+            const initialData = rawData.length > 132 ? rawData.slice(-132) : rawData;
+
+            const options = {
+                series: [
+                    { name: 'Copper', data: initialData.map(d => ({ x: d.date, y: d.cu })), color: '#2563eb' },
+                    { name: 'Aluminum', data: initialData.map(d => ({ x: d.date, y: d.al })), color: '#10b981' },
+                    { name: 'Zinc', data: initialData.map(d => ({ x: d.date, y: d.zn })), color: '#f59e0b' },
+                    { name: 'Lead', data: initialData.map(d => ({ x: d.date, y: d.pb })), color: '#8b5cf6' },
+                    { name: 'Nickel', data: initialData.map(d => ({ x: d.date, y: d.ni })), color: '#f43f5e' },
+                    { name: 'Tin', data: initialData.map(d => ({ x: d.date, y: d.sn })), color: '#06b6d4' }
+                ],
+                chart: {
+                    type: 'line',
+                    height: 500,
+                    fontFamily: 'Pretendard, sans-serif',
+                    toolbar: { show: true, tools: { download: true, zoom: true, zoomin: true, zoomout: true, pan: true } },
+                    animations: { enabled: true, easing: 'easeinout', speed: 800 }
+                },
+                stroke: { width: 3, curve: 'smooth' },
+                xaxis: {
+                    type: 'category',
+                    labels: { style: { fontSize: '10px', fontWeight: 600 }, rotate: -45, hideOverlappingLabels: true }
+                },
+                yaxis: {
+                    labels: { formatter: (val) => val.toLocaleString(), style: { fontSize: '10px', fontWeight: 600 } },
+                    title: { text: 'Price (US$/TON)', style: { fontWeight: 800 } }
+                },
+                tooltip: {
+                    shared: true,
+                    intersect: false,
+                    y: { formatter: (val) => `$${val.toLocaleString()}` },
+                    theme: 'light'
+                },
+                legend: { show: false },
+                grid: { borderColor: '#f1f5f9' }
+            };
+
+            if (chart) chart.destroy();
+            chart = new ApexCharts(document.querySelector("#mainChart"), options);
+            chart.render().then(() => {
+                // Hide components per request (only copper checked inside HTML)
+                chart.hideSeries('Aluminum');
+                chart.hideSeries('Zinc');
+                chart.hideSeries('Lead');
+                chart.hideSeries('Nickel');
+                chart.hideSeries('Tin');
+            });
+        }
+
+        function toggleSeries(metal) {
+            const map = { cu: 'Copper', al: 'Aluminum', zn: 'Zinc', pb: 'Lead', ni: 'Nickel', sn: 'Tin' };
+            chart.toggleSeries(map[metal]);
+            
+            // Toggle label opacity for better UX on checkboxes
+            const cb = event.target;
+            const label = cb.parentElement;
+            if(cb.checked) {
+                label.classList.remove('opacity-70');
+            } else {
+                label.classList.add('opacity-70');
+            }
+        }
+
+        function updateRange(range) {
+            // Update active styling
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === range) btn.classList.add('active');
+            });
+            
+            let filtered = [...rawData];
+            
+            if (range === '1W') filtered = rawData.slice(-7);
+            else if (range === '1M') filtered = rawData.slice(-22);
+            else if (range === '6M') filtered = rawData.slice(-132);
+            else if (range === '1Y') filtered = rawData.slice(-264);
+
+            chart.updateOptions({
+                series: [
+                    { name: 'Copper', data: filtered.map(d => ({ x: d.date, y: d.cu })) },
+                    { name: 'Aluminum', data: filtered.map(d => ({ x: d.date, y: d.al })) },
+                    { name: 'Zinc', data: filtered.map(d => ({ x: d.date, y: d.zn })) },
+                    { name: 'Lead', data: filtered.map(d => ({ x: d.date, y: d.pb })) },
+                    { name: 'Nickel', data: filtered.map(d => ({ x: d.date, y: d.ni })) },
+                    { name: 'Tin', data: filtered.map(d => ({ x: d.date, y: d.sn })) }
+                ]
+            });
+        }
+
+        fetchData();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
