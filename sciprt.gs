@@ -1,8 +1,10 @@
-// DA News Hub 통합 스크립트 (v15.18 - Limit Removed & Ultimate Stable Version)
+﻿// DA News Hub 통합 스크립트 (v15.18 - Limit Removed & Ultimate Stable Version)
 // -----------------------------------------------------------------
 // [유지] 기존의 앵커 브리핑, 요약 정제 등 모든 기존 기능 100% 완벽 유지!
 // [개선] 30개 개수 제한 해제! (가능한 많은 이미지를 한 번에 수집)
 // [개선] 타임아웃을 유발하는 악성 사이트 영구 스킵 + 동적 꼬리표 정제
+// [개선] E열(URL)에 붙는 [1], [2] 등 출처 인용 번호 찌꺼기 완벽 정제 로직 반영
+// [개선] 이메일 발송 시 기사 제목 클릭해도 News Hub 상세 페이지로 이동하도록 수정
 // -----------------------------------------------------------------
 
 var GITHUB_OWNER = "drasticlife";
@@ -14,14 +16,14 @@ var FOLDER_ID = "11OsMn-4WoNhg9QfxgraLQSJtkmG7PXTj";
 var SAFE_TIME_LIMIT = 240000; // 4분 안전장치 (구글 6분 강제종료 방어용)
 var DEFAULT_IMAGE_URL = "https://drasticlife.github.io/DA-news-hub/default_news_cover.jpg";
 var SKIP_EXTENSIONS = [".pdf", ".xls", ".xlsx", ".doc", ".docx", ".zip", ".hwp", ".ppt", ".pptx"];
-
 // 악성 무한 대기를 유발하는 사이트 차단
 var SKIP_DOMAINS = [
   "cmegroup.com", "tradingeconomics.com", "lme.com", "metal.com", "sunsirs.com",
-  "reuters.com", "bloomberg.com", "wsj.com", "ft.com", "nytimes.com", "washingtonpost.com",
-  "xe.com", "poundsterlinglive.com", "dyson.com", "dyson.com.sg", "news.samsung.com"
+  "bloomberg.com", "wsj.com", "ft.com", "nytimes.com", "washingtonpost.com",
+  "xe.com", "poundsterlinglive.com", "dyson.com", "dyson.com.sg", "news.samsung.com",
+  "schwab.com", "nuveen.com", "fidelity.com", "vanguard.com", "blackrock.com",
+  "ces.tech"
 ];
-
 var CATEGORY_MAP_EN = {
   "전략 시황": "Strategic Market",
   "원자재": "Raw Materials",
@@ -46,7 +48,7 @@ function onOpen() {
     .addItem("2. 영문 번역 실행", "translateEmptyEnglishFields")
     .addItem("3. 🎤 앵커 브리핑 생성 및 배포", "runAnchorBotAutomation")
     .addItem("4. Insight 시트 정비 (중복 제거 및 정제)", "cleanInsightSheet")
-    .addItem("5. 🧹 데이터 정제 (제목·요약 찌꺼기 제거)", "cleanDataColumns")
+    .addItem("5. 🧹 데이터 정제 (제목·요약·URL 찌꺼기 제거)", "cleanDataColumns")
     .addSeparator()
     .addItem("파일 권한 수정", "fixExistingImagePermissions")
     .addItem("📬 Daily News 이메일 발송", "sendDailyNewsEmail")
@@ -90,7 +92,8 @@ function handleRegister(ss, params) {
   var userId = params.userId, userName = params.userName, password = params.password;
   if (!userId || !userName || !password) throw new Error("Missing registration fields");
   var data = userSheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) { if (data[i][0] === userId) throw new Error("UserID already exists"); }
+  for (var i = 1; i < data.length; i++) { if (data[i][0] === userId) throw new Error("UserID already exists");
+  }
   userSheet.appendRow([userId, userName, password, "Pending", new Date()]);
   return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Registration successful. Please wait for admin approval." })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -112,14 +115,13 @@ function handleView(ss, params) {
   var targetTitle = params.title, targetDate = params.date, targetUrl = params.url;
   var sessionId = params.sessionId || "unknown", category = params.category || "MISC", risk = params.risk || "Low";
   if (!targetTitle) throw new Error("Title is required");
-
   var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idxTitle = headers.indexOf("Title"), idxDate = headers.indexOf("Date"), idxUrl = headers.indexOf("URL"), idxView = headers.indexOf("ViewCount");
-  
   if (idxTitle === -1) throw new Error("Title column not found");
-  if (idxView === -1) { idxView = headers.length; sheet.getRange(1, idxView + 1).setValue("ViewCount"); }
+  if (idxView === -1) { idxView = headers.length;
+    sheet.getRange(1, idxView + 1).setValue("ViewCount"); }
 
   var foundIndex = -1;
   for (var i = 1; i < data.length; i++) {
@@ -153,7 +155,8 @@ function handleLike(ss, params) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idxTitle = headers.indexOf("Title"), idxLike = headers.indexOf("LikeCount");
-  if (idxLike === -1) { idxLike = headers.length; sheet.getRange(1, idxLike + 1).setValue("LikeCount"); }
+  if (idxLike === -1) { idxLike = headers.length;
+    sheet.getRange(1, idxLike + 1).setValue("LikeCount"); }
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idxTitle]) === String(targetTitle)) {
@@ -197,9 +200,8 @@ function getSpecificSheetDataAsJson(sheetName) {
     headers.forEach(function (header, index) {
       if (!header) return;
       var val = row[index];
-      // Date 컬럼은 KST 기준 YYYY.MM.DD 텍스트로 강제 변환 (UTC 변환으로 날짜 밀림 방지)
       if (index === dateColIdx && val instanceof Date) {
-        var tz = new Date(val.getTime() + 9 * 60 * 60 * 1000); // KST(+9)
+        var tz = new Date(val.getTime() + 9 * 60 * 60 * 1000);
         var y = tz.getUTCFullYear();
         var m = String(tz.getUTCMonth() + 1).padStart(2, "0");
         var d = String(tz.getUTCDate()).padStart(2, "0");
@@ -208,10 +210,8 @@ function getSpecificSheetDataAsJson(sheetName) {
         obj[header] = val instanceof Date ? val.toISOString() : val;
       }
     });
-    // [신규] 고유 ID 생성 (제목 + 날짜 조합의 간단한 해시)
     var rawIdStr = (obj["Title"] || "") + (obj["Date"] || "");
     obj["_uId"] = "n-" + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawIdStr)).replace(/=/g, "");
-    
     return obj;
   });
 }
@@ -220,38 +220,26 @@ function pushToGitHub() {
   var token = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
   if (!token) { SpreadsheetApp.getUi().alert("GITHUB_TOKEN이 필요합니다. [프로젝트 설정]에서 추가해주세요."); return; }
 
-  // [월별 분할] 현재 날짜 기준으로 파일명 자동 결정
   var today = new Date();
   var year = today.getFullYear();
   var month = String(today.getMonth() + 1).padStart(2, "0");
   var monthlyFileName = "news/" + year + "-M" + month + ".json";
-
-  // 전체 데이터 로드
   var allData = getSpecificSheetDataAsJson("뉴스");
 
-  // 현재 달 데이터만 필터링
-  var monthPrefix1 = year + "." + month;   // 2026.03 형식
-  var monthPrefix2 = year + "-" + month;   // 2026-03 형식
+  var monthPrefix1 = year + "." + month;   
+  var monthPrefix2 = year + "-" + month;
   var monthlyData = allData.filter(function(item) {
     var dateVal = String(item["Date"] || "");
     return dateVal.startsWith(monthPrefix1) || dateVal.startsWith(monthPrefix2);
   });
-
   var encodedMonthly = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(monthlyData, null, 2)).getBytes());
 
-  // [신규] 월별 파일에 저장 (news/2026-M03.json)
   var res1 = uploadSingleFile(monthlyFileName, encodedMonthly, token);
-
-  // [신규] news/index.json 업데이트 (월 목록)
   var updatedIndex = buildNewsIndex(token);
   if (updatedIndex) {
     var encodedIndex = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(updatedIndex, null, 2)).getBytes());
     uploadSingleFile("news/index.json", encodedIndex, token);
   }
-
-  // [레거시 유지, 주석처리] 기존 data.json 방식 — 하위 호환 필요 시 주석 해제
-  // var encodedAll = Utilities.base64Encode(Utilities.newBlob(JSON.stringify(allData, null, 2)).getBytes());
-  // uploadSingleFile("data.json", encodedAll, token);
 
   if (res1.success) {
     SpreadsheetApp.getActiveSpreadsheet().toast(
@@ -263,7 +251,6 @@ function pushToGitHub() {
   }
 }
 
-// [월별 분할] news/index.json 내용 빌드 헬퍼
 function buildNewsIndex(token) {
   try {
     var url = "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/news?ref=" + GITHUB_BRANCH;
@@ -320,11 +307,9 @@ function translateEmptyEnglishFields() {
       colMap[c] = sheet.getLastColumn() - 1;
     }
   });
-  
   var idxT = colMap["Title"], idxS = colMap["Summary"], idxC = colMap["Category"], idxR = colMap["Region"], idxTa = colMap["Tag"];
   var idxTe = colMap["Title_en"], idxSe = colMap["Summary_en"], idxCe = colMap["Category_en"], idxRe = colMap["Region_en"], idxTae = colMap["Tag_en"];
   var count = 0;
-
   for (var i = 1; i < data.length; i++) {
     if (new Date().getTime() - startTime > SAFE_TIME_LIMIT) break;
     var rowNum = i + 1;
@@ -337,9 +322,6 @@ function translateEmptyEnglishFields() {
   SpreadsheetApp.getUi().alert("번역 완료: " + count + "건");
 }
 
-// =================================================================
-// 🚀 V15.18 무제한 이미지 추출 로직 (안전장치만 남기고 30개 제한 해제)
-// =================================================================
 function updateNewsImages() {
   var startTime = new Date().getTime();
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -349,7 +331,6 @@ function updateNewsImages() {
   var idxU = headers.indexOf("URL");
   var idxI = headers.indexOf("Image");
   var idxC = headers.indexOf("Category") !== -1 ? headers.indexOf("Category") : headers.indexOf("카테고리");
-    
   if (idxU === -1 || idxI === -1) {
     SpreadsheetApp.getUi().alert("URL 또는 Image 열을 찾을 수 없습니다.");
     return;
@@ -357,105 +338,98 @@ function updateNewsImages() {
 
   var requestsCount = 0;
   var successCount = 0;
-
   var imageColumnData = [];
   for (var i = 1; i < data.length; i++) {
     imageColumnData.push([data[i][idxI]]);
   }
 
-  console.log("🔍 역순 탐색 이미지 수집 시작 (전체 진행)");
+  // URL 열의 하이퍼링크/스마트칩 데이터를 위해 RichTextValue 가져오기
+  var richTextData = sheet.getRange(2, idxU + 1, data.length - 1, 1).getRichTextValues();
 
   for (var i = data.length - 1; i >= 1; i--) {
-    
-    // 4분 초과 시 깔끔하게 자동 중단 후 저장
     if (new Date().getTime() - startTime > SAFE_TIME_LIMIT) {
       console.warn("⚠️ 4분 시간 제한 도달. 현재까지의 작업을 저장하고 안전 종료합니다.");
       break;
     }
 
     if (!data[i][idxI] && data[i][idxU]) { 
+      var urls = [];
       
+      // 1. RichText에서 하이퍼링크/스마트칩 추출
+      var rt = richTextData[i - 1][0];
+      if (rt) {
+        var mainLink = rt.getLinkUrl();
+        if (mainLink) urls.push(mainLink);
+        var runs = rt.getRuns();
+        for (var r = 0; r < runs.length; r++) {
+          var runLink = runs[r].getLinkUrl();
+          if (runLink && urls.indexOf(runLink) === -1) urls.push(runLink);
+        }
+      }
+
+      // 2. 텍스트 직접 파싱 (전통적인 방식)
       var rawUrl = String(data[i][idxU]);
       var spacedUrl = rawUrl.replace(/https?:\/\//g, ' $&');
       var urlRegex = /(https?:\/\/[^\s]+)/g;
       var matches = spacedUrl.match(urlRegex) || [];
       
-      var urls = [];
       for (var m = 0; m < matches.length; m++) {
-        var cleanU = matches[m].split('[')[0]; 
-        cleanU = cleanU.replace(/[\u200B-\u200D\uFEFF]/g, ''); 
-        cleanU = cleanU.replace(/\+\d+$/, '');
-        
-        var urlObjMatch = cleanU.match(/^https?:\/\/([^\/]+)/i);
-        if (urlObjMatch) {
-            var domain = urlObjMatch[1].toLowerCase().replace(/^www\./, '');
-            var dParts = domain.split('.');
-            
-            var s3 = dParts.join("."); 
-            var s2 = dParts.length > 1 ? dParts[0] + "." + dParts[1] : ""; 
-            var s1 = dParts[0]; 
-            
-            if (s3 && cleanU.toLowerCase().endsWith(s3)) {
-                cleanU = cleanU.substring(0, cleanU.length - s3.length);
-            } else if (s2 && cleanU.toLowerCase().endsWith(s2)) {
-                cleanU = cleanU.substring(0, cleanU.length - s2.length);
-            } else if (s1 && cleanU.toLowerCase().endsWith(s1)) {
-                cleanU = cleanU.substring(0, cleanU.length - s1.length);
-            }
-        }
-        
-        cleanU = cleanU.replace(/[\.\,\'\"\;]+$/, '').trim();
-        
-        if (cleanU && cleanU.startsWith("http")) {
+        var cleanU = matches[m].replace(/[\[\]\s\t\n\r\(\)]+/g, ''); // 괄호, 대괄호 제거
+        cleanU = cleanU.replace(/[\.\,\'\"\;]+$/, '').trim(); // 끝에 붙은 구두점 제거
+        if (cleanU && cleanU.startsWith("http") && urls.indexOf(cleanU) === -1) {
           urls.push(cleanU);
         }
       }
 
       var category = idxC !== -1 ? String(data[i][idxC]).trim() : "";
       var validUrls = [];
-      
       for (var j = 0; j < urls.length; j++) {
         var url = urls[j];
         var shouldSkip = false;
-
+        
+        // 확장자 차단 (PDF 등)
         for (var k = 0; k < SKIP_EXTENSIONS.length; k++) {
           if (url.toLowerCase().indexOf(SKIP_EXTENSIONS[k]) !== -1) { shouldSkip = true; break; }
         }
+        
+        // 도메인 차단
         if (!shouldSkip) {
           for (var k = 0; k < SKIP_DOMAINS.length; k++) {
             if (url.toLowerCase().indexOf(SKIP_DOMAINS[k]) !== -1) { shouldSkip = true; break; }
           }
         }
+        
+        // 특정 카테고리 예외 처리
         if (category === "원자재" && url.toLowerCase().indexOf("tradingeconomics.com") !== -1) {
           shouldSkip = true;
         }
-
+        
         if (!shouldSkip) validUrls.push(url); 
       }
 
       if (validUrls.length > 0) {
         requestsCount++;
-        var rowNum = i + 1; 
+        var rowNum = i + 1;
+        console.log("🔍 [" + requestsCount + "건째] 행 " + rowNum + " 이미지 검색 중... → " + validUrls[0]);
+        SpreadsheetApp.getActiveSpreadsheet().toast(
+          "🔍 [" + requestsCount + "건째] 행 " + rowNum + " 이미지 검색 중...\n" + validUrls[0].substring(0, 60) + "...",
+          "이미지 업데이트 진행 중",
+          5
+        );
         var finalImageUrl = DEFAULT_IMAGE_URL;
-
         for (var v = 0; v < validUrls.length; v++) {
           var targetUrl = validUrls[v];
-          console.log("▶️ [" + rowNum + "행] URL " + (v+1) + "/" + validUrls.length + " 시도 중: " + targetUrl);
-          
           try {
             var response = UrlFetchApp.fetch(targetUrl, {
               muteHttpExceptions: true,
               followRedirects: true,
-              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+              headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
             });
-
             if (response.getResponseCode() === 200) {
               var html = response.getContentText();
               var metaMatch = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i) ||
                               html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i);
-              
               var foundImage = null;
-
               if (metaMatch && metaMatch[1]) {
                 foundImage = metaMatch[1];
               } else {
@@ -478,33 +452,32 @@ function updateNewsImages() {
                   if (baseUrlMatch) foundImage = baseUrlMatch[0] + (foundImage.indexOf("/") === 0 ? "" : "/") + foundImage;
                 }
                 finalImageUrl = foundImage;
-                console.log("✅ [" + rowNum + "행] 이미지 찾기 성공!");
-                break; 
+                break;
               }
             }
-          } catch (e) {
-            console.log("❌ [" + rowNum + "행] 통신 실패. 다음 URL로 재도전!");
-          }
+          } catch (e) {}
         } 
-        
         imageColumnData[i - 1][0] = finalImageUrl;
-        if (finalImageUrl !== DEFAULT_IMAGE_URL) successCount++;
-
-      } else {
-        imageColumnData[i - 1][0] = DEFAULT_IMAGE_URL;
+        if (finalImageUrl !== DEFAULT_IMAGE_URL) {
+          successCount++;
+        }
+        // ✅ 찾는 즉시 시트에 바로 저장 (타임아웃 시에도 진행 내용 보존)
+        sheet.getRange(i + 1, idxI + 1).setValue(finalImageUrl);
+        SpreadsheetApp.flush();
       }
+      // validUrls.length === 0 인 경우는 아무것도 저장하지 않음 (다음 실행 때 재시도 가능)
     }
   }
 
-  // 변경된 내용을 한 번에 시트에 업데이트
-  if (data.length > 1) {
-    sheet.getRange(2, idxI + 1, imageColumnData.length, 1).setValues(imageColumnData);
-  }
+  // 최종 결과는 이미 행별로 저장되었으므로 별도 일괄 저장 불필요
 
-  // 아직 남은 빈칸 확인
   var remainingCount = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (!imageColumnData[i - 1][0] && data[i][idxU]) {
+  var freshData = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+  var freshHeaders = freshData[0];
+  var freshIdxI = freshHeaders.indexOf("Image");
+  var freshIdxU = freshHeaders.indexOf("URL");
+  for (var i = 1; i < freshData.length; i++) {
+    if (!freshData[i][freshIdxI] && freshData[i][freshIdxU]) {
       remainingCount++;
     }
   }
@@ -592,9 +565,6 @@ function createBoardSheet(ss) {
   return sheet;
 }
 
-/**
- * 기존 가입자 정보를 Supabase profiles 테이블로 마이그레이션합니다.
- */
 function migrateUsersToSupabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var userSheet = ss.getSheetByName("Users");
@@ -674,39 +644,11 @@ function runAllProcesses(includeAnchor) {
   }
 }
 
-function cleanPastedData() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var idxI = headers.indexOf("Image");
-  var idxD = headers.indexOf("Date");
-  var idxS = headers.indexOf("Summary");
-  var idxT = headers.indexOf("Title");
-
-  if (idxD === -1) return;
-
-  for (var i = data.length - 1; i >= 1; i--) {
-    var rowValue = String(data[i][idxD]);
-    if (rowValue === "Date") {
-      sheet.deleteRow(i + 1);
-    } else {
-      if (idxI !== -1 && String(data[i][idxI]).trim() === "-") { sheet.getRange(i + 1, idxI + 1).clearContent(); }
-      if (idxT !== -1 && data[i][idxT]) {
-        var cleanedTitle = cleanTitleText(String(data[i][idxT]));
-        if (cleanedTitle !== String(data[i][idxT])) { sheet.getRange(i + 1, idxT + 1).setValue(cleanedTitle); }
-      }
-      if (idxS !== -1 && data[i][idxS]) {
-        var cleaned = cleanSummaryText(String(data[i][idxS]));
-        if (cleaned !== String(data[i][idxS])) { sheet.getRange(i + 1, idxS + 1).setValue(cleaned); }
-      }
-    }
-  }
-}
-
+// ----------------------------------------------------
+// ✨ 텍스트 정제 함수 모음 (제목, 요약, URL)
+// ----------------------------------------------------
 function cleanTitleText(text) {
   if (!text) return text;
-  // Remove source info like tomsguide+2 or people+2
   text = text.replace(/\s*[a-zA-Z][a-zA-Z0-9\.\-]*\+\d+/g, '');
   return text.trim();
 }
@@ -727,23 +669,74 @@ function cleanSummaryText(text) {
   return text.trim();
 }
 
+function cleanUrlText(text) {
+  if (!text) return text;
+  text = text.replace(/\[\d+\]/g, ''); 
+  return text.trim();
+}
+// ----------------------------------------------------
+
+function cleanPastedData() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idxI = headers.indexOf("Image");
+  var idxD = headers.indexOf("Date");
+  var idxS = headers.indexOf("Summary");
+  var idxT = headers.indexOf("Title");
+  var idxU = headers.indexOf("URL");
+
+  if (idxD === -1) return;
+
+  for (var i = data.length - 1; i >= 1; i--) {
+    var rowValue = String(data[i][idxD]);
+    if (rowValue === "Date") {
+      sheet.deleteRow(i + 1);
+    } else {
+      if (idxI !== -1 && String(data[i][idxI]).trim() === "-") { 
+        sheet.getRange(i + 1, idxI + 1).clearContent();
+      }
+      if (idxT !== -1 && data[i][idxT]) {
+        var cleanedTitle = cleanTitleText(String(data[i][idxT]));
+        if (cleanedTitle !== String(data[i][idxT])) { 
+          sheet.getRange(i + 1, idxT + 1).setValue(cleanedTitle);
+        }
+      }
+      if (idxS !== -1 && data[i][idxS]) {
+        var cleaned = cleanSummaryText(String(data[i][idxS]));
+        if (cleaned !== String(data[i][idxS])) { 
+          sheet.getRange(i + 1, idxS + 1).setValue(cleaned);
+        }
+      }
+      if (idxU !== -1 && data[i][idxU]) {
+        var cleanedUrl = cleanUrlText(String(data[i][idxU]));
+        if (cleanedUrl !== String(data[i][idxU])) {
+          sheet.getRange(i + 1, idxU + 1).setValue(cleanedUrl);
+        }
+      }
+    }
+  }
+}
+
 function cleanDataColumns() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idxS = headers.indexOf("Summary");
   var idxT = headers.indexOf("Title");
+  var idxU = headers.indexOf("URL");
   
-  if (idxS === -1 && idxT === -1) { 
-    SpreadsheetApp.getUi().alert("'Summary' 또는 'Title' 컬럼을 찾을 수 없습니다."); 
+  if (idxS === -1 && idxT === -1 && idxU === -1) { 
+    SpreadsheetApp.getUi().alert("'Summary', 'Title' 또는 'URL' 컬럼을 찾을 수 없습니다.");
     return; 
   }
   
   var countS = 0;
   var countT = 0;
+  var countU = 0;
   
   for (var i = 1; i < data.length; i++) {
-    // Title 정제
     if (idxT !== -1 && data[i][idxT]) {
       var originalT = String(data[i][idxT]);
       var cleanedT = cleanTitleText(originalT);
@@ -753,7 +746,6 @@ function cleanDataColumns() {
       }
     }
     
-    // Summary 정제
     if (idxS !== -1 && data[i][idxS]) {
       var originalS = String(data[i][idxS]);
       var cleanedS = cleanSummaryText(originalS);
@@ -762,12 +754,24 @@ function cleanDataColumns() {
         countS++;
       }
     }
+
+    if (idxU !== -1 && data[i][idxU]) {
+      var originalU = String(data[i][idxU]);
+      var cleanedU = cleanUrlText(originalU);
+      if (cleanedU !== originalU) {
+        sheet.getRange(i + 1, idxU + 1).setValue(cleanedU);
+        countU++;
+      }
+    }
   }
   
   var msg = "";
   if (countT > 0) msg += "제목 " + countT + "건, ";
-  if (countS > 0) msg += "요약 " + countS + "건";
+  if (countS > 0) msg += "요약 " + countS + "건, ";
+  if (countU > 0) msg += "URL " + countU + "건";
   
+  msg = msg.replace(/, $/, '');
+
   if (msg === "") {
     SpreadsheetApp.getActiveSpreadsheet().toast("정제할 데이터가 없습니다.", "✅ 완료");
   } else {
@@ -880,6 +884,7 @@ function categorizeAndFilterData(data, baseDate) {
     if (itemDate >= startOfThisMonth) periods.push("thisMonth");
     else if (itemDate >= startOfLastMonth && itemDate <= endOfLastMonth) periods.push("lastMonth");
     if (periods.length === 0) return;
+   
     var rawCatVal = item.Category || item.category || item.C || item.I || item.J || item["카테고리"] || item["분류"] || item["Category_en"] || "";
     var rawCat = String(rawCatVal).trim();
     var rawCatLower = rawCat.toLowerCase();
@@ -920,7 +925,8 @@ function generateMultiPeriodScripts(categorizedData, today) {
       if (targetData.length > 0 || cat === "신기술동향") {
         scripts[p][cat] = callPerplexityForSpecificPeriod(p, cat, CAT_EN[cat], targetData, today);
         Utilities.sleep(1100); 
-      } else {
+      } 
+      else {
         scripts[p][cat] = null;
       }
     });
@@ -1012,13 +1018,27 @@ function getLatestValidScriptFromSheet(period, category) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Insight");
   if (!sheet) return null;
   var data = sheet.getDataRange().getValues();
+  var latestScript = null;
+  var latestDate = -1;
   for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === period && data[i][1] === category) {
-      var script = data[i][3];
-      if (script && script.indexOf("API 호출 오류") === -1 && script.indexOf("대본 생성 중 구조적 오류") === -1) { return script; }
+    var p = String(data[i][0]).trim();
+    var c = String(data[i][1]).trim();
+    if (p === period && c === category) {
+      var script = String(data[i][3] || "");
+      if (script && script.indexOf("API 호출 오류") === -1 && script.indexOf("대본 생성 중 구조적 오류") === -1) {
+        var dTime = 0;
+        if (data[i][2] instanceof Date) dTime = data[i][2].getTime();
+        else if (data[i][2]) dTime = new Date(data[i][2]).getTime();
+        if (isNaN(dTime)) dTime = 0;
+        // 최신 날짜이거나, 동일 날짜라면 가장 아래쪽(나중에 붙여넣은) 행을 우선
+        if (latestScript === null || dTime >= latestDate) {
+          latestScript = script;
+          latestDate = dTime;
+        }
+      }
     }
   }
-  return null;
+  return latestScript;
 }
 
 function getLatestScriptsFromSheet() {
@@ -1055,9 +1075,6 @@ function cleanInsightSheet() {
   SpreadsheetApp.getActiveSpreadsheet().toast("정비 완료: 헤더 삭제 " + deletedCount + "건, 대본 정제 " + cleanedCount + "건", "완료");
 }
 
-/**
- * [신규] 오늘 업데이트된 기사를 카테고리별로 묶어 이메일 발송
- */
 function sendDailyNewsEmail() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("뉴스") || ss.getSheets()[0];
@@ -1068,7 +1085,6 @@ function sendDailyNewsEmail() {
   var idxDate = headers.indexOf("Date");
   if (idxDate === -1) idxDate = headers.indexOf("날짜");
   if (idxDate === -1) idxDate = 0;
-
   var idxTitle = headers.indexOf("Title");
   if (idxTitle === -1) idxTitle = headers.indexOf("제목");
 
@@ -1078,7 +1094,7 @@ function sendDailyNewsEmail() {
   var idxUrl = headers.indexOf("URL");
   var idxImage = headers.indexOf("Image");
   var idxTag = headers.indexOf("Tag") !== -1 ? headers.indexOf("Tag") : (headers.indexOf("태그") !== -1 ? headers.indexOf("태그") : -1);
-
+  
   function getNormalizedDateString(d) {
     if (!d) return "";
     var y, m, day;
@@ -1110,17 +1126,15 @@ function sendDailyNewsEmail() {
   var latestDateStrDot = latestDateStr.replace(/-/g, ".");
 
   SpreadsheetApp.getActiveSpreadsheet().toast(latestDateStrDot + " 데이터를 검색중입니다.", "이메일 준비 중");
-
   var categorizedToday = {};
   var foundCount = 0;
   var riskPriority = { "Very High": 4, "High": 3, "Med": 2, "Low": 1 };
-
+  
   for (var i = 1; i < data.length; i++) {
     var rowDateStr = getNormalizedDateString(data[i][idxDate]);
     if (rowDateStr === latestDateStr) {
       var rawCat = String(data[i][idxCategory] || "기타").trim();
       var cat = rawCat.split(':')[0].trim();
-
       if (!categorizedToday[cat]) categorizedToday[cat] = [];
 
       var dateStr = data[i][idxDate];
@@ -1133,11 +1147,11 @@ function sendDailyNewsEmail() {
 
       var rawTags = idxTag !== -1 ? String(data[i][idxTag] || "") : "";
       var tagList = rawTags.split(",").map(t => t.trim()).filter(t => t.length > 0);
-
+      
       categorizedToday[cat].push({
         title: data[i][idxTitle],
         risk: data[i][idxRisk],
-        summary: String(data[i][idxSummary] || "").substring(0, 80) + (String(data[i][idxSummary]).length > 80 ? "..." : ""),
+        summary: String(data[i][idxSummary] || "").substring(0, 80) + (String(data[i][idxSummary]).length > 80 ? " ব্যায়াম..." : ""),
         url: data[i][idxUrl],
         image: data[i][idxImage] || DEFAULT_IMAGE_URL,
         uId: uId,
@@ -1159,11 +1173,10 @@ function sendDailyNewsEmail() {
     "Med": "#f97316",
     "Low": "#3b82f6"
   };
-
+  
   var htmlBody = `
     <div style="font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; background-color: #f1f5f9; padding: 20px; color: #1e293b;">
       <div style="max-width: 800px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-        <!-- Header -->
         <div style="background-color: #0033A0; padding: 24px; text-align: center;">
           <div style="display: inline-block; background-color: rgba(255,255,255,0.2); color: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px;">DA PROCUREMENT</div>
           <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em;">Daily News Insights</h1>
@@ -1190,13 +1203,14 @@ function sendDailyNewsEmail() {
     items.forEach(function(item, idx) {
       var rColor = riskColors[item.risk] || "#94a3b8";
       var tagsHtml = item.tags.slice(0, 2).map(t => `<span style="display: inline-block; background-color: #f1f5f9; color: #475569; padding: 1px 4px; border-radius: 3px; font-size: 9px; margin-right: 2px; margin-bottom: 2px; border: 1px solid #e2e8f0;">#${t}</span>`).join("");
-
+      
+      // 👇 여기에 있던 <a href="${item.url}"> 부분을 News Hub 상세 링크로 수정했어요!
       htmlBody += `
         <td valign="top" style="padding: 0 ${idx === 0 ? '0' : '6px'} 0 ${idx === 0 ? '0' : '6px'};">
           <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; height: 190px; position: relative; overflow: hidden;">
             <div style="display: inline-block; background-color: ${rColor}22; color: ${rColor}; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 800; margin-bottom: 6px; border: 1px solid ${rColor}44;">${item.risk}</div>
             <h3 style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; line-height: 1.4; color: #0f172a; max-height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-              <a href="${item.url}" style="color: inherit; text-decoration: none;">${item.title}</a>
+              <a href="https://drasticlife.github.io/DA-news-hub/?targetId=${item.uId}" style="color: inherit; text-decoration: none;">${item.title}</a>
             </h3>
             <div style="margin-bottom: 4px; min-height: 1.2em;">${tagsHtml}</div>
             <p style="margin: 0; font-size: 10px; line-height: 1.4; color: #64748b; max-height: 4.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${item.summary}</p>
@@ -1221,7 +1235,6 @@ function sendDailyNewsEmail() {
 
   htmlBody += `
           </div>
-          <!-- Footer -->
           <div style="margin-top: 20px; padding: 32px; border-top: 1px solid #e2e8f0; text-align: center; background-color: #f8fafc;">
             <a href="https://drasticlife.github.io/DA-news-hub/" style="display: inline-block; background-color: #0033A0; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 14px; font-weight: 800; box-shadow: 0 4px 6px rgba(0,51,160,0.2);">DA NEWS HUB 방문하기</a>
             <p style="margin: 20px 0 0 0; font-size: 11px; color: #94a3b8; font-weight: 500;">본 메일은 Samsung DA News Hub 시스템에 의해 자동 발송되었습니다.</p>
@@ -1246,4 +1259,3 @@ function sendDailyNewsEmail() {
 
   SpreadsheetApp.getActiveSpreadsheet().toast(latestDateStrDot + " 리포트 메일이 발송되었습니다. (" + foundCount + "건)", "완료");
 }
-
