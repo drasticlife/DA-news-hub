@@ -57,11 +57,12 @@
                 </div>
                 
                 <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                    <button onclick="updateRange('1W')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1W</button>
-                    <button onclick="updateRange('1M')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1M</button>
-                    <button onclick="updateRange('6M')" class="range-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">6M</button>
-                    <button onclick="updateRange('1Y')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">1Y</button>
-                    <button onclick="updateRange('ALL')" class="range-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:bg-white">ALL</button>
+                    <button onclick="updateRange('1m')" class="range-btn px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">1m</button>
+                    <button onclick="updateRange('3m')" class="range-btn px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">3m</button>
+                    <button onclick="updateRange('6m')" class="range-btn active px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">6m</button>
+                    <button onclick="updateRange('YTD')" class="range-btn px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">YTD</button>
+                    <button onclick="updateRange('1y')" class="range-btn px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">1y</button>
+                    <button onclick="updateRange('all')" class="range-btn px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:bg-white uppercase">all</button>
                 </div>
             </div>
 
@@ -93,14 +94,21 @@
                 </label>
             </div>
 
-            <div id="mainChart" class="min-h-[500px] w-full"></div>
+            <div id="mainChart" class="min-h-[450px] w-full"></div>
+            <div id="brushChart" class="h-[130px] w-full mt-4"></div>
         </div>
     </main>
 
     <script>
         const DATA_URL = typeof GITHUB_LME_DATA_URL !== 'undefined' ? GITHUB_LME_DATA_URL : "https://raw.githubusercontent.com/drasticlife/DA-news-hub/main/data/lme_prices.json";
         let rawData = [];
-        let chart = null;
+        let chartMain = null;
+        let chartBrush = null;
+
+        function parseDate(dateStr) {
+            // "2026. 03. 18" -> Date object
+            return new Date(dateStr.replace(/\s/g, '').replace(/\./g, '/')).getTime();
+        }
 
         async function fetchData() {
             try {
@@ -169,29 +177,59 @@
         }
 
         function initChart() {
-            // Default load exactly 6 Months (approx 132 business days)
-            const initialData = rawData.length > 132 ? rawData.slice(-132) : rawData;
+            if (rawData.length === 0) return;
 
-            const options = {
+            const chartData = rawData.map(d => ({
+                t: parseDate(d.date),
+                cu: d.cu,
+                al: d.al,
+                zn: d.zn,
+                pb: d.pb,
+                ni: d.ni,
+                sn: d.sn
+            }));
+
+            // Calculate 6 Months ago timestamp for default view
+            const lastDate = chartData[chartData.length - 1].t;
+            const sixMonthsAgo = lastDate - (180 * 24 * 60 * 60 * 1000);
+
+            const optionsMain = {
                 series: [
-                    { name: 'Copper', data: initialData.map(d => ({ x: d.date, y: d.cu })), color: '#2563eb' },
-                    { name: 'Aluminum', data: initialData.map(d => ({ x: d.date, y: d.al })), color: '#10b981' },
-                    { name: 'Zinc', data: initialData.map(d => ({ x: d.date, y: d.zn })), color: '#f59e0b' },
-                    { name: 'Lead', data: initialData.map(d => ({ x: d.date, y: d.pb })), color: '#8b5cf6' },
-                    { name: 'Nickel', data: initialData.map(d => ({ x: d.date, y: d.ni })), color: '#f43f5e' },
-                    { name: 'Tin', data: initialData.map(d => ({ x: d.date, y: d.sn })), color: '#06b6d4' }
+                    { name: 'Copper', data: chartData.map(d => ({ x: d.t, y: d.cu })), color: '#2563eb' },
+                    { name: 'Aluminum', data: chartData.map(d => ({ x: d.t, y: d.al })), color: '#10b981' },
+                    { name: 'Zinc', data: chartData.map(d => ({ x: d.t, y: d.zn })), color: '#f59e0b' },
+                    { name: 'Lead', data: chartData.map(d => ({ x: d.t, y: d.pb })), color: '#8b5cf6' },
+                    { name: 'Nickel', data: chartData.map(d => ({ x: d.t, y: d.ni })), color: '#f43f5e' },
+                    { name: 'Tin', data: chartData.map(d => ({ x: d.t, y: d.sn })), color: '#06b6d4' }
                 ],
                 chart: {
+                    id: 'chartMain',
                     type: 'line',
-                    height: 500,
+                    height: 450,
                     fontFamily: 'Pretendard, sans-serif',
-                    toolbar: { show: true, tools: { download: true, zoom: true, zoomin: true, zoomout: true, pan: true } },
+                    toolbar: { 
+                        show: true,
+                        offsetY: -25,
+                        tools: {
+                            download: true,
+                            selection: false,
+                            zoom: false,
+                            zoomin: false,
+                            zoomout: false,
+                            pan: true,
+                            reset: true
+                        },
+                        autoSelected: 'pan'
+                    },
                     animations: { enabled: true, easing: 'easeinout', speed: 800 }
                 },
                 stroke: { width: 3, curve: 'smooth' },
                 xaxis: {
-                    type: 'category',
-                    labels: { style: { fontSize: '10px', fontWeight: 600 }, rotate: -45, hideOverlappingLabels: true }
+                    type: 'datetime',
+                    labels: { 
+                        style: { fontSize: '10px', fontWeight: 600 },
+                        datetimeFormatter: { year: 'yyyy', month: 'MMM \'yy', day: 'dd MMM' }
+                    }
                 },
                 yaxis: {
                     labels: { formatter: (val) => val.toLocaleString(), style: { fontSize: '10px', fontWeight: 600 } },
@@ -200,6 +238,7 @@
                 tooltip: {
                     shared: true,
                     intersect: false,
+                    x: { format: 'yyyy. MM. dd' },
                     y: { formatter: (val) => (val === undefined || val === null) ? 'N/A' : `$${val.toLocaleString()}` },
                     theme: 'light'
                 },
@@ -207,21 +246,52 @@
                 grid: { borderColor: '#f1f5f9' }
             };
 
-            if (chart) chart.destroy();
-            chart = new ApexCharts(document.querySelector("#mainChart"), options);
-            chart.render().then(() => {
-                // Hide components per request (only copper checked inside HTML)
-                chart.hideSeries('Aluminum');
-                chart.hideSeries('Zinc');
-                chart.hideSeries('Lead');
-                chart.hideSeries('Nickel');
-                chart.hideSeries('Tin');
+            const optionsBrush = {
+                series: [
+                    { name: 'Copper', data: chartData.map(d => ({ x: d.t, y: d.cu })), color: '#2563eb' }
+                ],
+                chart: {
+                    id: 'chartBrush',
+                    height: 130,
+                    type: 'area',
+                    fontFamily: 'Pretendard, sans-serif',
+                    brush: {
+                        target: 'chartMain',
+                        enabled: true
+                    },
+                    selection: {
+                        enabled: true,
+                        xaxis: {
+                            min: sixMonthsAgo,
+                            max: lastDate
+                        }
+                    }
+                },
+                stroke: { width: 1 },
+                fill: {
+                    type: 'gradient',
+                    gradient: { opacityFrom: 0.3, opacityTo: 0.1 }
+                },
+                xaxis: { type: 'datetime', tooltip: { enabled: false } },
+                yaxis: { tickAmount: 2, labels: { show: false } }
+            };
+
+            if (chartMain) chartMain.destroy();
+            if (chartBrush) chartBrush.destroy();
+
+            chartMain = new ApexCharts(document.querySelector("#mainChart"), optionsMain);
+            chartBrush = new ApexCharts(document.querySelector("#brushChart"), optionsBrush);
+
+            Promise.all([chartMain.render(), chartBrush.render()]).then(() => {
+                // Hide components per initial request
+                const metalsToHide = ['Aluminum', 'Zinc', 'Lead', 'Nickel', 'Tin'];
+                metalsToHide.forEach(m => chartMain.hideSeries(m));
             });
         }
 
         function toggleSeries(metal) {
             const map = { cu: 'Copper', al: 'Aluminum', zn: 'Zinc', pb: 'Lead', ni: 'Nickel', sn: 'Tin' };
-            chart.toggleSeries(map[metal]);
+            chartMain.toggleSeries(map[metal]);
             
             // Toggle label opacity for better UX on checkboxes
             const cb = event.target;
@@ -234,40 +304,36 @@
         }
 
         function updateRange(range) {
-            // Update active styling
             document.querySelectorAll('.range-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.textContent === range) btn.classList.add('active');
+                if (btn.textContent.toLowerCase() === range.toLowerCase()) btn.classList.add('active');
             });
             
-            let filtered = [...rawData];
-            
-            if (range === '1W') filtered = rawData.slice(-7);
-            else if (range === '1M') filtered = rawData.slice(-22);
-            else if (range === '6M') filtered = rawData.slice(-132);
-            else if (range === '1Y') filtered = rawData.slice(-264);
+            if (rawData.length === 0) return;
+            const lastDate = parseDate(rawData[rawData.length - 1].date);
+            let min;
 
-            chart.updateSeries([
-                { name: 'Copper', data: filtered.map(d => ({ x: d.date, y: d.cu })) },
-                { name: 'Aluminum', data: filtered.map(d => ({ x: d.date, y: d.al })) },
-                { name: 'Zinc', data: filtered.map(d => ({ x: d.date, y: d.zn })) },
-                { name: 'Lead', data: filtered.map(d => ({ x: d.date, y: d.pb })) },
-                { name: 'Nickel', data: filtered.map(d => ({ x: d.date, y: d.ni })) },
-                { name: 'Tin', data: filtered.map(d => ({ x: d.date, y: d.sn })) }
-            ]);
+            switch(range) {
+                case '1m': min = lastDate - (30 * 24 * 60 * 60 * 1000); break;
+                case '3m': min = lastDate - (90 * 24 * 60 * 60 * 1000); break;
+                case '6m': min = lastDate - (180 * 24 * 60 * 60 * 1000); break;
+                case '1y': min = lastDate - (365 * 24 * 60 * 60 * 1000); break;
+                case 'YTD': 
+                    min = new Date(new Date(lastDate).getFullYear(), 0, 1).getTime();
+                    break;
+                case 'all':
+                    min = parseDate(rawData[0].date);
+                    break;
+                default: min = lastDate - (180 * 24 * 60 * 60 * 1000);
+            }
 
-            // Re-apply visibility based on current checkbox states to prevent unhiding
-            setTimeout(() => {
-                const cbs = document.querySelectorAll('input[type="checkbox"]');
-                if (cbs.length >= 6) {
-                    if(!cbs[0].checked) chart.hideSeries('Copper');
-                    if(!cbs[1].checked) chart.hideSeries('Aluminum');
-                    if(!cbs[2].checked) chart.hideSeries('Zinc');
-                    if(!cbs[3].checked) chart.hideSeries('Lead');
-                    if(!cbs[4].checked) chart.hideSeries('Nickel');
-                    if(!cbs[5].checked) chart.hideSeries('Tin');
+            chartBrush.updateOptions({
+                chart: {
+                    selection: {
+                        xaxis: { min: min, max: lastDate }
+                    }
                 }
-            }, 50);
+            });
         }
 
         fetchData();
