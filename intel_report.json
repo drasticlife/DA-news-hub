@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-26 08:11:48",
+  "last_updated": "2026-03-27 08:57:54",
   "dailyBriefing": {
     "anchor_name": "Strategic-Bot",
     "script": "<b>금주(3/22~23) 종합 브리핑</b>입니다. 금주 공급망 전반에서 가장 중요한 이슈는 <b>미국 10% 글로벌 추가 관세</b> 지속과 <b>원/달러 1,500원대</b> 환율 급등의 이중 충격으로, DA 대미 수출 원가 부담이 <b>+3~5%</b> 수준까지 추가 상승하고 있다는 점입니다. 원자재 측면에서는 냉매 R32·R454B 구조적 강세와 HRC <b>1,064달러/톤(+10%)</b> 강세가 세탁기·에어컨 BOM에 직접적인 상방 압력을 가하고 있습니다. 생산지역에서는 중국 전략 금속 수출통제 강화와 이집트 통화 급락이 공급망 불안을 높이고 있으며, 태국·베트남·한국의 인건비·전기료 인상도 누적 부담 요인입니다. 경쟁사 측면에서는 Whirlpool의 멕시코 생산 이전 가속화가 SEDAM과의 현지 경쟁 구도를 재편할 가능성이 있어 주시가 필요합니다. 신기술 분야에서는 GE의 AI 비전 냉장고·오븐과 Roborock의 차세대 AI 로봇청소기가 경쟁 기술 위협으로 부상하고 있어, 삼성 DA의 AI 탑재 로드맵 재검토가 시급합니다. <mark>금주의 핵심 리스크는 관세+환율+원자재의 3중 원가 압박이며, 즉각적인 헤징 강화, HS코드별 관세 면제 점검, 대체 공급선 확보가 병행되어야 합니다.</mark> 우선순위 액션: ① 10% 관세 적용 품목 HS코드 매핑 완료, ② 달러 결제분 헤지 비중 단계적 확대, ③ 중국 수출통제 영향 긴급 점검."
@@ -353,22 +353,22 @@
             "LikeCount": ""
           },
           {
-            "Date": "2026.03.22",
-            "Title": "원·달러 환율 1500원대 유지, 한 달 새 4% 넘게 급등",
-            "Category": "거시경제:환율",
-            "Summary": "USD/KRW가 주간거래 기준 <b>1,500.6원</b> 수준을 이틀 연속 유지했고, 야간 거래와 중개사이트 기준으로 <b>1,504원</b> 안팎에서 움직이면서 2009년 금융위기 이후 처음으로 <b>1500원대 고환율</b> 구간이 고착되는 모습입니다. 지난 한 달 동안 원화는 달러 대비 약 <b>4.25%</b> 약세를 보였고, 12개월 기준으로도 약 <b>2.7%</b> 하락해 수입 원자재 결제 단가에 구조적인 상승 압력이 커진 상태예요.tradingeconomics​ <mark>환율이 한 달 새 4% 이상 뛰면 동일 달러 기준 수입 원재료비도 약 <b>+4%</b> 늘어나는 만큼, 분기 원가·판가 시나리오를 전면 재점검할 필요가 있겠습니다.</mark>\n\n액션:\n ① 환율 <b>1,450·1,500·1,550원</b> 3개 시나리오별 수입 원가 민감도 재산출 (우선순위: 상, 기한: 2026-03-25)\n ② 외환팀·재무와 협의해 2분기 선물환·자연헤지 한도 상향 검토 (우선순위: 상, 기한: 2026-03-27)\n ③ 미달러 결제 비중이 높은 부품에 대해 동아시아·유로화 대체 조달처 리스트업 (우선순위: 중, 기한: 2026-04-05)",
-            "URL": "https://www.hani.co.kr/arti/economy/finance/1250357.html\nhttps://v.daum.net/v/20260321065239347\nhttps://ko.tradingeconomics.com/south-korea/currency",
-            "Risk": "Med",
-            "Impact": "B",
-            "Image": "https://flexible.img.hani.co.kr/flexible/normal/740/435/imgdb/original/2026/0320/20260320502227.webp",
-            "Region": "South Korea,USA,Global",
-            "Tag": "USD/KRW,환율,1500원대,원화약세,+4.25%,수입원가,헤지",
+            "Date": "2026.03.26",
+            "Title": "미국 글로벌 관세 15% 인상 추진, 이란 전쟁 중에도 강행 시사",
+            "Category": "거시경제:통상정책",
+            "Summary": "트럼프 대통령의 ‘관세 책사’ 피터 나바로는 글로벌 관세를 현 <b>10%</b>에서 <b>15%</b>로 인상하는 방안이 이미 실행됐거나 최소한 실행 단계에 있다고 밝혔어요. 앞서 미국은 상호관세 위법 판결 이후 무역법 122조를 근거로 전 세계 모든 수입품에 10% 글로벌 관세를 부과하기 시작했고, 재무부·USTR도 15% 인상 계획을 수차례 확인한 상태입니다.mkyoutubeco <mark>DA 기준으로는 미국향 완제품·부품 수출뿐 아니라 미국을 경유하는 글로벌 부품 공급망 전반에서 최대 +5%p 추가 관세 부담이 발생할 수 있는 구간</mark>이라, 미국 생산·조달 구조 재점검이 필요해요. 단기적으로는 관세 인상분이 그대로 판가에 전가되기 어렵기 때문에, 미국향 DA 물량의 마진이 최대 <b>5%p</b> 내외까지 훼손될 수 있다고 보는 보수적인 시나리오가 필요합니다.\n\n시사점: \n기존 상호관세가 위법 판결로 무효화됐지만, 10~15% 글로벌 관세로 대체되면서 <mark>관세 리스크가 해소되기는커녕 구조가 바뀐 상태</mark>라 한국·중국·EU 소재 생산기지별 손익을 다시 비교해야 합니다.\n\n액션:\n ① 미국향 DA 완제품·부품별 관세 시나리오(10% vs 15%) 기준 손익 분석 및 최소 손익 보전 판가 인상 필요폭 산출 (우선순위: 상, 기한: 2026-04-05)\n ② 멕시코·동유럽·동남아 생산기지로의 우회 생산·직접 수출 구조 검토 (우선순위: 중, 기한: 2026-04-30)\n ③ 미국 내 현지 조립·KD 방식 전환 시 관세·물류·원가 구조 비교 리포트 작성 (우선순위: 중, 기한: 2026-04-30)",
+            "URL": "https://www.yna.co.kr/view/MYH20260326007700038\nhttps://news.kbs.co.kr/news/view.do?ncd=8518501\nhttps://www.mk.co.kr/news/world/11979006",
+            "Risk": "High",
+            "Impact": "C(+5%p 잠재 관세부담)",
+            "Image": "https://img1.yna.co.kr/mpic/YH/2026/03/26/MYH20260326007700038_P4.jpg",
+            "Region": "USA",
+            "Tag": "글로벌관세,15%,미국관세,트럼프,수출리스크,DA원가,High",
             "BOT": "",
-            "Title_en": "Won-Dollar Exchange Rate Maintains 1,500 Won Range, Surges Over 4% in a Month",
-            "Summary_en": "USD/KRW maintained the level of 1,500.6 won for two consecutive days based on weekly trading, and as it moved around 1,504 won based on night trading and brokerage sites, it appears that the high exchange rate range of the 1,500 won range is becoming entrenched for the first time since the 2009 financial crisis. Over the past month, the Korean Won has weakened by approximately 4.25% against the US Dollar, and has fallen by about 2.7% on a 12-month basis, placing structural upward pressure on the unit prices of imported raw materials. Since a jump of more than 4% in the exchange rate over a month leads to an increase of approximately +4% in the cost of imported raw materials based on the same dollar, it is necessary to completely re-examine the quarterly cost and selling price scenarios.\n\nAction:\n\n① Recalculate import cost sensitivity for three exchange rate scenarios: 1,450, 1,500, and 1,550 KRW (Priority: High, Deadline: 2026-03-25)\n\n② Review raising the Q2 forward exchange and natural hedging limits in consultation with the Foreign Exchange Team and Finance (Priority: High, Deadline: 2026-03-27)\n\n③ Regarding parts with a high proportion of US dollar settlements List of East Asia and Euro Alternative Sources (Priority: Medium, Deadline: 2026-04-05)",
-            "Category_en": "Macroeconomics: Exchange Rate",
-            "Tag_en": "USD/KRW, exchange rate, 1500 won range, weak won, +4.25%, import cost, hedging",
-            "Region_en": "South Korea, USA, Global",
+            "Title_en": "U.S. Pushes for 15% Global Tariff Hike, Indicates Push Forward Even Amid War with Iran",
+            "Summary_en": "President Trump’s ‘tariff strategist,’ Peter Navarro, stated that plans to raise global tariffs from the current 10% to 15% have already been implemented or are at least in the implementation phase. Previously, following a ruling that reciprocal tariffs were illegal, the U.S. began imposing a 10% global tariff on all imports worldwide based on Section 122 of the Trade Act, and the Treasury Department and the U.S. Trade Relations Bureau have confirmed plans to raise the rate to 15% on several occasions. Based on the DA (Digital Export) standard, this represents a range where an additional tariff burden of up to +5%p could occur not only on exports of finished goods and components to the U.S. but also across the entire global component supply chain passing through the U.S., thus requiring a re-examination of U.S. production and procurement structures. Since it is difficult to pass on the tariff increase directly to selling prices in the short term, a conservative scenario is necessary that anticipates margins on U.S.-bound DA volumes could be damaged by up to approximately 5%p. Implications:\n\nAlthough existing reciprocal tariffs were invalidated by a ruling of illegality, they have been replaced by 10–15% global tariffs. Far from resolving tariff risks, the structure has changed, necessitating a re-comparison of profits and losses for production bases located in Korea, China, and the EU.\n\nActions:\n\n① Analyze profits and losses based on tariff scenarios (10% vs. 15%) for US-bound DA finished products and components, and calculate the necessary price increase range to guarantee minimum profit. (Priority: High, Deadline: 2026-04-05)\n\n② Review indirect production and direct export structures to production bases in Mexico, Eastern Europe, and Southeast Asia. (Priority: Medium, Deadline: 2026-04-30)\n\n③ Prepare a report comparing tariff, logistics, and cost structures when switching to local assembly and KD methods within the US. (Priority: Medium, Deadline: 2026-04-30)",
+            "Category_en": "Macroeconomics: Trade Policy",
+            "Tag_en": "Global Tariffs, 15%, US Tariffs, Trump, Export Risk, DA Cost, High",
+            "Region_en": "USA",
             "BOT(eng)": "",
             "ViewCount": "",
             "LikeCount": ""
@@ -739,7 +739,7 @@
             "Tag_en": "India, general strike, February 12, SIEL-P, power union, labor risk, SIEL-N",
             "Region_en": "India",
             "BOT(eng)": "",
-            "ViewCount": "",
+            "ViewCount": 1,
             "LikeCount": ""
           },
           {
