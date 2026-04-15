@@ -650,6 +650,8 @@ function runAllProcesses(includeAnchor) {
 function cleanTitleText(text) {
   if (!text) return text;
   text = text.replace(/\s*[a-zA-Z][a-zA-Z0-9\.\-]*\+\d+/g, '');
+  // 한국어 문자 바로 뒤에 공백 없이 붙은 영문 도메인/출처명 제거 (예: 반등ajupress → 반등)
+  text = text.replace(/([가-힣])([a-zA-Z][a-zA-Z0-9\.\-]*)$/, '$1');
   return text.trim();
 }
 
