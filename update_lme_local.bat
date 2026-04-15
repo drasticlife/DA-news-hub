@@ -27,7 +27,19 @@ git add data\lme_prices.json
 git diff --staged --quiet
 if %errorlevel% neq 0 (
     git commit -m "bot: Auto-update LME prices from Local PC"
+    echo    Pulling latest changes from GitHub...
+    git pull --rebase origin main
+    if %errorlevel% neq 0 (
+        echo ERROR! Conflict occurred during pull. Please resolve manually.
+        timeout /t 10 > nul
+        exit /b 1
+    )
     git push
+    if %errorlevel% neq 0 (
+        echo ERROR! Push failed. Please check your GitHub connection.
+        timeout /t 10 > nul
+        exit /b 1
+    )
     echo DONE! Successfully updated LME prices to GitHub!
 ) else (
     echo DONE! No new data found. Everything is up to date.
