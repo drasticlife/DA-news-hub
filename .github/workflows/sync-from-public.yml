@@ -1,0 +1,41 @@
+name: Sync from public GitHub
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 매 정시마다 (1시간 간격)
+  workflow_dispatch:       # 수동 실행 버튼
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 사내 repo
+        uses: actions/checkout@v3
+
+      - name: 공개 GitHub에서 news/ 폴더 동기화
+        run: |
+          BASE_URL="https://raw.githubusercontent.com/drasticlife/DA-news-hub/main"
+          
+          # index.json 가져오기
+          curl -f "$BASE_URL/news/index.json" -o news/index.json
+          
+          # index.json에서 월별 파일 목록 추출 후 각각 다운로드
+          MONTHS=$(cat news/index.json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for m in data['months']:
+              print(m)
+          ")
+          
+          for MONTH in $MONTHS; do
+            echo "Downloading news/$MONTH.json"
+            curl -f "$BASE_URL/news/$MONTH.json" -o "news/$MONTH.json"
+          done
+
+      - name: 변경사항 커밋 & 푸시
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add news/
+          git diff --staged --quiet || git commit -m "Sync news/ from public GitHub $(date '+%Y-%m-%d %H:%M')"
+          git push
