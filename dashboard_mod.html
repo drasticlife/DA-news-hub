@@ -14,6 +14,7 @@
 </script>
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js" type="module"></script>
 <!-- Leaflet.js -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -513,6 +514,96 @@
     display: inline-block; font-size: 9px; font-weight: 600;
     padding: 1px 5px; border-radius: 3px; margin-right: 4px;
   }
+
+  /* ── Anchor BOT Panel (floating, bottom-left) ── */
+  #anchor-panel {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9200;
+    display: flex; flex-direction: row; align-items: flex-end; gap: 16px;
+    pointer-events: none;
+  }
+  #anchor-bot-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex-shrink: 0; pointer-events: auto; cursor: pointer;
+  }
+  #anchor-badge {
+    position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 9999px;
+    font-size: 9px; font-weight: 900; color: white;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    animation: anchorFloat 2s ease-in-out infinite;
+  }
+  #anchor-badge.standby { background: rgba(51,65,85,0.8); }
+  #anchor-badge.on-air  { background: rgba(239,68,68,0.9); box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+  #anchor-badge .dot { width:6px; height:6px; border-radius:50%; background:white; animation: anchorPulse 1.5s infinite; }
+  @keyframes anchorFloat { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-5px)} }
+  @keyframes anchorPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #anchor-bot-name {
+    font-size: 10px; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(6,182,212,0.5); background: rgba(15,23,42,0.6); backdrop-filter: blur(12px);
+    border: 1px solid rgba(6,182,212,0.15); padding: 5px 14px; border-radius: 9999px; transition: color 0.3s;
+  }
+  #anchor-bot-name.on-air { color: rgba(6,182,212,0.9); }
+  #lottie-container { width: 160px; height: 160px; }
+  dotlottie-wc { display: block; }
+
+  /* ── Blog Modal ── */
+  #blogModal {
+    display: none; position: fixed; inset: 0; z-index: 9100;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
+    align-items: center; justify-content: center;
+  }
+  #blogModal.open { display: flex; }
+  .blog-modal-card {
+    width: min(860px,95vw); height: min(82vh,680px); background: #0d1117;
+    border: 1px solid rgba(6,182,212,0.18); border-radius: 20px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 60px rgba(6,182,212,0.07);
+    display: flex; flex-direction: column; overflow: hidden;
+    animation: blogSlideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes blogSlideUp { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+  .blog-modal-header {
+    padding: 14px 20px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: linear-gradient(135deg,rgba(6,182,212,0.08),transparent);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .blog-header-avatar { font-size: 24px; flex-shrink: 0; }
+  .blog-header-info { flex: 1; }
+  .blog-header-info h3 { font-size:12px; font-weight:900; color:#06b6d4; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:1px; }
+  .blog-header-info p  { font-size:10px; color:rgba(255,255,255,0.28); }
+  .blog-modal-close {
+    width:30px; height:30px; border-radius:7px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.45); cursor:pointer; font-size:11px;
+    display:flex; align-items:center; justify-content:center; transition:all .15s; flex-shrink:0;
+  }
+  .blog-modal-close:hover { background:rgba(255,255,255,0.1); color:#fff; }
+  .blog-modal-body { display:flex; flex:1; overflow:hidden; }
+  .blog-list-panel {
+    width:220px; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.05);
+    overflow-y:auto; padding:10px 6px;
+  }
+  .blog-list-panel::-webkit-scrollbar { width:3px; }
+  .blog-list-panel::-webkit-scrollbar-thumb { background:rgba(6,182,212,0.15); border-radius:2px; }
+  .blog-section-label { font-size:9px; font-weight:900; letter-spacing:0.18em; color:rgba(255,255,255,0.18); text-transform:uppercase; padding:4px 8px 8px; }
+  .blog-list-item { padding:9px 10px; border-radius:8px; cursor:pointer; transition:all .15s; margin-bottom:2px; border:1px solid transparent; }
+  .blog-list-item:hover  { background:rgba(6,182,212,0.05); border-color:rgba(6,182,212,0.1); }
+  .blog-list-item.active { background:rgba(6,182,212,0.1);  border-color:rgba(6,182,212,0.22); }
+  .blog-item-issue { font-size:9px; font-weight:700; color:rgba(6,182,212,0.55); letter-spacing:0.08em; margin-bottom:3px; }
+  .blog-item-title { font-size:12px; font-weight:700; color:rgba(255,255,255,0.82); line-height:1.4; word-break:keep-all; }
+  .blog-item-week  { font-size:10px; color:rgba(255,255,255,0.25); margin-top:3px; }
+  .blog-content-panel { flex:1; overflow-y:auto; padding:28px 32px; }
+  .blog-content-panel::-webkit-scrollbar { width:4px; }
+  .blog-content-panel::-webkit-scrollbar-thumb { background:rgba(6,182,212,0.15); border-radius:2px; }
+  .blog-post-eyebrow  { font-size:10px; font-weight:900; letter-spacing:0.18em; color:rgba(6,182,212,0.55); text-transform:uppercase; margin-bottom:8px; }
+  .blog-post-headline { font-size:20px; font-weight:900; color:rgba(255,255,255,0.95); line-height:1.3; margin-bottom:8px; word-break:keep-all; letter-spacing:-0.02em; }
+  .blog-post-dateline { font-size:11px; color:rgba(255,255,255,0.28); margin-bottom:22px; display:flex; align-items:center; gap:8px; }
+  .blog-post-dateline::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.05); }
+  .blog-post-body { font-size:14px; line-height:1.95; color:rgba(255,255,255,0.75); word-break:keep-all; }
+  .blog-post-body b, .blog-post-body strong { color:rgba(255,255,255,0.95); font-weight:700; }
+  .blog-post-body mark { background:rgba(6,182,212,0.18); color:#67e8f9; padding:1px 5px; border-radius:3px; font-weight:700; }
+  .blog-empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:rgba(255,255,255,0.18); gap:12px; text-align:center; }
 
   /* ── Bottom Articles ── */
   .bottom-panel {
@@ -1331,6 +1422,32 @@
     </div>
   </div>
 </div>
+
+<!-- Strategic-Bot Weekly Blog Modal -->
+<div id="blogModal" onclick="handleBlogBgClick(event)">
+  <div class="blog-modal-card">
+    <div class="blog-modal-header">
+      <div class="blog-header-avatar">🤖</div>
+      <div class="blog-header-info">
+        <h3>⚡ Strategic-Bot Weekly</h3>
+        <p>삼성 DA 공급망 인텔리전스 · AI 위클리 브리핑</p>
+      </div>
+      <button class="blog-modal-close" onclick="closeBlogModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="blog-modal-body">
+      <div class="blog-list-panel" id="blogListPanel">
+        <div class="blog-section-label">Weekly Issues</div>
+      </div>
+      <div class="blog-content-panel" id="blogContentPanel">
+        <div class="blog-empty-state">
+          <i class="fas fa-robot" style="font-size:36px"></i>
+          <span style="font-size:13px">위클리 이슈를 선택하세요</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════
 // DA Intelligence Dashboard v3.1
@@ -1523,6 +1640,7 @@ function renderAll() {
   renderMapMarkers();
   renderCategoryCards();
   renderArticles();
+  updateBotWidget();
 }
 
 function updatePeriodLabel() {
@@ -1914,8 +2032,90 @@ function handleModalBgClick(e) {
   if (e.target === document.getElementById('articleModal')) closeModal();
 }
 
+
 // ESC 키로 닫기
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeBlogModal(); }
+});
+
+// ── Strategic-Bot Blog Modal ──────────────────────────────
+
+function updateBotWidget() {
+  if (intelData && intelData.scripts && typeof window._activateBotOnAir === 'function') {
+    window._activateBotOnAir();
+  }
+}
+
+function getPeriodRangeText(period) {
+  try {
+    const { start, end } = getPeriodRange(period);
+    const fmt = d => `${d.getMonth()+1}월 ${d.getDate()}일`;
+    return `${fmt(start)} ~ ${fmt(end)}`;
+  } catch(e) { return ''; }
+}
+
+function getBlogItems() {
+  if (intelData && Array.isArray(intelData.weeklyBlog) && intelData.weeklyBlog.length > 0) {
+    return intelData.weeklyBlog;
+  }
+  if (!intelData || !intelData.scripts) return [];
+  const PERIODS  = ['thisWeek','lastWeek','thisMonth','lastMonth'];
+  const LABELS   = { thisWeek:'이번 주', lastWeek:'지난 주', thisMonth:'이번 달', lastMonth:'지난 달' };
+  const FALLBACK = { thisWeek:'이번 주 공급망 이슈', lastWeek:'지난 주 브리핑', thisMonth:'이번 달 동향', lastMonth:'지난 달 리뷰' };
+  return PERIODS
+    .filter(p => intelData.scripts[p] && intelData.scripts[p].all)
+    .map(p => {
+      const txt = intelData.scripts[p].all;
+      const m = txt.match(/<mark>([^<]{6,45})<\/mark>/);
+      const title = m ? m[1].replace(/<[^>]+>/g,'').trim() : FALLBACK[p];
+      return { weekId:p, issue:LABELS[p], weekRange:getPeriodRangeText(p), title, content:txt };
+    });
+}
+
+function openBlogModal() {
+  const modal = document.getElementById('blogModal');
+  const listPanel = document.getElementById('blogListPanel');
+  const items = getBlogItems();
+  if (items.length === 0) {
+    listPanel.innerHTML = '<div class="blog-section-label">Weekly Issues</div><div style="padding:20px 10px;font-size:11px;color:rgba(255,255,255,0.22);text-align:center;line-height:1.7">브리핑 데이터가 없습니다.<br>스케줄러 실행 후 업데이트됩니다.</div>';
+  } else {
+    listPanel.innerHTML = '<div class="blog-section-label">Weekly Issues</div>' +
+      items.map((item, i) =>
+        `<div class="blog-list-item ${i===0?'active':''}" id="blogItem_${i}" onclick="selectBlogItem(${i})">` +
+        `<div class="blog-item-issue">#${String(items.length-i).padStart(2,'0')} · ${item.issue}</div>` +
+        `<div class="blog-item-title">${item.title}</div>` +
+        `<div class="blog-item-week">${item.weekRange||''}</div></div>`
+      ).join('');
+    selectBlogItem(0, items);
+  }
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function selectBlogItem(idx, itemsArg) {
+  const items = itemsArg || getBlogItems();
+  if (!items[idx]) return;
+  document.querySelectorAll('.blog-list-item').forEach((el,i) => el.classList.toggle('active', i===idx));
+  const item = items[idx];
+  const content = (item.content||'').replace(/\[\d[\d,\s]*\]/g,'').replace(/\*\*/g,'').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  const panel = document.getElementById('blogContentPanel');
+  panel.innerHTML =
+    `<div class="blog-post-eyebrow">${item.issue} · Strategic Intelligence</div>` +
+    `<div class="blog-post-headline">${item.title}</div>` +
+    `<div class="blog-post-dateline">${item.weekRange||''}</div>` +
+    `<div class="blog-post-body">${content}</div>`;
+  panel.scrollTop = 0;
+}
+
+function closeBlogModal() {
+  document.getElementById('blogModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleBlogBgClick(e) {
+  if (e.target === document.getElementById('blogModal')) closeBlogModal();
+}
+
 
 // ── Period 이벤트 ────────────────────────────────
 function setPeriod(p, el) {
@@ -1944,6 +2144,35 @@ document.addEventListener('DOMContentLoaded', () => {
   initLeafletMap();
   loadData();
 });
+</script>
+<!-- Anchor BOT (Lottie, bottom-left fixed) -->
+<div id="anchor-panel">
+  <div id="anchor-bot-wrap" onclick="openBlogModal()" title="Strategic-Bot 위클리 브리핑">
+    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;">
+      <div id="anchor-badge" class="standby">
+        <div class="dot"></div>
+        <span id="anchor-badge-text">Standby</span>
+      </div>
+      <div id="lottie-container"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.25),transparent);border-radius:50%;pointer-events:none;"></div>
+    </div>
+    <div id="anchor-bot-name">⚡ Strategic-Bot</div>
+  </div>
+</div>
+<script type="module">
+  const el = document.createElement('dotlottie-wc');
+  el.setAttribute('src','https://lottie.host/3f71118b-e57a-458b-80e7-dd5601a557c9/uR8UCTEcRD.lottie');
+  el.setAttribute('autoplay',''); el.setAttribute('loop','');
+  el.style.width='160px'; el.style.height='160px';
+  document.getElementById('lottie-container').appendChild(el);
+  window._activateBotOnAir = function() {
+    const b  = document.getElementById('anchor-badge');
+    const bt = document.getElementById('anchor-badge-text');
+    const n  = document.getElementById('anchor-bot-name');
+    if(b)  b.className = 'on-air';
+    if(bt) bt.textContent = 'On Air';
+    if(n)  n.classList.add('on-air');
+  };
 </script>
 <!-- Vercel Analytics -->
 <script defer src="/_vercel/insights/script.js"></script>
