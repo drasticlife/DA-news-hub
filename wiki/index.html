@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Wiki - SEC DA Purchase Intelligence</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%230033A0'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' fill='white' font-weight='900' font-family='sans-serif'>DA</text></svg>" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2JTZ61B1PW"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2JTZ61B1PW');
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+  <script>
+    tailwind.config = { darkMode: "class" };
+  </script>
+  <link rel="stylesheet" href="../assets/css/index.css" />
+  <style>
+    body { font-family: 'Pretendard', sans-serif; }
+    .wiki-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,51,160,0.10); }
+    .wiki-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .article-link:hover { color: #0033A0; background: #eff6ff; }
+  </style>
+</head>
+
+<body class="bg-[#f8f9fc] text-[#333]">
+
+  <!-- ============================================================ TOP NAV -->
+  <header class="bg-[#0033A0] text-white sticky top-0 z-50 px-4 h-14 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-4">
+      <button id="mobile-menu-btn" onclick="toggleMobileDrawer()" aria-label="메뉴 열기">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="flex items-center gap-3 cursor-pointer" onclick="location.href='../index.html'">
+        <div class="bg-white text-[#0033A0] px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+        <h1 class="font-bold text-[13px] tracking-tight uppercase whitespace-nowrap">Purchase Intelligence</h1>
+      </div>
+      <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-[11px] font-bold whitespace-nowrap">
+        <a href="../index.html" class="text-white/60 hover:text-white py-1 transition-all uppercase">전략 시황</a>
+        <a href="index.html" class="text-white border-b-2 border-white py-1 transition-all uppercase">WIKI</a>
+        <a href="../indices.html" class="text-white/60 hover:text-white py-1 transition-all uppercase">INDEX</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="window.location.href='../dashboard_mod.html'"
+        class="flex items-center gap-2 bg-blue-500 hover:bg-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md text-white">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> DASHBOARD
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================ HAMBURGER DRAWER -->
+  <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/50 z-[200] hidden backdrop-blur-sm" onclick="closeMobileDrawer()"></div>
+  <div id="mobile-drawer" class="fixed top-0 -left-full w-72 h-full bg-white dark:bg-[#25282c] z-[300] transition-all duration-300 shadow-2xl p-4 overflow-y-auto">
+    <div class="flex justify-between items-center mb-5 pb-4 border-b dark:border-gray-700">
+      <div class="flex items-center gap-2">
+        <div class="bg-[#0033A0] text-white px-1.5 py-0.5 rounded-sm text-[10px] font-black uppercase">DA</div>
+        <span class="font-bold text-[13px] text-[#0033A0] dark:text-blue-400 uppercase">Purchase Intelligence</span>
+      </div>
+      <button onclick="closeMobileDrawer()" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="text-[9px] font-black tracking-[0.18em] text-slate-400 uppercase px-1 mb-2">NAVIGATE</div>
+    <nav class="flex flex-col gap-1">
+      <a href="../index.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📰</span>
+        <span class="flex-1">전략 시황 (News Hub)</span>
+      </a>
+      <a href="../dashboard_mod.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📊</span>
+        <span class="flex-1">Dashboard</span>
+      </a>
+      <a href="index.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold bg-blue-50 text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg">📖</span>
+        <span class="flex-1">Product Wiki</span>
+        <span class="text-[9px] font-black px-2 py-0.5 bg-slate-200 text-slate-500 rounded-full">현재</span>
+      </a>
+      <a href="../indices.html" class="flex items-center gap-3 p-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#0033A0] transition-all">
+        <span class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-lg">📈</span>
+        <span class="flex-1">Market Indices</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ============================================================ MAIN CONTENT -->
+  <main class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Page title -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="text-3xl">📖</span>
+        <h2 class="text-2xl font-black text-[#0033A0] uppercase tracking-tight">생활가전제품 WIKI</h2>
+      </div>
+      <p class="text-sm text-slate-500">생활가전 제품 구조, 기술, 핵심 부품에 관한 구매 실무 지식 백과입니다.</p>
+    </div>
+
+    <!-- Category grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- 냉장·냉동 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🧊</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">냉장·냉동</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">냉장고</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">냉장고 종류 및 원리</a></li>
+        </ul>
+      </div>
+
+      <!-- 세탁·건조 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🫧</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">세탁·건조</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">세탁기</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">세탁기 종류 및 원리</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">건조기</a></li>
+        </ul>
+      </div>
+
+      <!-- 공조·청정 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🌬️</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">공조·청정</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">에어컨</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">에어컨 종류 및 분류</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">공기청정기</a></li>
+        </ul>
+      </div>
+
+      <!-- 조리·주방 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🍳</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">조리·주방</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">오븐·전자레인지</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">조리 기구 및 가열 원리</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">식기세척기</a></li>
+        </ul>
+      </div>
+
+      <!-- 핵심 기술·소재 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">⚙️</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">핵심 기술·소재</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">압축기</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">모터·인버터</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">냉매</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">사출(Injection)</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">프레스(Press)</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">밸브(Valve)</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">PCB 및 PBA</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">PCM·강판 소재</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">LME 및 원자재 단가</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">가전 원가와 원자재 시황 연동</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">전력 반도체와 공급망 리스크</a></li>
+        </ul>
+      </div>
+
+      <!-- 규제·인증·정책 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">📜</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">규제·인증·정책</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">유럽 에너지 등급 규제와 전략</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">글로벌 인증 및 무역 장벽</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">ESG 소재 채택의 비즈니스 논리</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">ESG 규제 및 인증</a></li>
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">인도 BIS 인증</a></li>
+        </ul>
+      </div>
+
+      <!-- 청소기 -->
+      <div class="wiki-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-xl">🧹</span>
+          <h3 class="font-black text-[#0033A0] text-[14px] uppercase">청소기</h3>
+        </div>
+        <ul class="space-y-1">
+          <li><a href="#" class="article-link block px-2 py-1 rounded-lg text-[13px] text-slate-600 transition-all">청소기 종류 및 작동 원리</a></li>
+        </ul>
+      </div>
+
+    </div><!-- /grid -->
+
+    <div class="mt-10 text-center text-xs text-slate-400">
+      SEC DA Purchase Intelligence · Product Wiki
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    function toggleMobileDrawer() {
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      const isOpen = drawer.style.left === '0px';
+      if (isOpen) {
+        drawer.style.left = '-100%';
+        overlay.classList.add('hidden');
+      } else {
+        drawer.style.left = '0px';
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    function closeMobileDrawer() {
+      const drawer = document.getElementById('mobile-drawer');
+      const overlay = document.getElementById('mobile-drawer-overlay');
+      drawer.style.left = '-100%';
+      overlay.classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMobileDrawer();
+    });
+  </script>
+</body>
+</html>
